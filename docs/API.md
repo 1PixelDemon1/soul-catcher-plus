@@ -54,6 +54,46 @@ across its forms. Selected-species commands target the active form even when the
 player is inspecting another captured appearance. Existing saved entries need no
 schema migration; their original snapshots supply their initial appearance.
 
+## Companion boss bars
+
+`SoulAdapter.bossBars(mob)` supplies the **exclusively entity-owned**
+`ServerBossEvent` instances to hide. The default uses `SoulBossBars.discover(mob)`:
+it caches accessible, non-static fields declared as `BossEvent` or a subtype in
+the mob's class hierarchy, then reads their current values. This is a heuristic,
+not proof of exclusive ownership. No display-name matching, static-field scan,
+global encounter manager or recursive object-graph search is used.
+
+The core applies suppression before insertion/tracking, on reload, and during
+the existing five-tick companion update. It marks the selected event instance,
+calls `setVisible(false)` to remove any existing display, and prevents later
+`setVisible(true)` through a required vanilla mixin. Registered viewers remain
+intact: some mods use `getPlayers()` for encounter behavior. Native add/update
+packets respect the invisible flag. The built-in Mowzie boss-event subclass uses
+this standard path; it does not need a name-based client overlay filter.
+
+Override the hook for bars held inside helper objects, and **exclude any shared
+encounter event** even when it is referenced by an instance field:
+
+```java
+@Override
+public Collection<ServerBossEvent> bossBars(Mob mob) {
+    return List.of(myEntityOwnedEvent(mob));
+    // Return List.of() when this mob only references a shared encounter bar.
+}
+```
+
+Only return an event if hiding it cannot also hide the UI for other hostile
+participants. Suppression lasts for the event object's lifetime; there is no
+automatic unhide of an event incorrectly claimed as private by an adapter.
+
+For lazily created bars, initialize them in `prepareSummon`/`configureCompanion`
+before tracking, or call `SoulBossBars.suppress(mob)` immediately after creation
+and **before** registering viewers. Five-tick rediscovery alone cannot prevent
+a first-frame display when a mod creates and shows a new event between updates.
+Fully custom HUDs that bypass `ServerBossEvent`, and subclasses that bypass the
+base packet/visibility implementation, require their own compatibility hook.
+Generic suppression is not a guarantee for every mod's overlay.
+
 ## Collection model previews
 
 `previewData(snapshot)` returns a small NBT compound containing client-safe visual

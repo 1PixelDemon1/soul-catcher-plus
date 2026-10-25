@@ -96,6 +96,7 @@ public final class SoulEvents {
             .entries.get(mob.getPersistentData().getUUID(CompanionBrain.ENTRY));
         if (entry == null || !mob.getUUID().equals(entry.activeEntity)) { event.setCanceled(true); return; }
         if (event.loadedFromDisk()) SoulAdapters.get(mob).configureCompanion(mob);
+        SoulBossBars.suppress(mob);
     }
     @SubscribeEvent public static void tracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer player && CompanionBrain.isSoul(event.getTarget()))

@@ -54,6 +54,7 @@ public final class SoulService {
             mob.getPersistentData().putString(CompanionBrain.MODE, "FOLLOW");
             SoulAdapters.get(mob).prepareSummon(mob, player);
             SoulAdapters.get(mob).configureCompanion(mob);
+            SoulBossBars.suppress(mob);
             if (!place(mob, player)) { message(player, "no_space"); return; }
             if (MinecraftForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob))) return;
             // Canonical identity must be visible to EntityJoinLevelEvent.

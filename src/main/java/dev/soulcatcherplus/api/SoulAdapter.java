@@ -21,6 +21,13 @@ public interface SoulAdapter {
     default CompoundTag previewData(CompoundTag snapshot) {
         return dev.soulcatcherplus.data.SoulVariants.preview(snapshot);
     }
+    /**
+     * Return only entity-owned events. The default inspects direct fields heuristically;
+     * override it to exclude shared encounter bars or expose events held in helpers.
+     */
+    default java.util.Collection<net.minecraft.server.level.ServerBossEvent> bossBars(Mob mob) {
+        return dev.soulcatcherplus.companion.SoulBossBars.discover(mob);
+    }
     /** Called after snapshot restoration, before adding the entity to the world. */
     default void prepareSummon(Mob mob, ServerPlayer owner) {}
     /** Install movement/target overrides without removing native attack goals. */

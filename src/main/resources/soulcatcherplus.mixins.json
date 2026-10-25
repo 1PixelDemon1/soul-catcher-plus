@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.soulcatcherplus.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": ["MowzieAreaTargetsMixin"],
+  "mixins": ["MowzieAreaTargetsMixin", "CompanionBossBarMixin"],
   "injectors": {"defaultRequire": 1}
 }

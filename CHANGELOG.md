@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Hide discovered entity-owned companion boss events on the server, including the standard Mowzie boss-event path; preserve encounter participants and block subsequent visibility requests for suppressed instances.
+- Expose `SoulAdapter.bossBars` for helper-owned events and excluding shared encounter bars. Automatic direct-field discovery is heuristic; shared, lazily shown, and fully custom HUDs require integration support.
 - Replace the collection screen with a custom ink, aged-brass, and teal interface, including species cards, resource indicators, contextual controls, and companion orders.
 - Add a detached 3D preview of the selected captured form with automatic rotation, drag rotation, and scroll-wheel zoom. Preview entities are not inserted into the world or AI-ticked.
 - Reduce the default preview size and reserve more space for wide models, weapons, and horns: use about 66% of the available width and 70% of the height, a larger footprint margin, a lower maximum scale, and extra space below the model.
