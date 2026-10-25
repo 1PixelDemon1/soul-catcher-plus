@@ -15,7 +15,18 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 
 public final class SoulScythe extends SwordItem {
-    public SoulScythe() { super(Tiers.IRON, 4, -3.0f, new Item.Properties().durability(750)); }
+    private final ScytheTier scytheTier;
+    public SoulScythe(ScytheTier tier) {
+        super(tier.material, tier.damageModifier, tier.speedModifier,
+            tier == ScytheTier.NETHERITE ? new Item.Properties().fireResistant() : new Item.Properties());
+        this.scytheTier = tier;
+    }
+    public int summonLimit() { return scytheTier.summonLimit; }
+    /** Main-hand scythes take precedence; another weapon does not revoke existing summons. */
+    public static SoulScythe heldBy(Player player) {
+        if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;
+        return player.getOffhandItem().getItem() instanceof SoulScythe scythe ? scythe : null;
+    }
     @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (player.isShiftKeyDown()) {
             if (player instanceof ServerPlayer server) SoulService.open(server);
@@ -61,5 +72,6 @@ public final class SoulScythe extends SwordItem {
     }
     @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.soulcatcherplus.soul_scythe.tip"));
+        tooltip.add(Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));
     }
 }

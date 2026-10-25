@@ -51,6 +51,7 @@ public final class CompanionBrain {
         PlayerSouls collection = ledger.player(owner(mob));
         SoulEntry entry = collection.entries.get(mob.getPersistentData().getUUID(ENTRY));
         if (entry == null || !mob.getUUID().equals(entry.activeEntity)) { mob.discard(); return; }
+        SoulBossBars.suppress(mob);
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
         if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }
         if (mob.getTarget() != null && !canAttack(mob, mob.getTarget())) mob.setTarget(null);

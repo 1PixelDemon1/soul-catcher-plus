@@ -14,8 +14,8 @@ public final class PlayerSouls {
     public boolean commandMode;
     public boolean commandGroup = true;
     public final Map<UUID, SoulEntry> entries = new LinkedHashMap<>();
-    public int usedSlots() {
-        return entries.values().stream().filter(e -> e.activeEntity != null).mapToInt(e -> e.slots).sum();
+    public int activeCount() {
+        return (int) entries.values().stream().filter(e -> e.activeEntity != null).count();
     }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();

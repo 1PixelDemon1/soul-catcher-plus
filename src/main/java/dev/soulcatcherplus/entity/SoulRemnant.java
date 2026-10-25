@@ -35,17 +35,21 @@ public final class SoulRemnant extends Entity {
         }
     }
     @Override public InteractionResult interact(Player player, InteractionHand hand) {
-        if (!player.getItemInHand(hand).is(dev.soulcatcherplus.SoulCatcherPlus.SCYTHE.get())) return InteractionResult.PASS;
+        if (!(player.getItemInHand(hand).getItem() instanceof dev.soulcatcherplus.item.SoulScythe)) return InteractionResult.PASS;
         if (player instanceof ServerPlayer server && server.getUUID().equals(owner) && soul != null
                 && player.distanceToSqr(this) <= 6 * 6) {
             PlayerSouls data = SoulService.data(server);
-            boolean known = data.entries.values().stream().anyMatch(e -> e.entityType.equals(soul.entityType));
+            boolean known = data.entries.values().stream().anyMatch(e -> SoulVariants.same(e, soul));
             if (!known) {
+                if (data.entries.size() >= 4096) {
+                    SoulService.message(server, "collection_full");
+                    return InteractionResult.FAIL;
+                }
                 data.entries.put(soul.id, soul);
                 data.selected = soul.id;
                 SoulService.message(server, "captured", soul.name);
             } else {
-                data.energy = (int) Math.min(Integer.MAX_VALUE, (long) data.energy + Math.max(5, soul.cost / 2));
+                // Victory already awarded HP / 2. A known appearance must not pay a second time.
                 SoulService.message(server, "duplicate");
             }
             SoulService.changed(server);

@@ -33,12 +33,12 @@ public final class SoulGameTests {
         player.setGameMode(GameType.SURVIVAL);
         BlockPos pos = helper.absolutePos(new BlockPos(8, 1, 8));
         player.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0, 0);
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.SCYTHE.get()));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
         return player;
     }
-    private static SoulEntry entry(ServerPlayer player, Mob mob, int cost, int slots) {
+    private static SoulEntry entry(ServerPlayer player, Mob mob) {
         SoulEntry entry = new SoulEntry(UUID.randomUUID(), mob.getType().builtInRegistryHolder().key().location().toString(),
-            mob.getName().getString(), SoulSnapshots.sanitize(SoulAdapters.get(mob).capture(mob)), cost, slots);
+            mob.getName().getString(), SoulSnapshots.sanitize(SoulAdapters.get(mob).capture(mob)), mob.getMaxHealth());
         SoulService.data(player).entries.put(entry.id, entry);
         SoulService.data(player).energy = 1000;
         SoulService.changed(player);
@@ -49,7 +49,7 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         var zombie = helper.spawn(EntityType.ZOMBIE, 8, 1, 10);
         zombie.setNoAi(true);
-        ((SoulScythe) SoulCatcherPlus.SCYTHE.get()).interactLivingEntity(player.getMainHandItem(), player, zombie, InteractionHand.MAIN_HAND);
+        ((SoulScythe) player.getMainHandItem().getItem()).interactLivingEntity(player.getMainHandItem(), player, zombie, InteractionHand.MAIN_HAND);
         helper.assertTrue(zombie.getPersistentData().hasUUID("scp_mark_owner"), "Scythe must mark enemy");
         zombie.hurt(player.damageSources().playerAttack(player), 1000);
         var remnants = helper.getLevel().getEntitiesOfClass(SoulRemnant.class, zombie.getBoundingBox().inflate(4));
@@ -75,7 +75,7 @@ public final class SoulGameTests {
     public static void foreignSoulCannotBeCollected(GameTestHelper helper) {
         ServerPlayer owner = player(helper), stranger = player(helper);
         var zombie = helper.spawn(EntityType.ZOMBIE, 8, 1, 10);
-        SoulEntry entry = entry(owner, zombie, 10, 1);
+        SoulEntry entry = entry(owner, zombie);
         SoulService.data(owner).entries.clear();
         SoulRemnant remnant = SoulCatcherPlus.REMNANT.get().create(helper.getLevel());
         remnant.initialize(owner, entry); remnant.setPos(owner.position());
@@ -90,20 +90,23 @@ public final class SoulGameTests {
     public static void resourceAndCapacityChecks(GameTestHelper helper) {
         ServerPlayer player = player(helper);
         var zombie = helper.spawn(EntityType.ZOMBIE, 8, 1, 10);
-        SoulEntry entry = entry(player, zombie, 20, 1);
+        SoulEntry entry = entry(player, zombie);
         SoulService.data(player).energy = 19;
         SoulService.summon(player, entry.id);
         helper.assertTrue(entry.activeEntity == null && SoulService.data(player).energy == 19, "Insufficient energy cannot summon");
-        SoulEntry oversized = entry(player, zombie, 20, 7);
-        SoulService.summon(player, oversized.id);
-        helper.assertTrue(oversized.activeEntity == null && SoulService.data(player).energy == 1000, "Capacity failure cannot spend energy");
+        for (EntityType<?> type : java.util.List.of(EntityType.SKELETON, EntityType.HUSK, EntityType.COW)) {
+            SoulEntry blocker = entry(player, (Mob) type.create(helper.getLevel()));
+            blocker.activeEntity = UUID.randomUUID(); // Ledger reservations count even when their chunks are unloaded.
+        }
+        SoulService.summon(player, entry.id);
+        helper.assertTrue(entry.activeEntity == null && SoulService.data(player).energy == 1000, "Capacity failure cannot spend energy");
         player.discard(); helper.succeed();
     }
     @GameTest(template = "arena")
     public static void alliedDamageAndStaleSummon(GameTestHelper helper) {
         ServerPlayer player = player(helper);
         var zombie = helper.spawn(EntityType.ZOMBIE, 8, 1, 10);
-        SoulEntry entry = entry(player, zombie, 20, 1);
+        SoulEntry entry = entry(player, zombie);
         SoulService.summon(player, entry.id);
         Mob summoned = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(summoned != null, "Summon exists");
@@ -126,7 +129,7 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         Skeleton skeleton = helper.spawn(EntityType.SKELETON, 8, 1, 10);
         skeleton.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
-        SoulEntry entry = entry(player, skeleton, 20, 1);
+        SoulEntry entry = entry(player, skeleton);
         skeleton.discard();
         SoulService.summon(player, entry.id);
         Skeleton summoned = (Skeleton) helper.getLevel().getEntity(entry.activeEntity);
@@ -144,7 +147,7 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         var original = helper.spawn(EntityType.HUSK, 8, 1, 10);
         original.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND));
-        SoulEntry entry = entry(player, original, 20, 1);
+        SoulEntry entry = entry(player, original);
         original.discard(); SoulService.summon(player, entry.id);
         Mob summoned = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(summoned != null, "Summon exists");
@@ -165,7 +168,7 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
         Mob original = (Mob) type.create(helper.getLevel());
-        SoulEntry entry = entry(player, original, 200, 4);
+        SoulEntry entry = entry(player, original);
         SoulService.summon(player, entry.id);
         Mob knight = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(knight != null, "Wroughtnaut must summon");
@@ -183,14 +186,14 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
         Mob original = (Mob) type.create(helper.getLevel());
-        SoulEntry entry = entry(player, original, 200, 4);
+        SoulEntry entry = entry(player, original);
         SoulService.summon(player, entry.id);
         Mob knight = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(knight != null, "Wroughtnaut must summon");
         helper.assertTrue((Boolean) knight.getClass().getMethod("isAlwaysActive").invoke(knight), "Knight must remain awake");
         helper.assertTrue(knight.goalSelector.getAvailableGoals().stream().anyMatch(g -> g.getGoal().getClass().getSimpleName().equals("WroughtnautAttackAI")), "Native combat goals must remain");
         var ally = helper.spawn(EntityType.ZOMBIE, 8, 1, 12);
-        SoulEntry allyEntry = entry(player, ally, 10, 1);
+        SoulEntry allyEntry = entry(player, ally);
         ally.discard(); SoulService.summon(player, allyEntry.id);
         Mob alliedMob = (Mob) helper.getLevel().getEntity(allyEntry.activeEntity);
         helper.assertTrue(alliedMob != null, "Allied test creature exists");

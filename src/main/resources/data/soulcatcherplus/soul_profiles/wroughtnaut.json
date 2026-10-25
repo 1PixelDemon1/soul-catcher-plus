@@ -1,1 +1,4 @@
-{"entity":"mowziesmobs:ferrous_wroughtnaut","enabled":true,"cost":200,"slots":4,"energy":80}
+{
+  "entity": "mowziesmobs:ferrous_wroughtnaut",
+  "enabled": true
+}
