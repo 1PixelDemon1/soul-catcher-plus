@@ -1,0 +1,6 @@
+{
+  "type":"minecraft:crafting_shaped",
+  "pattern":[" II"," EI","S  "],
+  "key":{"I":{"item":"minecraft:iron_ingot"},"E":{"item":"minecraft:ender_pearl"},"S":{"item":"minecraft:stick"}},
+  "result":{"item":"soulcatcherplus:soul_scythe"}
+}

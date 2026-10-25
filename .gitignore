@@ -1,0 +1,13 @@
+.gradle/
+.gradle-user-home/
+.tools/
+build/
+run/
+run-client/
+run-data/
+.idea/
+*.iml
+*.log
+logs/
+__pycache__/
+*.py[cod]
