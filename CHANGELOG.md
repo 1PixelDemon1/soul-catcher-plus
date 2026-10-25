@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Move the held scythe's third-person grip to the middle of its shaft while preserving the user-approved rotations, scales and first-person framing. Replace automatically extruded held-item geometry with closed opaque rectangles and texel-center edge UVs to address see-through seams; preserve the artwork and 16x16 inventory icons. In-game confirmation remains deferred to the user.
 - Replace scythe art with wooden shafts, left-facing crescent blades and soul lanterns. Keep cutting edges black while changing only blade-face colors between iron, diamond and netherite.
 - Use exact 16x16 inventory sprites and separate 128x128 held textures through Forge's built-in separate-transforms model loader. Share held transforms across all tiers, with approximately player-height third-person scale and separate first-person framing; use small icons for dropped items, frames and head display.
 - Keep editable inventory pixel maps, image-generation source art and packaging instructions in `art/scythes`. Held scale and grip are provisional until in-game inspection; no build or gameplay validation was run.

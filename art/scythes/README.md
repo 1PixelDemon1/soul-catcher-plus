@@ -19,13 +19,23 @@ lantern colors share the same palette in inventory icons.
 - `models/item/<item>.json`: Forge `forge:separate_transforms` models choose the
   small icon for GUI, dropped items, frames and head display, and the detailed
   texture for held views. The old iron registry ID `soul_scythe` remains unchanged.
-- `models/item/soul_scythe_held.json`: shared hand transforms. Third-person scale
-  is 2, approximately player height for this silhouette. Z rotation compensates
-  for the diagonal shaft; translation places the grip on its middle. First-person
-  scale is 1.6 with separate framing. These are provisional authoring values,
-  not an in-game measurement; review both hands and views during manual play.
+- `models/item/<item>_held_mesh.json`: generated, closed cuboids over opaque
+  rectangles of that tier's texture. Identical runs in consecutive rows are
+  merged; each UV stays between opaque texel centers. This replaces the generated
+  item's alpha-cut full-square faces and separate boundary strips, whose UV
+  contraction can expose seams at the silhouette. Thickness remains Z=7.5..8.5.
+  Separate meshes preserve each source silhouette without changing the PNGs.
+- `models/item/soul_scythe_held.json`: shared hand transforms and cutout rendering.
+  Third-person scale is 2; first-person scale is 1.6. The user approved both view
+  rotations and first-person framing. Only third-person translation was adjusted
+  to `[0, 6.77, -6.25]` for a grip near the middle of the wood. With centered texture
+  point `g=(0.27,-0.10,0)`, original rotation `Ry(-90) * Rz(-27)` and scale 2,
+  `translation=-16 * R * Scale * g` puts that point at the standard hand anchor.
+  Left-hand mirroring produces the same actual rotation, so the translation is
+  shared. Native arm-layer translation must remain intact. Final grip alignment
+  and seam removal still need user confirmation in-game.
 
-This uses Forge 47.4.28's built-in model loader and ordinary generated item meshes.
+This uses Forge 47.4.28's built-in model loader and standard cuboid model elements.
 No custom Java renderer or additional runtime dependency is required. Visual scale
 does not change combat reach or attack attributes.
 
@@ -36,8 +46,9 @@ inventory map. This authors icons and the existing development GameTest arena;
 it does not run Minecraft or tests.
 
 On the Windows artwork host, run `./scripts/prepare_scythe_art.ps1` after replacing
-a source PNG in this folder. It uses System.Drawing to package the held textures.
-These PNGs are committed, so building the mod on another OS does not need the
+a source PNG in this folder. It uses System.Drawing to package held textures and
+author the matching closed meshes. Do not hand-edit the generated mesh JSONs.
+These PNGs and JSONs are committed, so building the mod on another OS does not need the
 Windows packaging script. Neither art script runs during a normal Gradle build.
 
 `preview.png` is a presentation image only. It combines magnified inventory icons

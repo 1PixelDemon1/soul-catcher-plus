@@ -1,14 +1,15 @@
 {
-  "parent": "minecraft:item/generated",
+  "gui_light": "front",
+  "render_type": "minecraft:cutout",
   "display": {
     "thirdperson_righthand": {
       "rotation": [0, -90, -27],
-      "translation": [0, 4.5, 5.5],
+      "translation": [0, 6.77, -6.25],
       "scale": [2, 2, 2]
     },
     "thirdperson_lefthand": {
       "rotation": [0, 90, 27],
-      "translation": [0, 4.5, 5.5],
+      "translation": [0, 6.77, -6.25],
       "scale": [2, 2, 2]
     },
     "firstperson_righthand": {

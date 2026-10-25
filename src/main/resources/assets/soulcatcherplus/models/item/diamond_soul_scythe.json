@@ -5,7 +5,7 @@
     "particle": "soulcatcherplus:item/diamond_soul_scythe"
   },
   "base": {
-    "parent": "soulcatcherplus:item/soul_scythe_held",
+    "parent": "soulcatcherplus:item/diamond_soul_scythe_held_mesh",
     "textures": {
       "layer0": "soulcatcherplus:item/diamond_soul_scythe_held"
     }
