@@ -71,7 +71,7 @@ public final class SoulEvents {
         if (!adapter.canCapture(mob, player) || MinecraftForge.EVENT_BUS.post(new SoulEvent.Capture(player, mob))) return;
         try {
             SoulEntry soul = new SoulEntry(UUID.randomUUID(), mob.getType().builtInRegistryHolder().key().location().toString(),
-                mob.getName().getString(), SoulSnapshots.sanitize(adapter.capture(mob)), profile.cost(), profile.slots());
+                mob.getName().getString(), SoulSnapshots.sanitize(adapter.capture(mob)), mob.getMaxHealth());
             SoulRemnant remnant = SoulCatcherPlus.REMNANT.get().create(player.serverLevel());
             if (remnant != null) {
                 remnant.initialize(player, soul); remnant.moveTo(mob.getX(), mob.getY() + 0.5, mob.getZ());

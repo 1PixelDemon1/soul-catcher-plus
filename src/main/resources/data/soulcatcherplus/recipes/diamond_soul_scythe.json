@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MML",
+    " S ",
+    "S  "
+  ],
+  "key": {
+    "M": {
+      "item": "minecraft:diamond"
+    },
+    "L": {
+      "item": "minecraft:soul_lantern"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "soulcatcherplus:diamond_soul_scythe"
+  }
+}

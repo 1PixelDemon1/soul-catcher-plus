@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "3";
+    private static final String VERSION = "4";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -33,26 +33,31 @@ public final class SoulNetwork {
     }
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
-    public record Row(UUID id, String entityType, String name, int cost, int slots, boolean active, long cooldown, String command) {}
-    public record State(boolean openScreen, int energy, int slots, boolean commandMode, boolean group, UUID selected, List<Row> rows) {
+    public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
+            long cooldown, String command, SummonRules.Status status) {}
+    public record State(boolean openScreen, int energy, int activeCount, int summonLimit,
+            boolean commandMode, boolean group, UUID selected, List<Row> rows) {
         static State read(FriendlyByteBuf b) {
             boolean open = b.readBoolean();
-            int energy = b.readVarInt(), slots = b.readVarInt(); boolean mode = b.readBoolean(), group = b.readBoolean();
+            int energy = b.readVarInt(), activeCount = b.readVarInt(), limit = b.readVarInt();
+            boolean mode = b.readBoolean(), group = b.readBoolean();
             UUID selected = b.readBoolean() ? b.readUUID() : null;
             int size = b.readVarInt();
             if (size < 0 || size > 4096) throw new IllegalArgumentException("Invalid soul collection size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
-                b.readVarInt(), b.readBoolean(), b.readVarLong(), b.readUtf(16)));
-            return new State(open, energy, slots, mode, group, selected, List.copyOf(rows));
+                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class)));
+            return new State(open, energy, activeCount, limit, mode, group, selected, List.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
             b.writeBoolean(openScreen);
-            b.writeVarInt(energy); b.writeVarInt(slots); b.writeBoolean(commandMode); b.writeBoolean(group);
+            b.writeVarInt(energy); b.writeVarInt(activeCount); b.writeVarInt(summonLimit);
+            b.writeBoolean(commandMode); b.writeBoolean(group);
             b.writeBoolean(selected != null); if (selected != null) b.writeUUID(selected);
             b.writeVarInt(rows.size());
             for (Row row : rows) { b.writeUUID(row.id); b.writeUtf(row.entityType, 256); b.writeUtf(row.name, 256); b.writeVarInt(row.cost);
-                b.writeVarInt(row.slots); b.writeBoolean(row.active); b.writeVarLong(row.cooldown); b.writeUtf(row.command, 16); }
+                b.writeDouble(row.maxHealth); b.writeBoolean(row.active); b.writeVarLong(row.cooldown);
+                b.writeUtf(row.command, 16); b.writeEnum(row.status); }
         }
     }
     public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH }
@@ -110,17 +115,17 @@ public final class SoulNetwork {
     }
     private static void sendState(ServerPlayer player, boolean openScreen) {
         PlayerSouls data = SoulService.data(player);
-        long now = player.server.overworld().getGameTime();
-        Map<String, Long> recovery = new HashMap<>();
-        data.entries.values().forEach(e -> recovery.merge(e.entityType, e.readyAt, Math::max));
+        SummonRules.Context availabilityContext = SoulService.summonContext(player);
         List<Row> rows = data.entries.values().stream().map(e -> {
             Entity active = e.activeEntity == null ? null : player.serverLevel().getEntity(e.activeEntity);
             String command = active == null ? "" : active.getPersistentData().getString(CompanionBrain.MODE);
-            return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.slots, e.activeEntity != null,
-                Math.max(0, (recovery.getOrDefault(e.entityType, 0L) - now + 19) / 20), command);
+            SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
+            return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
+                availability.recoverySeconds(), command, availability.status());
         }).toList();
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-            new State(openScreen, data.energy, data.usedSlots(), data.commandMode, data.commandGroup, data.selected, rows));
+            new State(openScreen, data.energy, availabilityContext.activeCount(), availabilityContext.limit(),
+                data.commandMode, data.commandGroup, data.selected, rows));
     }
     public static void ghost(ServerPlayer player, Entity entity) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));

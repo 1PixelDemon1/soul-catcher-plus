@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Author the original pixel scythe and a small, empty GameTest arena."""
+"""Author the three pixel scythes and a small, empty GameTest arena."""
 from pathlib import Path
 import gzip
 import struct
@@ -35,12 +35,28 @@ def chunk(name, data):
     return struct.pack('>I', len(data)) + name + data + struct.pack('>I', zlib.crc32(name + data))
 
 
-raw = b''.join(b'\x00' + bytes(v for pixel in row for v in pixel) for row in pixels)
-png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>2I5B', 32, 32, 8, 6, 0, 0, 0))
-png += chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
-texture = ROOT / 'src/main/resources/assets/soulcatcherplus/textures/item/soul_scythe.png'
-texture.parent.mkdir(parents=True, exist_ok=True)
-texture.write_bytes(png)
+def scythe_texture(name, palette):
+    rows = [[palette.get(pixel, pixel) for pixel in row] for row in pixels]
+    raw = b''.join(b'\x00' + bytes(v for pixel in row for v in pixel) for row in rows)
+    png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>2I5B', 32, 32, 8, 6, 0, 0, 0))
+    png += chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
+    texture = ROOT / f'src/main/resources/assets/soulcatcherplus/textures/item/{name}.png'
+    texture.parent.mkdir(parents=True, exist_ok=True)
+    texture.write_bytes(png)
+
+
+# Retain the soul-fire bands and core; the blade identifies the crafting material.
+scythe_texture('soul_scythe', {
+    (102, 224, 225, 255): (174, 185, 193, 255),
+    (198, 255, 248, 255): (232, 239, 239, 255),
+})
+scythe_texture('diamond_soul_scythe', {})
+scythe_texture('netherite_soul_scythe', {
+    dark: (31, 23, 34, 255),
+    (102, 224, 225, 255): (82, 66, 80, 255),
+    (198, 255, 248, 255): (143, 122, 134, 255),
+    (74, 54, 67, 255): (61, 43, 47, 255),
+})
 
 
 def string(value):
@@ -68,4 +84,4 @@ arena = {'DataVersion': (3, 3465), 'size': (9, (3, [16, 8, 16])),
 structure = ROOT / 'src/gametest/resources/data/soulcatcherplus/structures/arena.nbt'
 structure.parent.mkdir(parents=True, exist_ok=True)
 structure.write_bytes(gzip.compress(b'\x0a\x00\x00' + payload(10, arena), mtime=0))
-print('Generated scythe texture and GameTest arena')
+print('Generated three scythe textures and GameTest arena')

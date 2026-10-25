@@ -31,7 +31,7 @@ Lifecycle:
    `variantData(snapshot)` determines whether the captured appearance is already
    owned. Return only stable appearance traits: no UUID, health, cooldown, equipment
    durability, temporary anger or arbitrary encounter state. Equal compounds mean
-   the same form; repeated captures of that form become energy. Different forms
+   the same form; repeated captures do not add another reward beyond kill energy. Different forms
    share one species card and are unlocked separately by capture.
 3. Core recreates the original entity type, loads a defensive copy, assigns a fresh
    UUID and full health, then sets ownership.
@@ -51,8 +51,8 @@ this initial API: adapters own that lifecycle directly.
 
 Only one form of a species can be active at a time. Defeat cooldowns are shared
 across its forms. Selected-species commands target the active form even when the
-player is inspecting another captured appearance. Existing saved entries need no
-schema migration; their original snapshots supply their initial appearance.
+player is inspecting another captured appearance. Original snapshots supply the
+appearance of older saved entries.
 
 ## Companion boss bars
 
@@ -128,7 +128,7 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-The collection UI and departure effects use protocol **3**, so clients and servers must update together.
+The collection UI and departure effects use protocol **4**, so clients and servers must update together.
 
 The collection screen pauses an unpublished integrated singleplayer server.
 Recovery remains authoritative on world game time; cosmetic screen ticks do not
@@ -159,20 +159,47 @@ introduced for the visual effect.
 the entity is inserted and before energy is consumed. Capture fires before a remnant
 is created; ordinary kill energy is a separate reward.
 
-## Balance through datapacks
+## Health economy and scythe limits
+
+`SoulBalance` uses maximum health in health points: summon cost is `ceil(maxHP * 2)`
+and credited kill energy is `floor(maxHP / 2)`, both at least one. Invalid maximum
+health is treated as one. Current dying health is never used. Companion deaths
+give no energy; collecting an already owned form gives no second kill reward.
+
+`SoulEntry` now takes maximum health as its final constructor argument, replacing
+the old cost/slots pair. It stores `MaxHealth` and derives `cost` from that value.
+Ledger schema 2 loads older entries using their saved maximum-health attribute
+(including saved modifiers); without it, old cost / 2 is a best-effort fallback.
+Transient modifiers absent from NBT cannot be reconstructed. Existing energy,
+ownership, selection, active identity, snapshots and cooldowns are retained.
+`PlayerSouls.activeCount()` replaces weighted slot accounting.
+
+`SoulScythe.summonLimit()` is 1 / 2 / 3 for iron / diamond / netherite.
+`SoulScythe.heldBy(player)` chooses the main-hand scythe first, then the offhand.
+`SummonRules` supplies one availability decision to server summoning and UI state.
+Existing companions remain when the held limit decreases or no scythe is held;
+only new summons check the current limit. Every companion counts as one, including
+unloaded active ledger reservations. The collection belongs to the player's UUID
+in overworld saved data; no collection or energy is stored in item stacks.
+
+The legacy `soulcatcherplus:soul_scythe` registry ID and `SCYTHE` field alias refer
+to the iron tier. New registry IDs are `diamond_soul_scythe` and `netherite_soul_scythe`.
+
+## Capture availability through datapacks
 
 Create `data/<your_namespace>/soul_profiles/<name>.json`:
 
 ```json
-{"entity":"yourmod:your_mob","enabled":true,"cost":100,"slots":2,"energy":20}
+{"entity":"yourmod:your_mob","enabled":true}
 ```
 
-`cost`: energy spent on summon; `slots`: active capacity used (total capacity is 6);
-`energy`: awarded for a credited kill. Set `enabled` to false to disable capture.
+Set `enabled` to false to disable marking and capture. Ordinary credited kill
+energy still uses the maximum-health formula. Legacy `cost`, `slots` and `energy`
+fields are ignored; profiles cannot override the common economy or scythe limits.
 The Wroughtnaut profile is provided in the base mod even when Mowzie's is absent.
 Use the same resource path as an existing profile to override it. Reload with `/reload`.
-Existing collection entries retain their captured cost and capacity; profiles apply
-to new captures and kill rewards. Avoid multiple profile files targeting one entity.
+Existing collection entries retain their captured maximum health and cost; disabling
+capture does not delete collected souls. Avoid multiple profile files targeting one entity.
 
 ## Client rendering
 

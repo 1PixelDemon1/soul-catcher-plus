@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
-import dev.soulcatcherplus.companion.SoulService;
+import dev.soulcatcherplus.data.SummonRules;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
@@ -155,10 +155,13 @@ public final class SoulScreen extends Screen {
         var group = group();
         if (row == null || group == null) return text("empty_short");
         if (group.active() != null) return text(group.active().id().equals(selected) ? "recall_hint" : "other_form_active");
-        if (cooldown(row) > 0) return text("recovering", cooldown(row));
-        if (row.slots() + state.slots() > SoulService.CAPACITY) return text("capacity_hint");
-        if (row.cost() > state.energy()) return text("need_energy", row.cost() - state.energy());
-        return text("summon_hint");
+        return switch (row.status()) {
+            case RECOVERING -> text("recovering", cooldown(row));
+            case LIMIT_REACHED -> text("capacity_hint");
+            case NO_SCYTHE -> text("scythe_needed");
+            case LOW_ENERGY -> text("need_energy", Math.max(0, row.cost() - state.energy()));
+            default -> text("summon_hint");
+        };
     }
     private void updateControls() {
         if (primary == null) return;
@@ -167,8 +170,7 @@ public final class SoulScreen extends Screen {
         var active = group == null ? null : group.active();
         primary.setMessage(text(active == null ? "summon" : "recall"));
         primary.hint(summonHint());
-        primary.active = active != null || (row != null && cooldown(row) == 0 && row.cost() <= state.energy()
-            && row.slots() + state.slots() <= SoulService.CAPACITY);
+        primary.active = active != null || (row != null && row.status() == SummonRules.Status.READY);
         previousForm.active = nextForm.active = group != null && group.forms().size() > 1;
         boolean hasCommands = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
         follow.active = wait.active = guard.active = hasCommands;
@@ -212,7 +214,7 @@ public final class SoulScreen extends Screen {
         g.drawString(font, title, 50, 19, SoulTheme.LIGHT, false);
         g.drawString(font, text("subtitle"), 50, 34, SoulTheme.MUTED, false);
         metric(g, 333, 119, text("energy"), Integer.toString(state.energy()), SoulTheme.TEAL);
-        metric(g, 460, 125, text("capacity_label"), state.slots() + " / " + SoulService.CAPACITY, SoulTheme.GOLD);
+        metric(g, 460, 125, text("capacity_label"), state.activeCount() + " / " + state.summonLimit(), SoulTheme.GOLD);
         SoulTheme.panel(g, 18, 60, 156, 240);
         SoulTheme.panel(g, 182, 60, 248, 240);
         SoulTheme.panel(g, 438, 60, 164, 240);
@@ -278,17 +280,26 @@ public final class SoulScreen extends Screen {
         if (row != null && group != null) {
             if (group.active() != null) {
                 status = text(group.active().id().equals(selected) ? "status_active" : "status_other_active"); color = SoulTheme.TEAL;
-            } else if (cooldown(row) > 0) status = text("recovering", cooldown(row));
-            else { status = text("status_ready"); color = SoulTheme.TEAL; }
+            } else {
+                status = switch (row.status()) {
+                    case RECOVERING -> text("recovering", cooldown(row));
+                    case NO_SCYTHE -> text("status_no_scythe");
+                    case LIMIT_REACHED -> text("status_limit");
+                    case LOW_ENERGY -> text("status_low_energy");
+                    default -> text("status_ready");
+                };
+                if (row.status() == SummonRules.Status.READY) color = SoulTheme.TEAL;
+            }
         }
         SoulTheme.diamond(g, 452, 93, 2, color);
         g.drawString(font, fit(status.getString(), 129), 460, 89, color, false);
         g.drawString(font, text("summon_cost"), 448, 113, SoulTheme.MUTED, false);
         String cost = row == null ? "—" : Integer.toString(row.cost());
         g.drawString(font, cost, 592 - font.width(cost), 113, SoulTheme.TEAL, false);
-        g.drawString(font, text("soul_weight"), 448, 137, SoulTheme.MUTED, false);
-        String weight = row == null ? "—" : Integer.toString(row.slots());
-        g.drawString(font, weight, 592 - font.width(weight), 137, SoulTheme.GOLD, false);
+        g.drawString(font, text("max_health"), 448, 137, SoulTheme.MUTED, false);
+        String health = row == null ? "—" : java.math.BigDecimal.valueOf(row.maxHealth())
+            .setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+        g.drawString(font, health, 592 - font.width(health), 137, SoulTheme.GOLD, false);
         g.drawWordWrap(font, summonHint(), 449, 195, 140, SoulTheme.MUTED);
         g.fill(448, 225, 592, 226, SoulTheme.BORDER);
     }

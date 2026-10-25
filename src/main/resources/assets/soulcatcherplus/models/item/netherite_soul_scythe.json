@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "soulcatcherplus:item/netherite_soul_scythe"
+  }
+}

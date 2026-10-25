@@ -24,7 +24,7 @@ public final class SoulLedger extends SavedData {
     @Override public CompoundTag save(CompoundTag tag) {
         CompoundTag list = new CompoundTag();
         players.forEach((id, data) -> list.put(id.toString(), data.save()));
-        tag.putInt("Version", 1); tag.put("Players", list);
+        tag.putInt("Version", 2); tag.put("Players", list);
         return tag;
     }
 }

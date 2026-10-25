@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.companion;
 
-import dev.soulcatcherplus.SoulCatcherPlus;
 import dev.soulcatcherplus.api.*;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.network.SoulNetwork;
+import dev.soulcatcherplus.item.SoulScythe;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -18,28 +17,35 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class SoulService {
-    public static final int CAPACITY = 6;
     public static PlayerSouls data(ServerPlayer player) { return SoulLedger.get(player.server).player(player.getUUID()); }
     public static void changed(ServerPlayer player) { SoulLedger.get(player.server).setDirty(); }
     public static void message(ServerPlayer player, String key, Object... args) {
         player.displayClientMessage(Component.translatable("message.soulcatcherplus." + key, args), true);
     }
     public static boolean holdsScythe(ServerPlayer player) {
-        return player.getMainHandItem().is(SoulCatcherPlus.SCYTHE.get()) || player.getOffhandItem().is(SoulCatcherPlus.SCYTHE.get());
+        return SoulScythe.heldBy(player) != null;
+    }
+    public static SummonRules.Context summonContext(ServerPlayer player) {
+        SoulScythe scythe = SoulScythe.heldBy(player);
+        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(), player.server.overworld().getGameTime());
     }
     public static void summon(ServerPlayer player, UUID id) {
         SoulEntry entry = data(player).entries.get(id);
-        if (entry == null || entry.activeEntity != null) return;
-        if (data(player).entries.values().stream().anyMatch(e -> e.entityType.equals(entry.entityType) && e.activeEntity != null)) {
-            message(player, "variant_active"); return;
+        if (entry == null) return;
+        SummonRules.Context context = summonContext(player);
+        SummonRules.Availability availability = SummonRules.inspect(context, entry);
+        if (availability.status() != SummonRules.Status.READY) {
+            switch (availability.status()) {
+                case ACTIVE -> { }
+                case OTHER_FORM_ACTIVE -> message(player, "variant_active");
+                case RECOVERING -> message(player, "cooldown", availability.recoverySeconds());
+                case NO_SCYTHE -> message(player, "scythe_needed");
+                case LIMIT_REACHED -> message(player, "capacity", context.limit());
+                case LOW_ENERGY -> message(player, "energy_needed", entry.cost);
+                case READY -> { }
+            }
+            return;
         }
-        long time = player.server.overworld().getGameTime();
-        long typeReadyAt = data(player).entries.values().stream().filter(e -> e.entityType.equals(entry.entityType))
-            .mapToLong(e -> e.readyAt).max().orElse(0);
-        if (typeReadyAt > time) { message(player, "cooldown", (typeReadyAt - time + 19) / 20); return; }
-        if (entry.readyAt > time) { message(player, "cooldown", (entry.readyAt - time + 19) / 20); return; }
-        if (data(player).energy < entry.cost) { message(player, "energy_needed", entry.cost); return; }
-        if (data(player).usedSlots() + entry.slots > CAPACITY) { message(player, "capacity", CAPACITY); return; }
         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(entry.entityType));
         if (type == null) { message(player, "missing_mod"); return; }
         Entity created = type.create(player.serverLevel());

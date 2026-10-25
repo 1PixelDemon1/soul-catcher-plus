@@ -17,33 +17,37 @@ public final class SoulPreviewCommand {
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("soulcatcherqa").requires(s -> s.hasPermission(2)).executes(c -> {
             ServerPlayer player = c.getSource().getPlayerOrException();
-            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.SCYTHE.get()));
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
+            for (var item : java.util.List.of(SoulCatcherPlus.IRON_SCYTHE, SoulCatcherPlus.DIAMOND_SCYTHE)) {
+                ItemStack stack = new ItemStack(item.get());
+                if (!player.getInventory().contains(stack)) player.getInventory().add(stack);
+            }
             for (EntityType<?> type : java.util.List.of(EntityType.ZOMBIE, EntityType.SKELETON)) {
                 Mob mob = (Mob) type.create(player.serverLevel());
                 if (mob instanceof net.minecraft.world.entity.monster.Skeleton)
                     mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
-                add(player, mob, 25, 1);
+                add(player, mob);
             }
             for (net.minecraft.world.item.DyeColor color : java.util.List.of(
                     net.minecraft.world.item.DyeColor.CYAN, net.minecraft.world.item.DyeColor.PURPLE)) {
                 var sheep = EntityType.SHEEP.create(player.serverLevel());
                 sheep.setColor(color);
-                add(player, sheep, 20, 1);
+                add(player, sheep);
             }
             if (net.minecraftforge.fml.ModList.get().isLoaded("mowziesmobs")) {
                 EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(
                     new net.minecraft.resources.ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
-                add(player, (Mob) type.create(player.serverLevel()), 200, 4);
+                add(player, (Mob) type.create(player.serverLevel()));
             }
             SoulService.data(player).energy = 1000; SoulService.changed(player); SoulService.open(player);
             return 1;
         }));
     }
-    private static void add(ServerPlayer player, Mob mob, int cost, int slots) {
+    private static void add(ServerPlayer player, Mob mob) {
         var data = SoulService.data(player);
         String type = mob.getType().builtInRegistryHolder().key().location().toString();
         var entry = new dev.soulcatcherplus.data.SoulEntry(java.util.UUID.randomUUID(), type,
-            mob.getName().getString(), dev.soulcatcherplus.api.SoulAdapters.get(mob).capture(mob), cost, slots);
+            mob.getName().getString(), dev.soulcatcherplus.api.SoulAdapters.get(mob).capture(mob), mob.getMaxHealth());
         if (data.entries.values().stream().anyMatch(e -> dev.soulcatcherplus.data.SoulVariants.same(e, entry))) return;
         data.entries.put(entry.id, entry); data.selected = entry.id;
     }

@@ -5,6 +5,7 @@ import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.compat.WroughtnautAdapter;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.item.SoulScythe;
+import dev.soulcatcherplus.item.ScytheTier;
 import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -24,7 +25,12 @@ public final class SoulCatcherPlus {
     public static final String ID = "soulcatcherplus";
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ID);
     public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, ID);
-    public static final RegistryObject<Item> SCYTHE = ITEMS.register("soul_scythe", SoulScythe::new);
+    // Preserve the original registry ID so existing iron scythes remain usable.
+    public static final RegistryObject<Item> IRON_SCYTHE = ITEMS.register("soul_scythe", () -> new SoulScythe(ScytheTier.IRON));
+    public static final RegistryObject<Item> DIAMOND_SCYTHE = ITEMS.register("diamond_soul_scythe", () -> new SoulScythe(ScytheTier.DIAMOND));
+    public static final RegistryObject<Item> NETHERITE_SCYTHE = ITEMS.register("netherite_soul_scythe", () -> new SoulScythe(ScytheTier.NETHERITE));
+    /** Compatibility alias for the original iron scythe. */
+    public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<EntityType<SoulRemnant>> REMNANT = ENTITIES.register("soul_remnant",
         () -> EntityType.Builder.<SoulRemnant>of(SoulRemnant::new, MobCategory.MISC)
             .sized(0.6f, 0.8f).clientTrackingRange(8).updateInterval(10)
@@ -36,7 +42,9 @@ public final class SoulCatcherPlus {
         ENTITIES.register(bus);
         SoulNetwork.register();
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
-            if (event.getTabKey() == CreativeModeTabs.COMBAT) event.accept(SCYTHE);
+            if (event.getTabKey() == CreativeModeTabs.COMBAT) {
+                event.accept(IRON_SCYTHE); event.accept(DIAMOND_SCYTHE); event.accept(NETHERITE_SCYTHE);
+            }
         });
         bus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) ->
             event.enqueueWork(() -> {

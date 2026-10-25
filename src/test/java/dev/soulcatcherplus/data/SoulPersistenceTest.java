@@ -12,7 +12,7 @@ class SoulPersistenceTest {
         CompoundTag root = new CompoundTag();
         SoulLedger ledger = new SoulLedger();
         PlayerSouls data = ledger.player(owner);
-        SoulEntry entry = new SoulEntry(UUID.randomUUID(), "minecraft:skeleton", "Archer", new CompoundTag(), 30, 1);
+        SoulEntry entry = new SoulEntry(UUID.randomUUID(), "minecraft:skeleton", "Archer", new CompoundTag(), 15);
         entry.activeEntity = active; entry.dimension = "minecraft:the_nether"; entry.readyAt = 1200;
         data.energy = 91; data.commandMode = true; data.commandGroup = false;
         data.selected = entry.id; data.entries.put(entry.id, entry);
@@ -23,7 +23,7 @@ class SoulPersistenceTest {
         assertEquals(active, restored.entries.get(entry.id).activeEntity);
         assertEquals(1200, restored.entries.get(entry.id).readyAt);
         assertEquals("minecraft:the_nether", restored.entries.get(entry.id).dimension);
-        assertEquals(1, restored.usedSlots());
+        assertEquals(1, restored.activeCount());
     }
     @Test void sanitizeDropsDeathIdentityAndOurOwnershipButKeepsModState() {
         CompoundTag source = new CompoundTag(), forge = new CompoundTag();
@@ -42,7 +42,7 @@ class SoulPersistenceTest {
     }
     @Test void snapshotsAreDefensiveCopies() {
         CompoundTag snapshot = new CompoundTag(); snapshot.putString("Variant", "original");
-        SoulEntry entry = new SoulEntry(UUID.randomUUID(), "example:mage", "Mage", snapshot, 10, 1);
+        SoulEntry entry = new SoulEntry(UUID.randomUUID(), "example:mage", "Mage", snapshot, 5);
         snapshot.putString("Variant", "changed");
         entry.snapshot().putString("Variant", "changed again");
         assertEquals("original", entry.snapshot().getString("Variant"));
