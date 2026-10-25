@@ -1,21 +1,13 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "category": "equipment",
-  "pattern": [
-    "MML",
-    " S ",
-    "S  "
-  ],
-  "key": {
-    "M": {
-      "item": "minecraft:netherite_ingot"
-    },
-    "L": {
-      "item": "minecraft:soul_lantern"
-    },
-    "S": {
-      "item": "minecraft:stick"
-    }
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "minecraft:netherite_upgrade_smithing_template"
+  },
+  "base": {
+    "item": "soulcatcherplus:diamond_soul_scythe"
+  },
+  "addition": {
+    "item": "minecraft:netherite_ingot"
   },
   "result": {
     "item": "soulcatcherplus:netherite_soul_scythe"
