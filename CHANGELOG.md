@@ -2,47 +2,45 @@
 
 ## Unreleased
 
-- Keep held scythes one vanilla model pixel thick by scaling depth independently of their enlarged silhouette; preserve both hand positions and view rotations across all three tiers.
-- Keep compact two-pixel-wide inventory lanterns with a narrow top cap, a two-pixel-high cyan area and a dark bottom rim; keep held models unchanged.
-- Redraw the 16x16 inventory scythes in a clockwise-rotated layout matching their crafting recipe: shaft from bottom-left to upper-right, thin colored blade across the top and lantern at the right. Remove the black blade band from icons only; retain held artwork, mesh, grip and view transforms.
-- Move the held scythe's third-person grip to the middle of its shaft while preserving the user-approved rotations, scales and first-person framing. Replace automatically extruded held-item geometry with closed opaque rectangles and texel-center edge UVs to address see-through seams; preserve the artwork and 16x16 inventory icons. In-game confirmation remains deferred to the user.
-- Replace scythe art with wooden shafts, left-facing crescent blades and soul lanterns. Keep cutting edges black while changing only blade-face colors between iron, diamond and netherite.
-- Use exact 16x16 inventory sprites and separate 128x128 held textures through Forge's built-in separate-transforms model loader. Share held transforms across all tiers, with approximately player-height third-person scale and separate first-person framing; use small icons for dropped items, frames and head display.
-- Keep editable inventory pixel maps, image-generation source art and packaging instructions in `art/scythes`. Held scale and grip are provisional until in-game inspection; no build or gameplay validation was run.
-- Base summon cost on twice captured maximum HP (rounded up), and credited kill energy on half maximum HP (rounded down), with a minimum of one. Remove the extra energy reward for collecting an already owned form.
-- Add iron, diamond and netherite soul scythes with 1 / 2 / 3 companion limits, 8 / 8 / 9 attack damage, and slower attack speeds than their corresponding vanilla axes. Craft iron and diamond tiers with two matching materials, a soul lantern and two sticks; upgrade diamond to netherite at a smithing table using one netherite ingot and a netherite upgrade template.
-- Replace weighted capacity with companion counts. Check the held scythe only for new summons; changing equipment keeps existing companions. Main-hand scythes take precedence over offhand scythes.
-- Keep collection and energy bound to the player's UUID, retain the old item ID for the iron scythe, and migrate old soul records to maximum-health pricing using saved attributes where available. Datapack profiles now control capture availability only.
-- Show captured maximum HP and held scythe companion limits in the collection, and provide distinct material textures and English/Russian item labels.
-- Hide discovered entity-owned companion boss events on the server, including the standard Mowzie boss-event path; preserve encounter participants and block subsequent visibility requests for suppressed instances.
-- Expose `SoulAdapter.bossBars` for helper-owned events and excluding shared encounter bars. Automatic direct-field discovery is heuristic; shared, lazily shown, and fully custom HUDs require integration support.
-- Replace the collection screen with a custom ink, aged-brass, and teal interface, including species cards, resource indicators, contextual controls, and companion orders.
-- Add a detached 3D preview of the selected captured form with automatic rotation, drag rotation, and scroll-wheel zoom. Preview entities are not inserted into the world or AI-ticked.
-- Reduce the default preview size and reserve more space for wide models, weapons, and horns: use about 66% of the available width and 70% of the height, a larger footprint margin, a lower maximum scale, and extra space below the model.
-- Group collection entries by species and let players switch between forms unlocked by capturing that appearance.
-- Add experimental `SoulAdapter.variantData` and `SoulAdapter.previewData` hooks for custom appearance identities and client-safe preview state. Default variant identity excludes equipment and transient poses.
-- Request bounded preview data on demand instead of transmitting full captured snapshots; keep collection status updated while the screen is open.
-- Enforce one active companion per species across its captured variants, and share recovery cooldowns across that species. Commands for the selected species reach its active form.
-- Pause local singleplayer worlds while the collection is open, unless the integrated server is shared over LAN. Base recovery countdowns on world game time so they stop with the paused world.
-- Use session-only monotonic-time rate limits for menu actions, previews, and refreshes so networking does not remain locked while world time is paused.
-- Add 18-tick client-side departure echoes on companion death and recall, with a noisy dissolve edge travelling from feet to head, fading, soul-fire particles, and a quiet soul escape sound. Combat-entity removal continues through the existing server lifecycle; particles and sound remain available when a model echo cannot be rendered.
-- Send explicit departure notifications to tracking clients and use network protocol **4** for collection, preview, dissolve and scythe-limit state; clients and servers must use matching protocol-4 builds.
-- Extend English and Russian interface text for species, captured forms, preview controls, and summon availability.
+No changes yet.
 
-Validation was not run for these changes at the user's request. No build, compilation, unit tests, GameTests, game launch, or UI automation was performed; gameplay and visual verification are deferred to the user. The earlier 0.1.0 validation results do not validate this unreleased work.
+## 0.1.0+1.20.1 — 2026-10-25
 
-## 0.1.0+1.20.1 — Initial prototype — 2026-10-25
+First tagged pre-1.0 milestone. Release tag: `v0.1.0`. Artifact version: `0.1.0+1.20.1`.
 
-- Add a Forge 1.20.1 project targeting Java 17, with a Gradle wrapper and local development bootstrap.
-- Add the Soul Scythe, harvest/command modes, and an English/Russian collection screen.
-- Mark enemies for three minutes and collect their soul remnants within one minute of a credited victory.
-- Store soul collections and energy independently of the scythe; convert repeated captures into energy.
-- Restore the original mob type as a companion with follow, wait, guard, attack, and recall commands.
-- Enforce summon costs, active capacity, one active instance per soul, and a recovery cooldown after defeat.
+### Soul collection and companions
+
+- Add a Forge 1.20.1 mod targeting Java 17, with a Gradle wrapper and local development bootstrap.
+- Mark enemies with a scythe for three minutes, earn energy for credited victories, and collect owner-bound soul remnants within one minute.
+- Store the collection and energy by player UUID, independently of the scythe. Group entries by species and unlock appearance variants through capture.
+- Restore the original mob type as a spectral companion with follow, wait, guard, attack, and recall commands for one species or the group.
+- Enforce one active form per species, a shared 60-second recovery cooldown after defeat, and the held scythe's companion limit. Existing companions remain when equipment changes.
 - Validate commands on the server, reject stale summons, block allied damage, and suppress companion loot and energy rewards.
-- Add spectral rendering for standard living-entity renderers.
-- Add an optional Ferrous Wroughtnaut adapter that preserves native combat and filters allies from Mowzie's area attacks.
-- Expose experimental adapter, event, and visual hooks, plus datapack balance profiles.
-- Add persistence tests, gameplay tests, and API/validation documentation.
+- Add an optional Ferrous Wroughtnaut adapter that preserves native combat and excludes allies from area-target queries.
+- Suppress discovered entity-owned companion boss bars while preserving encounter participants. Add `SoulAdapter.bossBars` for helper-owned events and excluding shared bars; automatic discovery remains heuristic.
 
-This is a pre-1.0 prototype. Balance and UI are provisional; arbitrary modpacks, custom renderers, shaders, and two-client multiplayer have not been fully validated. See [release notes](docs/releases/0.1.0.md).
+### Scythes, economy, and artwork
+
+- Add iron, diamond, and netherite scythes with limits of 1, 2, and 3 companions; attack damage of 8, 8, and 9; and attack speeds of 0.7, 0.8, and 0.8 attacks per second.
+- Set summon cost to `ceil(captured maximum HP * 2)` and victory energy to `floor(maximum HP / 2)`, each at least one. Collecting an already owned variant gives no second energy reward.
+- Craft iron and diamond scythes using two matching materials, a soul lantern, and two sticks. Upgrade the diamond scythe with a netherite ingot and netherite upgrade template at a smithing table.
+- Add material-specific scythe artwork with exact 16x16 inventory icons and separate 128x128 held textures. Icons follow the crafting layout and use compact lanterns with two-pixel-high cyan flames.
+- Keep enlarged held scythes one model pixel thick, anchor their shafts at the fist, and use closed opaque meshes to address see-through seams. Keep editable pixel maps, source artwork, and packaging instructions in `art/scythes`.
+
+### Interface, effects, and integrations
+
+- Add an English/Russian ink, brass, and teal collection interface with species cards, captured-form selection, health and resource indicators, and contextual orders.
+- Add detached, rotatable, zoomable previews with extra margins for large models and weapons. Request bounded appearance data instead of full captured snapshots; preview entities are not inserted into the world or AI-ticked.
+- Pause unpublished singleplayer worlds while the collection is open. Tie recovery displays to world time and use session-only monotonic network rate limits so menu actions remain available during a pause.
+- Add 18-tick client-side departure echoes on death and recall, with a noisy bottom-to-top dissolve, fading, soul-fire particles, and a quiet escape sound. Keep server entity removal in its existing lifecycle and retain a particle/sound fallback when an echo cannot be rendered.
+- Expose experimental adapter, event, appearance-identity, preview, and visual hooks. Datapack profiles control capture availability; legacy cost, slots, and energy overrides are ignored.
+- Use protocol **4** for collection, preview, departure, and scythe-limit state. Update clients and servers together.
+- Write ledger schema 2 and migrate older entries to maximum-health pricing from saved attributes where available, falling back to half the old cost as inferred HP. Keep the iron scythe's original item ID.
+
+### Validation and limitations
+
+Fresh release packaging completed successfully with `./scripts/gradle.ps1 clean build -x test`, without development test sources or optional integration dependencies. The runtime JAR was inspected for version metadata, final artwork, meshes, smithing recipe, mixins, and exclusion of test content and third-party packages. Tests were not run.
+
+The user reported that earlier base gameplay and the held grip/seam correction work in game. The latest inventory artwork, independent held-model depth, and netherite smithing changes have not been explicitly confirmed in game. No new automated tests, game launches, or UI automation were run for this milestone at the user's request. Successful packaging is not gameplay validation.
+
+The passing checks in [historical prototype validation](docs/VALIDATION.md) describe an earlier development snapshot, not this release. Balance and public interfaces remain provisional; arbitrary modpacks, custom AI/renderers, shaders, and two-client multiplayer are not comprehensively validated. See [release notes](docs/releases/0.1.0.md).
