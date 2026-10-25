@@ -48,6 +48,12 @@ Do not invent version bumps or publish tags/remotes without a release to publish
 
 ## Validation
 
+The user currently handles testing during early development. Until they ask to
+resume agent-driven validation, do not run builds, compilation, automated tests,
+Minecraft clients/servers, or UI automation merely to verify changes. Source and
+API inspection is allowed. Explicitly state when a change has not been built or
+tested; do not present the earlier prototype checks as validation of new work.
+
 Run checks appropriate to the change. Documentation-only and Git-organization
 changes do not require another Minecraft build.
 

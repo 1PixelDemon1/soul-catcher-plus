@@ -30,7 +30,13 @@ public final class SoulService {
     public static void summon(ServerPlayer player, UUID id) {
         SoulEntry entry = data(player).entries.get(id);
         if (entry == null || entry.activeEntity != null) return;
+        if (data(player).entries.values().stream().anyMatch(e -> e.entityType.equals(entry.entityType) && e.activeEntity != null)) {
+            message(player, "variant_active"); return;
+        }
         long time = player.server.overworld().getGameTime();
+        long typeReadyAt = data(player).entries.values().stream().filter(e -> e.entityType.equals(entry.entityType))
+            .mapToLong(e -> e.readyAt).max().orElse(0);
+        if (typeReadyAt > time) { message(player, "cooldown", (typeReadyAt - time + 19) / 20); return; }
         if (entry.readyAt > time) { message(player, "cooldown", (entry.readyAt - time + 19) / 20); return; }
         if (data(player).energy < entry.cost) { message(player, "energy_needed", entry.cost); return; }
         if (data(player).usedSlots() + entry.slots > CAPACITY) { message(player, "capacity", CAPACITY); return; }
@@ -100,7 +106,7 @@ public final class SoulService {
     }
     public static void command(ServerPlayer player, CompanionBrain.Mode mode) {
         PlayerSouls collection = data(player);
-        collection.entries.values().stream().filter(e -> collection.commandGroup || e.id.equals(collection.selected))
+        collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
             .filter(e -> e.activeEntity != null).forEach(e -> {
                 Entity entity = player.serverLevel().getEntity(e.activeEntity);
                 if (entity instanceof Mob mob) {
@@ -114,7 +120,7 @@ public final class SoulService {
     }
     public static void attack(ServerPlayer player, LivingEntity target) {
         PlayerSouls collection = data(player);
-        collection.entries.values().stream().filter(e -> collection.commandGroup || e.id.equals(collection.selected))
+        collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
             .filter(e -> e.activeEntity != null).forEach(e -> {
                 Entity entity = player.serverLevel().getEntity(e.activeEntity);
                 if (entity instanceof Mob mob && CompanionBrain.canAttack(mob, target)) {
@@ -123,5 +129,9 @@ public final class SoulService {
             });
     }
     public static void open(ServerPlayer player) { SoulNetwork.open(player); }
+    private static boolean receivesCommand(PlayerSouls collection, SoulEntry entry) {
+        SoulEntry selected = collection.entries.get(collection.selected);
+        return collection.commandGroup || (selected != null && selected.entityType.equals(entry.entityType));
+    }
     private SoulService() {}
 }

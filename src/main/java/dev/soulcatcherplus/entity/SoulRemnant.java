@@ -39,8 +39,12 @@ public final class SoulRemnant extends Entity {
         if (player instanceof ServerPlayer server && server.getUUID().equals(owner) && soul != null
                 && player.distanceToSqr(this) <= 6 * 6) {
             PlayerSouls data = SoulService.data(server);
-            boolean known = data.entries.values().stream().anyMatch(e -> e.entityType.equals(soul.entityType));
+            boolean known = data.entries.values().stream().anyMatch(e -> SoulVariants.same(e, soul));
             if (!known) {
+                if (data.entries.size() >= 4096) {
+                    SoulService.message(server, "collection_full");
+                    return InteractionResult.FAIL;
+                }
                 data.entries.put(soul.id, soul);
                 data.selected = soul.id;
                 SoulService.message(server, "captured", soul.name);

@@ -24,6 +24,12 @@ public final class SoulPreviewCommand {
                     mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
                 add(player, mob, 25, 1);
             }
+            for (net.minecraft.world.item.DyeColor color : java.util.List.of(
+                    net.minecraft.world.item.DyeColor.CYAN, net.minecraft.world.item.DyeColor.PURPLE)) {
+                var sheep = EntityType.SHEEP.create(player.serverLevel());
+                sheep.setColor(color);
+                add(player, sheep, 20, 1);
+            }
             if (net.minecraftforge.fml.ModList.get().isLoaded("mowziesmobs")) {
                 EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(
                     new net.minecraft.resources.ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
@@ -36,9 +42,9 @@ public final class SoulPreviewCommand {
     private static void add(ServerPlayer player, Mob mob, int cost, int slots) {
         var data = SoulService.data(player);
         String type = mob.getType().builtInRegistryHolder().key().location().toString();
-        if (data.entries.values().stream().anyMatch(e -> e.entityType.equals(type))) return;
         var entry = new dev.soulcatcherplus.data.SoulEntry(java.util.UUID.randomUUID(), type,
             mob.getName().getString(), dev.soulcatcherplus.api.SoulAdapters.get(mob).capture(mob), cost, slots);
+        if (data.entries.values().stream().anyMatch(e -> dev.soulcatcherplus.data.SoulVariants.same(e, entry))) return;
         data.entries.put(entry.id, entry); data.selected = entry.id;
     }
 }

@@ -11,6 +11,12 @@ import net.minecraft.world.entity.Mob;
  * code/assets or requiring it when the base mod loads.
  */
 public final class WroughtnautAdapter implements SoulAdapter {
+    @Override public CompoundTag previewData(CompoundTag snapshot) {
+        CompoundTag tag = SoulAdapter.super.previewData(snapshot);
+        tag.putBoolean("active", true);
+        tag.putBoolean("alwaysActive", true);
+        return tag;
+    }
     @Override public CompoundTag capture(Mob mob) {
         CompoundTag tag = SoulAdapter.super.capture(mob);
         tag.remove("restPos");

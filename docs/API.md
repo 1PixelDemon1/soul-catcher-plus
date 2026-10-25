@@ -28,6 +28,11 @@ Lifecycle:
    passengers, old targets, temporary potion effects, and this mod's ownership fields.
    Persistent data belonging to other mods is retained; an adapter must remove any
    encounter-specific state that is unsafe to restore.
+   `variantData(snapshot)` determines whether the captured appearance is already
+   owned. Return only stable appearance traits: no UUID, health, cooldown, equipment
+   durability, temporary anger or arbitrary encounter state. Equal compounds mean
+   the same form; repeated captures of that form become energy. Different forms
+   share one species card and are unlocked separately by capture.
 3. Core recreates the original entity type, loads a defensive copy, assigns a fresh
    UUID and full health, then sets ownership.
 4. `prepareSummon(mob, owner)`: reset custom encounter state before world insertion.
@@ -43,6 +48,47 @@ Do not call `configureCompanion` repeatedly each tick or retain entity reference
 Default follow/wait/guard behavior lives in `CompanionBrain`; read `CompanionBrain.mode(mob)`
 from a custom controller. A dedicated `CompanionController` interface is not needed in
 this initial API: adapters own that lifecycle directly.
+
+Only one form of a species can be active at a time. Defeat cooldowns are shared
+across its forms. Selected-species commands target the active form even when the
+player is inspecting another captured appearance. Existing saved entries need no
+schema migration; their original snapshots supply their initial appearance.
+
+## Collection model previews
+
+`previewData(snapshot)` returns a small NBT compound containing client-safe visual
+state. The default implementation includes common appearance keys and visible
+equipment. Override it for custom skin IDs or render-state flags. The Wroughtnaut
+adapter includes its awake/active flags so it can be shown standing in the archive.
+Both methods receive a defensive copy of the stored snapshot.
+
+```java
+@Override
+public CompoundTag variantData(CompoundTag snapshot) {
+    CompoundTag appearance = SoulAdapter.super.variantData(snapshot);
+    appearance.putString("MySkin", snapshot.getString("MySkin"));
+    return appearance;
+}
+
+@Override
+public CompoundTag previewData(CompoundTag snapshot) {
+    CompoundTag preview = SoulAdapter.super.previewData(snapshot);
+    preview.putString("MySkin", snapshot.getString("MySkin"));
+    return preview;
+}
+```
+
+Do not send the complete saved entity. The server only answers owned-entry preview
+requests while the player holds the scythe, strips identity and Forge persistent
+data/capabilities, and limits serialized visual data to 16 KiB. Larger/invalid visual
+data falls back to default entity appearance. Complex nested custom state should
+be reduced to the fields that the renderer actually needs.
+
+Preview mobs are detached client entities: they are never added to the level or
+AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
+that require live-world ticking or special synchronized data can need further
+integration; a failed preview shows a placeholder without removing the soul.
+The collection UI uses protocol **2**, so clients and servers must update together.
 
 ## Events
 

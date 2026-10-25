@@ -17,7 +17,8 @@ public final class SoulAdapters {
             throw new IllegalArgumentException("Duplicate soul adapter: " + entityType);
     }
     public static SoulAdapter get(Mob mob) {
-        return ADAPTERS.getOrDefault(ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()), STANDARD);
+        return get(ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()));
     }
+    public static SoulAdapter get(ResourceLocation entityType) { return ADAPTERS.getOrDefault(entityType, STANDARD); }
     private SoulAdapters() {}
 }
