@@ -7,9 +7,9 @@ blade and hanging soul lantern. On held models, the cutting edge stays black;
 the broad blade face changes to silver iron, cyan diamond or muted netherite.
 Inventory icons use a thinner, single-pixel colored blade without the black band.
 Their clockwise-rotated layout follows the crafting recipe: shaft from bottom-left
-to upper-right, blade across the top and a lantern at the right. Its two cyan
-pixels stack vertically in a three-pixel-wide body with transparent upper
-corners and a small gray hanging loop. Shafts, fittings
+to upper-right, blade across the top and a compact, two-pixel-wide lantern at
+the right. Its cyan area is two pixels high (2x2), with a narrow top cap and
+a dark bottom rim. Shafts, fittings
 and lantern colors share the same palette in inventory icons.
 
 ![Magnified 16x16 inventory icons](inventory-preview.png)
