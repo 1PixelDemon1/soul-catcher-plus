@@ -1,6 +1,39 @@
 {
-  "parent": "minecraft:item/handheld",
+  "loader": "forge:separate_transforms",
+  "gui_light": "front",
   "textures": {
-    "layer0": "soulcatcherplus:item/diamond_soul_scythe"
+    "particle": "soulcatcherplus:item/diamond_soul_scythe"
+  },
+  "base": {
+    "parent": "soulcatcherplus:item/soul_scythe_held",
+    "textures": {
+      "layer0": "soulcatcherplus:item/diamond_soul_scythe_held"
+    }
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "soulcatcherplus:item/diamond_soul_scythe"
+      }
+    },
+    "ground": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "soulcatcherplus:item/diamond_soul_scythe"
+      }
+    },
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "soulcatcherplus:item/diamond_soul_scythe"
+      }
+    },
+    "head": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "soulcatcherplus:item/diamond_soul_scythe"
+      }
+    }
   }
 }

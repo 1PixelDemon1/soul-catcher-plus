@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replace scythe art with wooden shafts, left-facing crescent blades and soul lanterns. Keep cutting edges black while changing only blade-face colors between iron, diamond and netherite.
+- Use exact 16x16 inventory sprites and separate 128x128 held textures through Forge's built-in separate-transforms model loader. Share held transforms across all tiers, with approximately player-height third-person scale and separate first-person framing; use small icons for dropped items, frames and head display.
+- Keep editable inventory pixel maps, image-generation source art and packaging instructions in `art/scythes`. Held scale and grip are provisional until in-game inspection; no build or gameplay validation was run.
 - Base summon cost on twice captured maximum HP (rounded up), and credited kill energy on half maximum HP (rounded down), with a minimum of one. Remove the extra energy reward for collecting an already owned form.
 - Add iron, diamond and netherite soul scythes with 1 / 2 / 3 companion limits, 8 / 8 / 9 attack damage, and slower attack speeds than their corresponding vanilla axes. Craft each with two matching materials, a soul lantern and two sticks.
 - Replace weighted capacity with companion counts. Check the held scythe only for new summons; changing equipment keeps existing companions. Main-hand scythes take precedence over offhand scythes.
