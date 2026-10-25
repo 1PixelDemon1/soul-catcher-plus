@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Narrow the inventory lanterns to two pixels, with two cyan flame pixels and trimmed upper corners; keep held models unchanged.
 - Redraw the 16x16 inventory scythes in a clockwise-rotated layout matching their crafting recipe: shaft from bottom-left to upper-right, thin colored blade across the top and lantern at the right. Remove the black blade band from icons only; retain held artwork, mesh, grip and view transforms.
 - Move the held scythe's third-person grip to the middle of its shaft while preserving the user-approved rotations, scales and first-person framing. Replace automatically extruded held-item geometry with closed opaque rectangles and texel-center edge UVs to address see-through seams; preserve the artwork and 16x16 inventory icons. In-game confirmation remains deferred to the user.
 - Replace scythe art with wooden shafts, left-facing crescent blades and soul lanterns. Keep cutting edges black while changing only blade-face colors between iron, diamond and netherite.
