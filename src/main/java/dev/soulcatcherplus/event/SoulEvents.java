@@ -47,6 +47,7 @@ public final class SoulEvents {
     public static void death(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide) return;
         if (CompanionBrain.isSoul(mob)) {
+            SoulNetwork.dissolve(mob);
             SoulLedger ledger = SoulLedger.get(mob.getServer());
             SoulEntry entry = ledger.player(CompanionBrain.owner(mob)).entries.get(mob.getPersistentData().getUUID(CompanionBrain.ENTRY));
             if (entry != null && mob.getUUID().equals(entry.activeEntity)) {

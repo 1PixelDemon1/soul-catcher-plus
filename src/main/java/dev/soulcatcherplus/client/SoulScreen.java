@@ -4,6 +4,7 @@ package dev.soulcatcherplus.client;
 import dev.soulcatcherplus.companion.SoulService;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -20,7 +21,8 @@ public final class SoulScreen extends Screen {
     private final Map<String, UUID> rememberedForms = new HashMap<>();
     private List<SoulGroup> groups = List.of();
     private UUID selected;
-    private int page, ticks, receivedTick;
+    private int page, ticks;
+    private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
     private SoulButton primary, previousForm, nextForm, follow, wait, guard, scope, recallAll;
@@ -31,13 +33,14 @@ public final class SoulScreen extends Screen {
     public SoulScreen(SoulNetwork.State state) {
         super(text("title"));
         this.state = state;
+        receivedGameTime = worldTime();
         selected = state.selected();
         regroup();
         for (int i = 0; i < groups.size(); i++) if (groups.get(i).equals(group())) page = i / PAGE_SIZE;
     }
     public void update(SoulNetwork.State state) {
         this.state = state;
-        receivedTick = ticks;
+        receivedGameTime = worldTime();
         regroup();
         // Preserve hover, keyboard focus and dragging during periodic state synchronization.
         updateControls();
@@ -68,7 +71,15 @@ public final class SoulScreen extends Screen {
         return type == null ? group.forms().get(0).name() : type.getDescription().getString();
     }
     private int lastPage() { return Math.max(0, (groups.size() - 1) / PAGE_SIZE); }
-    private long cooldown(SoulNetwork.Row row) { return Math.max(0, row.cooldown() - (ticks - receivedTick) / 20); }
+    private static long worldTime() {
+        var level = Minecraft.getInstance().level;
+        return level == null ? 0 : level.getGameTime();
+    }
+    private long cooldown(SoulNetwork.Row row) {
+        // Cosmetic screen ticks continue during a pause; recovery must follow world time.
+        long elapsed = Math.max(0, worldTime() - receivedGameTime);
+        return Math.max(0, row.cooldown() - elapsed / 20);
+    }
     private void send(SoulNetwork.Action action) { send(action, selected); }
     private void send(SoulNetwork.Action action, UUID entry) {
         SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.Request(action, entry));
@@ -245,7 +256,7 @@ public final class SoulScreen extends Screen {
         if (row != null && preview.available(selected)) {
             g.enableScissor((int)(originX + PX * scale), (int)(originY + PY * scale),
                 (int)(originX + (PX + PW) * scale), (int)(originY + (PY + PH) * scale));
-            try { preview.render(g, selected, 306, 218, PW, PH, partialTick); }
+            try { preview.render(g, selected, 306, 212, PW, PH, partialTick); }
             finally { g.disableScissor(); }
         } else {
             SoulTheme.diamond(g, 306, 149, 15, 0xFF234349);
@@ -310,5 +321,6 @@ public final class SoulScreen extends Screen {
         return super.mouseScrolled(x, y, delta);
     }
     @Override public void removed() { preview.clear(); }
-    @Override public boolean isPauseScreen() { return false; }
+    // Minecraft applies this pause to an unpublished integrated server, not multiplayer/LAN.
+    @Override public boolean isPauseScreen() { return true; }
 }

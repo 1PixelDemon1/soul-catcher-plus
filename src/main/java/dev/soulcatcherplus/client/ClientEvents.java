@@ -16,6 +16,8 @@ import net.minecraftforge.fml.common.Mod;
 public final class ClientEvents {
     private static boolean renderingSoul;
     @SubscribeEvent public static <T extends LivingEntity, M extends EntityModel<T>> void render(RenderLivingEvent.Pre<T, M> event) {
+        if (SoulDissolves.renderingEcho()) return;
+        if (SoulDissolves.contains(event.getEntity().getUUID())) { event.setCanceled(true); return; }
         if (renderingSoul || !CompanionBrain.isSoul(event.getEntity())) return;
         event.setCanceled(true);
         T mob = (T) event.getEntity();

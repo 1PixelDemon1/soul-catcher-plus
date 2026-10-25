@@ -21,5 +21,6 @@ public final class ClientPackets {
     public static void preview(SoulNetwork.Preview preview) {
         if (Minecraft.getInstance().screen instanceof SoulScreen screen) screen.receivePreview(preview);
     }
+    public static void dissolve(SoulNetwork.Dissolve dissolve) { SoulDissolves.start(dissolve); }
     private ClientPackets() {}
 }

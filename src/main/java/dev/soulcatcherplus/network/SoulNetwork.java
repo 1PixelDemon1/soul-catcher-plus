@@ -17,14 +17,20 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "2";
+    private static final String VERSION = "3";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
+    // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
+    private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
+    private static final class UiRateLimit {
+        long action, preview, refresh;
+    }
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
     public record Row(UUID id, String entityType, String name, int cost, int slots, boolean active, long cooldown, String command) {}
@@ -73,6 +79,18 @@ public final class SoulNetwork {
         }
         void write(FriendlyByteBuf b) { b.writeUUID(entry); b.writeUtf(entityType, 256); b.writeNbt(appearance); }
     }
+    /** Visual-only departure; includes a fallback envelope if the entity is already untracked. */
+    public record Dissolve(int entityId, UUID entityUuid, ResourceLocation dimension,
+            double x, double y, double z, float width, float height) {
+        static Dissolve read(FriendlyByteBuf b) {
+            return new Dissolve(b.readVarInt(), b.readUUID(), b.readResourceLocation(),
+                b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat());
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(entityId); b.writeUUID(entityUuid); b.writeResourceLocation(dimension);
+            b.writeDouble(x); b.writeDouble(y); b.writeDouble(z); b.writeFloat(width); b.writeFloat(height);
+        }
+    }
     public static void register() {
         CHANNEL.registerMessage(0, State.class, State::write, State::read, SoulNetwork::state,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
@@ -83,6 +101,8 @@ public final class SoulNetwork {
         CHANNEL.registerMessage(3, PreviewRequest.class, PreviewRequest::write, PreviewRequest::read, SoulNetwork::previewRequest,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(4, Preview.class, Preview::write, Preview::read, SoulNetwork::previewPacket,
+            Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(5, Dissolve.class, Dissolve::write, Dissolve::read, SoulNetwork::dissolvePacket,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
     public static void open(ServerPlayer player) {
@@ -105,22 +125,30 @@ public final class SoulNetwork {
     public static void ghost(ServerPlayer player, Entity entity) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
     }
+    public static void dissolve(Mob mob) {
+        if (mob.level().isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
+        mob.getPersistentData().putBoolean("scp_dissolving", true);
+        // Send before the removal packet; clients retain a short-lived visual echo only.
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> mob), new Dissolve(mob.getId(), mob.getUUID(),
+            mob.level().dimension().location(), mob.getX(), mob.getY(), mob.getZ(), mob.getBbWidth(), mob.getBbHeight()));
+    }
     private static void request(Request packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator() || !SoulService.holdsScythe(player)) return;
             // Per-player throttle; packet state is never accepted as authority.
-            long now = player.server.overworld().getGameTime();
+            long now = System.nanoTime();
+            UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, p -> new UiRateLimit());
             if (packet.action == Action.REFRESH) {
-                if (player.getPersistentData().getLong("scp_next_ui_refresh") <= now) {
-                    player.getPersistentData().putLong("scp_next_ui_refresh", now + 20);
+                if (rate.refresh == 0 || now - rate.refresh >= 0) {
+                    rate.refresh = now + 1_000_000_000L;
                     sendState(player, false);
                 }
                 return;
             }
-            if (player.getPersistentData().getLong("scp_next_action") > now) return;
-            player.getPersistentData().putLong("scp_next_action", now + 2);
+            if (rate.action != 0 && now - rate.action < 0) return;
+            rate.action = now + 100_000_000L;
             PlayerSouls data = SoulService.data(player);
             if (data.entries.containsKey(packet.entry)) data.selected = packet.entry;
             switch (packet.action) {
@@ -157,9 +185,10 @@ public final class SoulNetwork {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator() || !SoulService.holdsScythe(player)) return;
-            long now = player.server.overworld().getGameTime();
-            if (player.getPersistentData().getLong("scp_next_preview") > now) return;
-            player.getPersistentData().putLong("scp_next_preview", now + 2);
+            long now = System.nanoTime();
+            UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, p -> new UiRateLimit());
+            if (rate.preview != 0 && now - rate.preview < 0) return;
+            rate.preview = now + 100_000_000L;
             SoulEntry entry = SoulService.data(player).entries.get(packet.entry);
             if (entry == null) return;
             CompoundTag appearance = new CompoundTag();
@@ -183,6 +212,12 @@ public final class SoulNetwork {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.preview(packet)));
+        context.setPacketHandled(true);
+    }
+    private static void dissolvePacket(Dissolve packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+            () -> () -> dev.soulcatcherplus.client.ClientPackets.dissolve(packet)));
         context.setPacketHandled(true);
     }
     private static String abbreviate(String name) { return name.length() <= 256 ? name : name.substring(0, 256); }

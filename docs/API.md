@@ -88,7 +88,29 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-The collection UI uses protocol **2**, so clients and servers must update together.
+The collection UI and departure effects use protocol **3**, so clients and servers must update together.
+
+The collection screen pauses an unpublished integrated singleplayer server.
+Recovery remains authoritative on world game time; cosmetic screen ticks do not
+advance its displayed countdown. Packet-rate limits use a session-only monotonic
+clock so requests remain usable while world time is frozen. Dedicated servers and
+LAN sessions retain Minecraft's normal non-pausing behavior.
+
+## Departure effects
+
+Companion death and recall send a tracking-client departure message before normal
+entity removal. Clients keep a short-lived visual echo of the original mob and
+render a bottom-to-top soul-fire dissolve for 18 unpaused client ticks. The server
+does not keep a second combat entity alive for this animation. Echoes and particles
+pause with the local singleplayer world and are discarded when the client changes
+levels. If the original client entity is unavailable, the packet's position and
+dimensions still allow a particle effect.
+
+The effect reuses the existing renderer and spectral render-type mapping, with
+an additional per-vertex fade edge. Custom renderers or opaque render layers can
+need their own spectral mapping to dissolve as completely as a standard body.
+No new entity class, persistent save schema or mandatory third-party dependency is
+introduced for the visual effect.
 
 ## Events
 

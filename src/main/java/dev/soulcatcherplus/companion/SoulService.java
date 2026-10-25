@@ -95,6 +95,7 @@ public final class SoulService {
             if (entity instanceof Mob mob) {
                 ServerPlayer owner = server.getPlayerList().getPlayer(CompanionBrain.owner(mob));
                 if (owner != null) SoulAdapters.get(mob).onRecall(mob, owner);
+                SoulNetwork.dissolve(mob);
                 mob.discard();
             }
         }

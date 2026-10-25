@@ -4,11 +4,15 @@
 
 - Replace the collection screen with a custom ink, aged-brass, and teal interface, including species cards, resource indicators, contextual controls, and companion orders.
 - Add a detached 3D preview of the selected captured form with automatic rotation, drag rotation, and scroll-wheel zoom. Preview entities are not inserted into the world or AI-ticked.
+- Reduce the default preview size and reserve more space for wide models, weapons, and horns: use about 66% of the available width and 70% of the height, a larger footprint margin, a lower maximum scale, and extra space below the model.
 - Group collection entries by species and let players switch between forms unlocked by capturing that appearance. Capturing the same variant again converts its soul into energy.
 - Add experimental `SoulAdapter.variantData` and `SoulAdapter.previewData` hooks for custom appearance identities and client-safe preview state. Default variant identity excludes equipment and transient poses.
 - Request bounded preview data on demand instead of transmitting full captured snapshots; keep collection status updated while the screen is open.
 - Enforce one active companion per species across its captured variants, and share recovery cooldowns across that species. Commands for the selected species reach its active form.
-- Use network protocol **2** for the expanded collection and preview messages; clients and servers must use matching protocol-2 builds.
+- Pause local singleplayer worlds while the collection is open, unless the integrated server is shared over LAN. Base recovery countdowns on world game time so they stop with the paused world.
+- Use session-only monotonic-time rate limits for menu actions, previews, and refreshes so networking does not remain locked while world time is paused.
+- Add 18-tick client-side departure echoes on companion death and recall, with a noisy dissolve edge travelling from feet to head, fading, soul-fire particles, and a quiet soul escape sound. Combat-entity removal continues through the existing server lifecycle; particles and sound remain available when a model echo cannot be rendered.
+- Send explicit departure notifications to tracking clients and use network protocol **3** for collection, preview, and dissolve messages; clients and servers must use matching protocol-3 builds.
 - Extend English and Russian interface text for species, captured forms, preview controls, and summon availability.
 
 Validation was not run for these changes at the user's request. No build, compilation, unit tests, GameTests, game launch, or UI automation was performed; gameplay and visual verification are deferred to the user. The earlier 0.1.0 validation results do not validate this unreleased work.

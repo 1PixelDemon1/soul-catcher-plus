@@ -77,9 +77,13 @@ final class SoulPreview {
         PoseStack pose = new PoseStack();
         pose.last().pose().set(graphics.pose().last().pose());
         pose.last().normal().set(graphics.pose().last().normal());
-        float scale = Math.min((width - 28) / Math.max(1.0f, mob.getBbWidth() * 1.5f),
-            (height - 16) / Math.max(0.5f, mob.getBbHeight()));
-        scale = Math.max(5, Math.min(74, scale)) * zoom;
+        // Reserve visible space around the model, including protruding weapons and horns.
+        // Width/depth jointly bound the footprint while it rotates.
+        float usableWidth = width * 0.66f;
+        float usableHeight = height * 0.70f;
+        float footprint = Math.max(1.0f, mob.getBbWidth() * 1.65f);
+        float scale = Math.min(usableWidth / footprint, usableHeight / Math.max(0.75f, mob.getBbHeight()));
+        scale = Math.max(0.5f, Math.min(58, scale)) * zoom;
         pose.translate(centerX, baseline, 60);
         pose.mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
         pose.mulPose(Axis.ZP.rotationDegrees(180));
