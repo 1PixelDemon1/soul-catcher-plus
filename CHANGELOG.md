@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep held scythes one vanilla model pixel thick by scaling depth independently of their enlarged silhouette; preserve both hand positions and view rotations across all three tiers.
 - Keep compact two-pixel-wide inventory lanterns with a narrow top cap, a two-pixel-high cyan area and a dark bottom rim; keep held models unchanged.
 - Redraw the 16x16 inventory scythes in a clockwise-rotated layout matching their crafting recipe: shaft from bottom-left to upper-right, thin colored blade across the top and lantern at the right. Remove the black blade band from icons only; retain held artwork, mesh, grip and view transforms.
 - Move the held scythe's third-person grip to the middle of its shaft while preserving the user-approved rotations, scales and first-person framing. Replace automatically extruded held-item geometry with closed opaque rectangles and texel-center edge UVs to address see-through seams; preserve the artwork and 16x16 inventory icons. In-game confirmation remains deferred to the user.

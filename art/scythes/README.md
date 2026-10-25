@@ -33,14 +33,18 @@ and lantern colors share the same palette in inventory icons.
   contraction can expose seams at the silhouette. Thickness remains Z=7.5..8.5.
   Separate meshes preserve each source silhouette without changing the PNGs.
 - `models/item/soul_scythe_held.json`: shared hand transforms and cutout rendering.
-  Third-person scale is 2; first-person scale is 1.6. The user approved both view
+  In-plane scale is 2 in third person and 1.6 in first person. The thickness-axis
+  scale is 1 in both views, keeping the Z=7.5..8.5 mesh one vanilla model pixel
+  (1/16 block) thick. This does not change the silhouette or centered grip point.
+  The user approved both view
   rotations and first-person framing. Only third-person translation was adjusted
   to `[0, 6.77, -6.25]` for a grip near the middle of the wood. With centered texture
   point `g=(0.27,-0.10,0)`, original rotation `Ry(-90) * Rz(-27)` and scale 2,
   `translation=-16 * R * Scale * g` puts that point at the standard hand anchor.
   Left-hand mirroring produces the same actual rotation, so the translation is
-  shared. Native arm-layer translation must remain intact. Final grip alignment
-  and seam removal still need user confirmation in-game.
+  shared. Native arm-layer translation must remain intact. The user confirmed
+  the grip and seam correction in-game; the thinner depth has not yet been
+  inspected in-game.
 
 This uses Forge 47.4.28's built-in model loader and standard cuboid model elements.
 No custom Java renderer or additional runtime dependency is required. Visual scale
