@@ -18,6 +18,7 @@ public final class SoulScreen extends Screen {
     private SoulNetwork.State state;
     private final SoulPreview preview = new SoulPreview();
     private final List<SoulButton> controls = new ArrayList<>();
+    private final List<CardControls> cards = new ArrayList<>();
     private final Map<String, UUID> rememberedForms = new HashMap<>();
     private List<SoulGroup> groups = List.of();
     private UUID selected;
@@ -29,7 +30,9 @@ public final class SoulScreen extends Screen {
 
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
         SoulNetwork.Row active() { return forms.stream().filter(SoulNetwork.Row::active).findFirst().orElse(null); }
+        boolean favorite() { return forms.get(0).favorite(); }
     }
+    private record CardControls(String entityType, SoulButton body, SoulButton favorite) {}
     public SoulScreen(SoulNetwork.State state) {
         super(text("title"));
         this.state = state;
@@ -53,10 +56,11 @@ public final class SoulScreen extends Screen {
         List<String> before = groups.stream().map(SoulGroup::entityType).toList();
         Map<String, List<SoulNetwork.Row>> map = new LinkedHashMap<>();
         state.rows().forEach(r -> map.computeIfAbsent(r.entityType(), t -> new ArrayList<>()).add(r));
-        groups = map.entrySet().stream().map(e -> new SoulGroup(e.getKey(), List.copyOf(e.getValue()))).toList();
+        groups = map.entrySet().stream().map(e -> new SoulGroup(e.getKey(), List.copyOf(e.getValue())))
+            .sorted(Comparator.comparing(SoulGroup::favorite).reversed()).toList();
         if (state.rows().stream().noneMatch(r -> r.id().equals(selected))) selected = state.rows().isEmpty() ? null : state.rows().get(0).id();
         page = Math.min(page, lastPage());
-        // A newly captured species changes the list layout; ordinary refreshes do not.
+        // New species or favorite ordering change the layout; ordinary refreshes do not.
         if (minecraft != null && !before.equals(groups.stream().map(SoulGroup::entityType).toList())) rebuildWidgets();
     }
     private static Component text(String key, Object... args) {
@@ -111,6 +115,7 @@ public final class SoulScreen extends Screen {
 
     @Override protected void init() {
         controls.clear();
+        cards.clear();
         turning = false;
         scale = Math.max(0.25f, Math.min(1.5f, Math.min((width - 12f) / W, (height - 12f) / H)));
         originX = (width - W * scale) / 2;
@@ -118,9 +123,15 @@ public final class SoulScreen extends Screen {
         button(592, 19, 16, 20, Component.literal("×"), SoulButton.Style.SUBTLE, this::onClose).hint(text("close"));
         for (int i = page * PAGE_SIZE; i < Math.min(groups.size(), (page + 1) * PAGE_SIZE); i++) {
             SoulGroup group = groups.get(i);
-            button(26, 88 + (i % PAGE_SIZE) * 43, 140, 39, Component.literal(name(group)), SoulButton.Style.CARD,
-                () -> select(group)).subtitle(text("forms_owned", group.forms().size())).selected(group.equals(group()))
+            int y = 88 + (i % PAGE_SIZE) * 43;
+            SoulButton body = button(26, y, 118, 39, Component.literal(name(group)), SoulButton.Style.CARD,
+                () -> select(group)).subtitle(text("forms_short", group.forms().size())).selected(group.equals(group()))
                 .lit(group.active() != null).hint(text("choose_soul"));
+            Component favoriteHint = text(group.favorite() ? "remove_favorite" : "add_favorite");
+            SoulButton favorite = button(146, y, 20, 39, favoriteHint, SoulButton.Style.FAVORITE,
+                () -> send(SoulNetwork.Action.TOGGLE_FAVORITE, group.forms().get(0).id()))
+                .selected(group.favorite()).hint(favoriteHint);
+            cards.add(new CardControls(group.entityType(), body, favorite));
         }
         button(26, 273, 25, 18, Component.literal("‹"), SoulButton.Style.SUBTLE,
             () -> { page--; rebuildWidgets(); }).hint(text("previous")).active = page > 0;
@@ -185,13 +196,14 @@ public final class SoulScreen extends Screen {
                 button.setMessage(text(state.commandMode() ? "command" : "harvest"));
                 button.hint(text(state.commandMode() ? "command_hint" : "harvest_hint"));
             }
-            if (button.getX() == 26 && button.getY() >= 88 && button.getY() < 260) {
-                int index = page * PAGE_SIZE + (button.getY() - 88) / 43;
-                if (index < groups.size()) {
-                    var card = groups.get(index);
-                    button.selected(card.equals(group)).lit(card.active() != null).subtitle(text("forms_owned", card.forms().size()));
-                }
-            }
+        }
+        for (CardControls card : cards) {
+            SoulGroup species = groups.stream().filter(g -> g.entityType().equals(card.entityType())).findFirst().orElse(null);
+            if (species == null) continue;
+            card.body().selected(species.equals(group)).lit(species.active() != null)
+                .subtitle(text("forms_short", species.forms().size()));
+            Component favoriteHint = text(species.favorite() ? "remove_favorite" : "add_favorite");
+            card.favorite().selected(species.favorite()).hint(favoriteHint).setMessage(favoriteHint);
         }
     }
 

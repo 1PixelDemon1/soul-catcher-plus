@@ -130,7 +130,7 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development uses protocol **5** for collection, wheel and departure messages;
+Current development uses protocol **6** for collection, wheel and departure messages;
 clients and servers must update together. Released 0.1.0 artifacts remain on protocol 4.
 
 The collection screen pauses an unpublished integrated singleplayer server.
@@ -138,6 +138,21 @@ Recovery remains authoritative on world game time; cosmetic screen ticks do not
 advance its displayed countdown. Packet-rate limits use a session-only monotonic
 clock so requests remain usable while world time is frozen. Dedicated servers and
 LAN sessions retain Minecraft's normal non-pausing behavior.
+
+### Collection favorites
+
+`PlayerSouls` stores favorite entity-type IDs in the optional `Favorites` string
+list. Old saves load with no favorites; loading retains only IDs represented in
+the player's collection. `isFavorite(entityType)` queries the species-wide flag;
+`toggleFavorite(entryId)` resolves an owned entry before changing it. All current
+and future captured forms of that type share the flag.
+
+Collection `Row` packets include `favorite`; `Action.TOGGLE_FAVORITE` uses the
+existing owned-entry request, rate limit, dirty marking and state reply. It does
+not change selection, group scope, active summons or energy. The screen performs
+a stable favorites-first sort of species cards, preserving capture order within
+each tier. A separate keyboard-accessible star button toggles the flag without
+selecting the card. This ordering applies to the collection screen only.
 
 ## Key-bound collection and command wheel
 

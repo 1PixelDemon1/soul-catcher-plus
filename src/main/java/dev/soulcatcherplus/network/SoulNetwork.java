@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "5";
+    private static final String VERSION = "6";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -34,7 +34,7 @@ public final class SoulNetwork {
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
     public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
-            long cooldown, String command, SummonRules.Status status) {}
+            long cooldown, String command, SummonRules.Status status, boolean favorite) {}
     public record State(boolean openScreen, int energy, int activeCount, int summonLimit,
             boolean commandMode, boolean group, UUID selected, List<Row> rows) {
         static State read(FriendlyByteBuf b) {
@@ -46,7 +46,7 @@ public final class SoulNetwork {
             if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid soul collection size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
-                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class)));
+                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
             return new State(open, energy, activeCount, limit, mode, group, selected, List.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
@@ -57,10 +57,10 @@ public final class SoulNetwork {
             b.writeVarInt(rows.size());
             for (Row row : rows) { b.writeUUID(row.id); b.writeUtf(row.entityType, 256); b.writeUtf(row.name, 256); b.writeVarInt(row.cost);
                 b.writeDouble(row.maxHealth); b.writeBoolean(row.active); b.writeVarLong(row.cooldown);
-                b.writeUtf(row.command, 16); b.writeEnum(row.status); }
+                b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE }
     public record Request(Action action, UUID entry) {
         static Request read(FriendlyByteBuf b) {
             return new Request(b.readEnum(Action.class), b.readBoolean() ? b.readUUID() : null);
@@ -152,7 +152,7 @@ public final class SoulNetwork {
             String command = active == null ? "" : active.getPersistentData().getString(CompanionBrain.MODE);
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
-                availability.recoverySeconds(), command, availability.status());
+                availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
         }).toList();
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
             new State(openScreen, data.energy, availabilityContext.activeCount(), availabilityContext.limit(),
@@ -186,7 +186,7 @@ public final class SoulNetwork {
             if (rate.action != 0 && now - rate.action < 0) return;
             rate.action = now + 100_000_000L;
             PlayerSouls data = SoulService.data(player);
-            if (data.entries.containsKey(packet.entry)) data.selected = packet.entry;
+            if (packet.action != Action.TOGGLE_FAVORITE && data.entries.containsKey(packet.entry)) data.selected = packet.entry;
             switch (packet.action) {
                 case SELECT -> { if (data.entries.containsKey(packet.entry)) data.selected = packet.entry; }
                 case SUMMON -> { if (packet.entry != null) SoulService.summon(player, packet.entry); }
@@ -197,6 +197,7 @@ public final class SoulNetwork {
                 case GUARD -> SoulService.command(player, CompanionBrain.Mode.GUARD);
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
+                case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
                 case OPEN -> { sendState(player, true); return; }
                 case REFRESH -> { return; }
             }
