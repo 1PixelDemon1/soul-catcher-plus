@@ -41,7 +41,7 @@ public final class SoulRemnant extends Entity {
             PlayerSouls data = SoulService.data(server);
             boolean known = data.entries.values().stream().anyMatch(e -> SoulVariants.same(e, soul));
             if (!known) {
-                if (data.entries.size() >= 4096) {
+                if (data.entries.size() >= PlayerSouls.MAX_ENTRIES) {
                     SoulService.message(server, "collection_full");
                     return InteractionResult.FAIL;
                 }

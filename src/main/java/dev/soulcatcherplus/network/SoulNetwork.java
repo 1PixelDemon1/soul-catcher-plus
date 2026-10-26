@@ -43,7 +43,7 @@ public final class SoulNetwork {
             boolean mode = b.readBoolean(), group = b.readBoolean();
             UUID selected = b.readBoolean() ? b.readUUID() : null;
             int size = b.readVarInt();
-            if (size < 0 || size > 4096) throw new IllegalArgumentException("Invalid soul collection size");
+            if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid soul collection size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
                 b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class)));
@@ -79,7 +79,7 @@ public final class SoulNetwork {
     public record WheelState(int energy, List<Companion> companions) {
         static WheelState read(FriendlyByteBuf b) {
             int energy = b.readVarInt(), size = b.readVarInt();
-            if (size < 0 || size > 4096) throw new IllegalArgumentException("Invalid companion count");
+            if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid companion count");
             List<Companion> companions = new ArrayList<>();
             for (int i = 0; i < size; i++) companions.add(new Companion(b.readUUID(), b.readUtf(256),
                 b.readFloat(), b.readFloat(), b.readUtf(16), b.readBoolean()));

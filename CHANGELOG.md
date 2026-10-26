@@ -6,8 +6,9 @@
 - Add configurable O and held-R key bindings for the full collection and a non-pausing command wheel, replacing Shift + right-click menu opening. Menus work without a held scythe; new summons still require one.
 - Display soul energy, active companion names, live HP and current orders in the wheel. Hover a companion and a command, then release the trigger to issue an individual follow/wait/guard/recall order; release in the center or outside, or Escape/focus loss, cancels.
 - Use bounded active-only server snapshots with explicit unknown health for unloaded companions, per-entry ownership validation, and independent wheel requests that preserve collection selection/group scope. Use network protocol 5; released 0.1.0 remains protocol 4.
+- Add optional dev-only `/soulcatcherqa --all` to populate one default capturable form per registered mob type in server-tick batches. Keep the existing sample command, preserve known souls and selection, skip unsupported samples with a summary, and share the 4096-entry limit with capture/networking. Temporary samples are never inserted into the world and are discarded after capture; this does not enumerate every appearance variant.
 
-The user confirmed the following fix in-game. The new key bindings and command wheel have only received source review: no build, compilation, tests or game launch was run for these changes.
+The user confirmed the following fix in-game. New controls and the QA bestiary flag have only received source review: no build, compilation, tests or game launch was run for these changes.
 
 ## 0.1.0+1.20.1 — 2026-10-25
 

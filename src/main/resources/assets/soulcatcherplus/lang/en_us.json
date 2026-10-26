@@ -90,5 +90,9 @@
   "wheel.soulcatcherplus.hint": "Hover a companion, then a command. Release %s to issue it; center or outside cancels.",
   "wheel.soulcatcherplus.loading": "Loading companions…",
   "wheel.soulcatcherplus.empty": "No companions summoned",
-  "wheel.soulcatcherplus.page": "Scroll: %s / %s"
+  "wheel.soulcatcherplus.page": "Scroll: %s / %s",
+  "command.soulcatcherplus.qa.running": "Your bestiary fill is still in progress.",
+  "command.soulcatcherplus.qa.started": "Filling the bestiary from %s registered entity types. The collection opens when finished.",
+  "command.soulcatcherplus.qa.finished": "QA souls — added: %s, already known: %s, skipped: %s, errors: %s.",
+  "command.soulcatcherplus.qa.full": "Collection limit reached (%s). Entity types not processed: %s."
 }

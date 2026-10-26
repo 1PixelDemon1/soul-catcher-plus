@@ -233,6 +233,29 @@ Use the same resource path as an existing profile to override it. Reload with `/
 Existing collection entries retain their captured maximum health and cost; disabling
 capture does not delete collected souls. Avoid multiple profile files targeting one entity.
 
+## Development bestiary population
+
+The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
+`--all`. The bare command keeps its sample species and two sheep colors; both
+forms grant the existing scythe loadout and set energy to 1000.
+
+Bulk population takes a sorted snapshot of registered entity types and creates
+samples on the server thread in small tick batches. Only returned `Mob` instances
+passing profile/adapter capture checks are added. No world insertion, ticking or
+`finalizeSpawn` is requested. Constructor-default forms are used, with a bow for
+skeleton QA samples; this does not enumerate every variant or spawn-dependent state.
+The common capture helper sanitizes snapshots and uses `SoulVariants.same` to
+preserve existing entries and selection. `PlayerSouls.MAX_ENTRIES` is shared with
+normal remnant capture and packet bounds.
+
+Errors in one factory/adapter are logged and counted; returned temporary entities
+are discarded in a guarded cleanup. A failed constructor that never returns an
+object cannot be cleaned up generically. Bulk population is a QA tool, not a
+guarantee that arbitrary mod constructors/adapters are free of world/global effects.
+Jobs stop when the player leaves or the server stops. A full collection stops
+further creation and reports remaining unprocessed entity types rather than
+claiming that they were all capturable. Partial additions remain saved.
+
 ## Client rendering
 
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client

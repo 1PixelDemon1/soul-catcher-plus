@@ -9,6 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 public final class PlayerSouls {
+    public static final int MAX_ENTRIES = 4096;
     public int energy;
     public UUID selected;
     public boolean commandMode;
