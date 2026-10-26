@@ -261,10 +261,18 @@ claiming that they were all capturable. Partial additions remain saved.
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client
 setup. `SoulVisualProvider.remap(originalRenderType, bodyTexture)` lets an integration
 replace render types; the shared vertex wrapper applies spectral color and alpha.
-Vanilla `LivingEntityRenderer`/`MobRenderer` bodies are handled by the default provider.
-Renderers that bypass `RenderLivingEvent` require their own renderer hook and can
-reuse `CompanionBrain.isSoul(entity)`. Custom armor/emissive layers and shaders need
-visual testing; their blend modes may differ from the main body.
+The client-only `EntityRenderDispatcher` hook wraps the native renderer's buffer
+argument once, including renderers that bypass `RenderLivingEvent` (such as GeckoLib
+entity renderers). It does not rerun render events or wrap dispatcher fire, shadows
+or debug hitboxes. Ordinary entities keep their original buffers; dissolve echoes
+keep their separately supplied fade. Nested dispatcher calls unwrap our parent
+source before applying the child's own texture/provider, preventing repeated tint.
+No GeckoLib or Mowzie dependency is required.
+The default mapping makes standard solid/cutout body materials translucent. A
+renderer must use the supplied `MultiBufferSource` for this hook to affect it.
+Custom shaders, independently acquired buffers and extra textures/layers may still
+need an integration through `SoulVisualProvider` and visual testing. The hook does
+not guarantee transparency for every third-party rendering pipeline.
 
 The built-in Wroughtnaut adapter uses the creature's public activation API. An optional
 `@Pseudo` Mixin filters Mowzie's area-query results before native attacks apply
