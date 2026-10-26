@@ -230,6 +230,25 @@ Ferrous Wroughtnaut сохраняет родной тип, атаки, аним
 включая настройки здоровья из модпака; рыцарь занимает одно место, как любой напарник.
 Баланс предварительный: его родная неуязвимость делает напарника очень сильным.
 
+## Ice and Fire в тестовом клиенте
+
+Флаг `-PwithIceAndFire` подключает [Ice and Fire 2.1.13 beta 5](https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons/files/5633453)
+и обязательную библиотеку [Citadel 2.6.3](https://www.curseforge.com/minecraft/mc-mods/citadel/files/7476570)
+для Forge 1.20.1. Gradle скачивает и подготавливает их для среды разработки;
+вручную копировать эти JAR в `run-client/mods` не нужно.
+
+Запуск с нашим модом, Mowzie's Mobs, Ice and Fire и QA-командой:
+
+```powershell
+.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire
+```
+
+Чтобы играть только с Ice and Fire, уберите `-PwithMowzies`. Флаг `-PgameTests`
+нужен для `/soulcatcherqa`, в том числе `--all`; для обычной игры его можно убрать.
+Ice and Fire и Citadel остаются необязательными зависимостями тестового запуска.
+Для обычного лаунчера устанавливайте оба мода отдельно в его папку `mods`.
+Подключение модов не означает, что все их существа уже проверены с Soul Catcher Plus.
+
 ## Проверки
 
 ```powershell
