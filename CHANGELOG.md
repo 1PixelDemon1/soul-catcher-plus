@@ -2,13 +2,39 @@
 
 ## Unreleased
 
-- Fix intermittent companion following caused by checking global mob ticks from a goal that may execute only on odd ticks. Use a goal-local path timer and request movement immediately when the goal starts; preserve native combat and command behavior.
-- Add configurable O and held-R key bindings for the full collection and a non-pausing command wheel, replacing Shift + right-click menu opening. Menus work without a held scythe; new summons still require one.
-- Display soul energy, active companion names, live HP and current orders in the wheel. Hover a companion and a command, then release the trigger to issue an individual follow/wait/guard/recall order; release in the center or outside, or Escape/focus loss, cancels.
-- Use bounded active-only server snapshots with explicit unknown health for unloaded companions, per-entry ownership validation, and independent wheel requests that preserve collection selection/group scope. Use network protocol 5; released 0.1.0 remains protocol 4.
-- Add optional dev-only `/soulcatcherqa --all` to populate one default capturable form per registered mob type in server-tick batches. Keep the existing sample command, preserve known souls and selection, skip unsupported samples with a summary, and share the 4096-entry limit with capture/networking. Temporary samples are never inserted into the world and are discarded after capture; this does not enumerate every appearance variant.
+No changes yet.
 
-The user confirmed the following fix in-game. New controls and the QA bestiary flag have only received source review: no build, compilation, tests or game launch was run for these changes.
+## 0.2.0+1.20.1 — 2026-10-27
+
+Release tag: `v0.2.0`. Artifact version: `0.2.0+1.20.1`. Targets Minecraft 1.20.1, Forge 47.4.28, and Java 17.
+
+### Controls, collection, and following
+
+- Fix intermittent following with a goal-local path timer and immediate path updates when the follow goal starts, instead of relying on global mob-tick parity. Preserve native combat and command behavior.
+- Add remappable O and held-R bindings for the collection and a non-pausing command wheel, replacing Shift + right-click menu opening. Viewing collections and issuing orders no longer require a held scythe; new summons still do.
+- Show soul energy, active companion names, live HP, and current orders in the wheel. Hover a companion and a command, then release the trigger to issue an individual follow/wait/guard/recall order. Releasing in the center/outside, Escape, or focus loss cancels.
+- Keep wheel requests separate from collection selection/group scope, validate ownership on the server, and mark unloaded companion health as unknown without loading chunks.
+- Add persistent species-wide favorites with a star control and stable favorites-first collection ordering. Older saves begin with no favorites; selection, commands, energy, and captured variants remain independent of the favorite flag.
+
+### Rendering, recalls, and summoned minions
+
+- Apply spectral rendering once through the entity dispatcher, extending support to renderers that bypass `RenderLivingEvent`, including compatible GeckoLib renderers. Preserve ordinary entity buffers and separate dissolve fades; custom buffers, materials, and shaders can still require adapters.
+- Refund `floor(current HP / 2)` energy when recalling a living, loaded root companion, with a minimum of zero. Use actual current health, invalidate the reservation before callbacks, and grant no refund for dead, missing, or unloaded companions. Single, group, and automatic recalls use the same rule.
+- Let recognized summoned Mob descendants inherit the root companion's player allegiance, permitted target, spectral rendering, and lifecycle through explicit ownership chains. Preserve native child movement/attacks and provide adapter hooks for custom ownership and AI.
+- Keep child mobs outside the collection, scythe limits, and independent refunds. Their deaths produce no loot, XP, or soul energy; their credited enemy kills belong to the player.
+- Persist minion root links, restore Vex ownership and idle origin when the root is loaded, and keep valid minions idle while the root is unloaded. Recall, death, or permanent removal of the root dismisses loaded descendants; unloaded descendants are rejected when reloaded after invalidation.
+- Add `SoulAdapter.summoner`, `configureMinion`, `tickMinion`, and the server-side `SoulMinions.attach` integration hook. Discovery uses ownership rather than proximity guesses; unknown creator links and nonstandard AI can require explicit integration.
+
+### Developer support and compatibility
+
+- Add dev-only `/soulcatcherqa --all` to populate one constructor-default capturable form per registered Mob type in bounded server-tick batches. Preserve known entries and selection, summarize unsupported samples, and enforce the shared 4096-entry collection limit. This tool does not enumerate every appearance and is excluded from normal release builds.
+- Use network protocol **6** for collection, favorites, wheel, preview, and departure messages. Update clients and servers together; released 0.1.0 uses protocol 4.
+
+### Validation and limitations
+
+The user manually reported that following, controls, transparency, favorites, and summoned minions work, including an overall positive report for the latest development state. These are user observations, not automated or exhaustive compatibility evidence. No new automated tests, Minecraft launches, or UI automation were run by the agent for this release.
+
+Fresh release packaging completed successfully with `./scripts/gradle.ps1 clean build -x test`, without `-PgameTests` or `-PwithMowzies`. Compilation, resources, runtime JAR reobfuscation, and sources packaging succeeded. Artifact inspection confirmed version 0.2.0+1.20.1, the new controls/minion/rendering code and client Mixin configuration, and exclusion of QA/GameTest content and bundled third-party packages. Tests were excluded; successful packaging is not gameplay validation. Historical 0.1.0 checks do not validate 0.2.0. This remains a pre-1.0 release with experimental APIs and integration limits; see [release notes](docs/releases/0.2.0.md).
 
 ## 0.1.0+1.20.1 — 2026-10-25
 

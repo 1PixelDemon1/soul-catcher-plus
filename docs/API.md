@@ -130,7 +130,7 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development uses protocol **6** for collection, wheel and departure messages;
+Release 0.2.0 uses protocol **6** for collection, wheel and departure messages;
 clients and servers must update together. Released 0.1.0 artifacts remain on protocol 4.
 
 The collection screen pauses an unpublished integrated singleplayer server.
