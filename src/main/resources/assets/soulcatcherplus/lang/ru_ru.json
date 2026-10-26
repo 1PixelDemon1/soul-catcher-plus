@@ -39,7 +39,7 @@
   "message.soulcatcherplus.variant_active": "Другой облик этого существа уже призван.",
   "message.soulcatcherplus.collection_full": "Коллекция душ заполнена.",
   "item.soulcatcherplus.soul_scythe": "Железная коса душ",
-  "item.soulcatcherplus.soul_scythe.tip": "ПКМ: метка / приказ. Shift + ПКМ: коллекция.",
+  "item.soulcatcherplus.soul_scythe.tip": "ПКМ: метка / приказ. Меню открываются настроенными клавишами.",
   "entity.soulcatcherplus.soul_remnant": "Несвязанная душа",
   "screen.soulcatcherplus.title": "Коллекция душ",
   "screen.soulcatcherplus.balance": "Энергия: %s  |  Напарники: %s / %s",
@@ -78,5 +78,17 @@
   "message.soulcatcherplus.scythe_needed": "Возьми косу душ, чтобы призвать напарника.",
   "screen.soulcatcherplus.status_no_scythe": "Нужна коса",
   "screen.soulcatcherplus.status_limit": "Лимит напарников",
-  "screen.soulcatcherplus.status_low_energy": "Мало энергии"
+  "screen.soulcatcherplus.status_low_energy": "Мало энергии",
+  "key.categories.soulcatcherplus": "Soul Catcher Plus",
+  "key.soulcatcherplus.collection": "Открыть коллекцию душ",
+  "key.soulcatcherplus.command_wheel": "Колесо команд напарникам (удерживать)",
+  "wheel.soulcatcherplus.title": "Приказы напарникам",
+  "wheel.soulcatcherplus.active": "Призвано: %s",
+  "wheel.soulcatcherplus.health": "%s / %s HP",
+  "wheel.soulcatcherplus.unloaded": "HP неизвестно",
+  "wheel.soulcatcherplus.unloaded_hint": "Напарник не загружен. Доступен только отзыв.",
+  "wheel.soulcatcherplus.hint": "Наведи на напарника, затем на команду. Отпусти %s для приказа; центр или область вне колеса — отмена.",
+  "wheel.soulcatcherplus.loading": "Загрузка напарников…",
+  "wheel.soulcatcherplus.empty": "Нет призванных напарников",
+  "wheel.soulcatcherplus.page": "Колесо мыши: %s / %s"
 }

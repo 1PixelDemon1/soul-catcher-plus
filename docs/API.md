@@ -119,7 +119,7 @@ public CompoundTag previewData(CompoundTag snapshot) {
 ```
 
 Do not send the complete saved entity. The server only answers owned-entry preview
-requests while the player holds the scythe, strips identity and Forge persistent
+requests from a living, non-spectator owner, strips identity and Forge persistent
 data/capabilities, and limits serialized visual data to 16 KiB. Larger/invalid visual
 data falls back to default entity appearance. Complex nested custom state should
 be reduced to the fields that the renderer actually needs.
@@ -128,13 +128,45 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-The collection UI and departure effects use protocol **4**, so clients and servers must update together.
+Current development uses protocol **5** for collection, wheel and departure messages;
+clients and servers must update together. Released 0.1.0 artifacts remain on protocol 4.
 
 The collection screen pauses an unpublished integrated singleplayer server.
 Recovery remains authoritative on world game time; cosmetic screen ticks do not
 advance its displayed countdown. Packet-rate limits use a session-only monotonic
 clock so requests remain usable while world time is frozen. Dedicated servers and
 LAN sessions retain Minecraft's normal non-pausing behavior.
+
+## Key-bound collection and command wheel
+
+Client-only `ClientControls` registers remappable defaults O (collection) and held R
+(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus and owned preview
+requests work without a held scythe. `SoulService.summon` still applies the held
+scythe rules; viewing or issuing orders does not grant summon capacity.
+
+The wheel opens locally and receives update-only `WheelState` packets: late replies
+cannot reopen it after release. Hovering the inner ring selects an active entry;
+hovering the outer ring arms a command. Releasing the trigger commits only the
+currently hovered enabled command. Center, ring gaps, outside, Escape, lost focus,
+death, disconnect or a changed client level close without executing an armed action.
+It is a non-pausing screen, unlike the collection.
+
+Minecraft clears key states on screen opening and deactivates IN_GAME key contexts.
+The wheel therefore handles matching keyboard/mouse release events in the screen
+and polls physical keys/buttons as a fallback. Scancodes use matching input events
+instead of being treated as GLFW keycodes. Closing with a still-held trigger blocks
+wheel reopening until release; it does not block the collection shortcut.
+
+`WheelState` contains energy and active entries only, with current/max HP read from
+loaded, canonically owned mobs. Unloaded entries carry explicit unknown health;
+menu snapshots never load chunks. Refreshes are throttled to 250 ms per player
+using session monotonic time, with a separate 100 ms command throttle.
+
+`SoulService.commandOne(player, entryId, mode)` looks up the entry in that player's
+ledger and shares command application with collection orders. Loaded entity UUID,
+owner and entry identity are checked. Wheel orders never modify `selected` or
+`commandGroup`; a single order cannot silently become a group order. Recall also
+works for an unloaded active reservation through the normal ledger invalidation.
 
 ## Departure effects
 

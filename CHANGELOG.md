@@ -3,8 +3,11 @@
 ## Unreleased
 
 - Fix intermittent companion following caused by checking global mob ticks from a goal that may execute only on odd ticks. Use a goal-local path timer and request movement immediately when the goal starts; preserve native combat and command behavior.
+- Add configurable O and held-R key bindings for the full collection and a non-pausing command wheel, replacing Shift + right-click menu opening. Menus work without a held scythe; new summons still require one.
+- Display soul energy, active companion names, live HP and current orders in the wheel. Hover a companion and a command, then release the trigger to issue an individual follow/wait/guard/recall order; release in the center or outside, or Escape/focus loss, cancels.
+- Use bounded active-only server snapshots with explicit unknown health for unloaded companions, per-entry ownership validation, and independent wheel requests that preserve collection selection/group scope. Use network protocol 5; released 0.1.0 remains protocol 4.
 
-Source review only; this fix has not been built or tested in-game.
+The user confirmed the following fix in-game. The new key bindings and command wheel have only received source review: no build, compilation, tests or game launch was run for these changes.
 
 ## 0.1.0+1.20.1 — 2026-10-25
 

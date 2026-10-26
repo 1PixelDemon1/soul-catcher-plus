@@ -26,10 +26,7 @@ public final class SoulEvents {
     public static void interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
         if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return;
         net.minecraft.world.InteractionResult result;
-        if (event.getEntity().isShiftKeyDown()) {
-            if (event.getEntity() instanceof ServerPlayer player) SoulService.open(player);
-            result = net.minecraft.world.InteractionResult.sidedSuccess(event.getLevel().isClientSide);
-        } else if (event.getTarget() instanceof LivingEntity living) {
+        if (event.getTarget() instanceof LivingEntity living) {
             result = scythe.interactLivingEntity(event.getItemStack(), event.getEntity(), living, event.getHand());
         } else return;
         if (result != net.minecraft.world.InteractionResult.PASS) {

@@ -115,16 +115,31 @@ public final class SoulService {
     public static void command(ServerPlayer player, CompanionBrain.Mode mode) {
         PlayerSouls collection = data(player);
         collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
-            .filter(e -> e.activeEntity != null).forEach(e -> {
-                Entity entity = player.serverLevel().getEntity(e.activeEntity);
-                if (entity instanceof Mob mob) {
-                    mob.setTarget(null);
-                    mob.getPersistentData().putString(CompanionBrain.MODE, mode.name());
-                    mob.getPersistentData().putLong("scp_guard", player.blockPosition().asLong());
-                    mob.getNavigation().stop();
-                }
-            });
+            .forEach(e -> applyCommand(player, e, mode));
         changed(player);
+    }
+    /** Address one owned entry without changing the collection's selected species or group scope. */
+    public static void commandOne(ServerPlayer player, UUID id, CompanionBrain.Mode mode) {
+        SoulEntry entry = data(player).entries.get(id);
+        if (entry != null && applyCommand(player, entry, mode)) changed(player);
+    }
+    /** Resolve canonical ownership without loading a chunk for a menu request. */
+    public static Mob activeMob(ServerPlayer player, SoulEntry entry) {
+        Entity entity = entry.activeEntity == null ? null : player.serverLevel().getEntity(entry.activeEntity);
+        if (!(entity instanceof Mob mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob)
+                || !player.getUUID().equals(CompanionBrain.owner(mob))
+                || !mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)
+                || !entry.id.equals(mob.getPersistentData().getUUID(CompanionBrain.ENTRY))) return null;
+        return mob;
+    }
+    private static boolean applyCommand(ServerPlayer player, SoulEntry entry, CompanionBrain.Mode mode) {
+        Mob mob = activeMob(player, entry);
+        if (mob == null) return false;
+        mob.setTarget(null);
+        mob.getPersistentData().putString(CompanionBrain.MODE, mode.name());
+        mob.getPersistentData().putLong("scp_guard", player.blockPosition().asLong());
+        mob.getNavigation().stop();
+        return true;
     }
     public static void attack(ServerPlayer player, LivingEntity target) {
         PlayerSouls collection = data(player);
