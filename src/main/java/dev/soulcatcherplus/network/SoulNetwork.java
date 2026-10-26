@@ -161,6 +161,9 @@ public final class SoulNetwork {
     public static void ghost(ServerPlayer player, Entity entity) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
     }
+    public static void ghost(Entity entity) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
+    }
     public static void dissolve(Mob mob) {
         if (mob.level().isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
         mob.getPersistentData().putBoolean("scp_dissolving", true);

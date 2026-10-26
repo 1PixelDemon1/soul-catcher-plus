@@ -185,6 +185,71 @@ owner and entry identity are checked. Wheel orders never modify `selected` or
 `commandGroup`; a single order cannot silently become a group order. Recall also
 works for an unloaded active reservation through the normal ledger invalidation.
 
+## Summoned minions
+
+`SoulMinions` discovers Mob descendants through `SoulAdapter.summoner(mob)`. Its
+default follows `TraceableEntity.getOwner()` and `OwnableEntity` ownership. Because
+the default `OwnableEntity.getOwner()` resolves players only, a null result also
+tries the owner UUID among loaded entities in the same server level. Discovery
+requires a chain reaching a marked companion; player-owned pets and unrelated
+nearby mobs are not adopted. Traversal stops on cycles, dimension boundaries or
+after 32 creators. No reflection, proximity guessing or chunk loading is used.
+
+The child stores player `scp_owner`, collection `scp_entry` and a separate
+`scp_minion_root` UUID in entity persistent data. `CompanionBrain.activeEntry(mob)`
+validates the root UUID against the canonical reservation, rather than comparing
+the child's UUID. Nested summons flatten to the same root. Children never become
+collection entries or consume slots, and cannot be captured or refunded. Their
+own deaths give no soul energy, drops or XP; their enemy kills credit the player.
+Right-clicking an owned child with the scythe selects its root collection entry.
+
+Discovery runs on join, periodically on living ticks, and at target/combat and
+interaction boundaries to handle creators assigned after insertion. Attachment
+only changes metadata and sends the existing Ghost packet to current trackers.
+Target-selector configuration runs on join or before AI on a living tick, never
+while a target/attack callback might be iterating goals. A transient weak-key set
+prevents repeated configuration without retaining entity instances or save state.
+Existing tracking synchronization supplies the spectral tint; the wire protocol
+remains 6.
+
+`configureMinion(mob)` defaults to clearing only `targetSelector`; native movement
+and attack goals remain. Every five ticks a loaded root's permitted target is
+inherited; WAIT clears combat. Independent native Brain/custom attacks can need
+an adapter, while the shared target and damage guards still reject allies.
+Vex native owner and idle origin are restored to the loaded root without changing
+its limited lifespan. A valid but unloaded root leaves the child idle instead of
+being mistaken for death. The root link survives disk reload even though vanilla
+Vex does not save its own owner reference.
+An old, unmarked Vex loaded from a save that already lost its native owner cannot
+be safely adopted retroactively; check the feature with newly created minions.
+
+Root recall, death or permanent removal invalidates its reservation and dissolves
+loaded descendants. Unloaded descendants fail validation on their next load.
+Chunk unload/dimension-transfer removal reasons do not end a root reservation.
+Permanent root removal without a living-death event (for example a creeper's own
+explosion) now ends the reservation with the normal defeat cooldown and no refund.
+Minion death never changes the root cooldown or active identity.
+
+For a custom child type, extend its adapter's creator resolver:
+
+```java
+@Override
+public Entity summoner(Mob mob) {
+    return ((TheirMinion) mob).getCaster(); // Integration owns this dependency.
+}
+```
+
+Alternatively call `SoulMinions.attach(child, creator)` on the server thread,
+before insertion or after the creator becomes known. Existing companions/minions
+are not reassigned. Unknown/cyclic/cross-level creators return false unchanged;
+a recognized but invalidated root marks and discards its stale child and returns
+false. Do not load chunks or mutate AI in `summoner`. Override `configureMinion`
+for nonstandard target selection and `tickMinion(minion, root)` for native owner
+restoration or other integration work. The latter runs every five server ticks
+only while the root is loaded, after common target inheritance. Fully custom
+spawning with no exposed creator still needs an explicit integration; automatic
+compatibility with every mod is not promised.
+
 ## Departure effects
 
 Companion death and recall send a tracking-client departure message before normal

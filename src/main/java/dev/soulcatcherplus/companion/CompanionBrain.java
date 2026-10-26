@@ -20,6 +20,13 @@ public final class CompanionBrain {
     public enum Mode { FOLLOW, WAIT, GUARD }
     public static boolean isSoul(Entity entity) { return entity.getPersistentData().hasUUID(OWNER); }
     public static UUID owner(Entity entity) { return entity.getPersistentData().getUUID(OWNER); }
+    /** Roots own the active UUID; minions validate their separately persisted root UUID. */
+    public static SoulEntry activeEntry(Mob mob) {
+        if (!isSoul(mob) || mob.getServer() == null || !mob.getPersistentData().hasUUID(ENTRY)) return null;
+        SoulEntry entry = SoulLedger.get(mob.getServer()).player(owner(mob)).entries.get(mob.getPersistentData().getUUID(ENTRY));
+        UUID root = SoulMinions.isMinion(mob) ? mob.getPersistentData().getUUID(SoulMinions.ROOT) : mob.getUUID();
+        return entry != null && root.equals(entry.activeEntity) ? entry : null;
+    }
     public static Mode mode(Mob mob) {
         try { return Mode.valueOf(mob.getPersistentData().getString(MODE)); }
         catch (IllegalArgumentException e) { return Mode.FOLLOW; }
@@ -28,7 +35,7 @@ public final class CompanionBrain {
         UUID owner = owner(mob);
         if (other.getUUID().equals(owner)) return true;
         if (isSoul(other) && owner(other).equals(owner)) return true;
-        if (other instanceof TamableAnimal tame && owner.equals(tame.getOwnerUUID())) return true;
+        if (other instanceof OwnableEntity tame && owner.equals(tame.getOwnerUUID())) return true;
         ServerPlayer player = mob.getServer() == null ? null : mob.getServer().getPlayerList().getPlayer(owner);
         return player != null && player.isAlliedTo(other);
     }
@@ -47,10 +54,13 @@ public final class CompanionBrain {
     }
     public static void tick(Mob mob) {
         if (mob.level().isClientSide || mob.tickCount % 5 != 0) return;
-        SoulLedger ledger = SoulLedger.get(mob.getServer());
-        PlayerSouls collection = ledger.player(owner(mob));
-        SoulEntry entry = collection.entries.get(mob.getPersistentData().getUUID(ENTRY));
-        if (entry == null || !mob.getUUID().equals(entry.activeEntity)) { mob.discard(); return; }
+        SoulEntry entry = activeEntry(mob);
+        if (entry == null) { mob.discard(); return; }
+        if (SoulMinions.isMinion(mob)) {
+            if (!mob.isAlive()) mob.discard();
+            else SoulMinions.tick(mob);
+            return;
+        }
         SoulBossBars.suppress(mob);
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
         if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }

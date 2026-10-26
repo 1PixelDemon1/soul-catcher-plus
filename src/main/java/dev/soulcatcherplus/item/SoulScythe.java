@@ -30,6 +30,7 @@ public final class SoulScythe extends SwordItem {
     @Override public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
         if (!(target instanceof Mob mob)) return InteractionResult.PASS;
         if (player instanceof ServerPlayer server) {
+            SoulMinions.tryInherit(mob);
             PlayerSouls collection = SoulService.data(server);
             if (CompanionBrain.isSoul(mob)) {
                 if (CompanionBrain.owner(mob).equals(server.getUUID())) {

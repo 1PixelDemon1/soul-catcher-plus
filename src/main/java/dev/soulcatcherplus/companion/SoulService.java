@@ -67,14 +67,17 @@ public final class SoulService {
             entry.activeEntity = mob.getUUID();
             entry.dimension = player.level().dimension().location().toString();
             if (!player.serverLevel().addFreshEntity(mob)) {
-                entry.activeEntity = null; entry.dimension = ""; return;
+                entry.activeEntity = null; entry.dimension = "";
+                SoulMinions.dismiss(player.server, mob.getUUID());
+                return;
             }
             data(player).energy -= entry.cost;
             changed(player);
             message(player, "summoned", entry.name);
         } catch (RuntimeException error) {
-            if (created.isAddedToWorld()) created.discard();
             entry.activeEntity = null; entry.dimension = "";
+            if (created.isAddedToWorld()) created.discard();
+            SoulMinions.dismiss(player.server, created.getUUID());
             com.mojang.logging.LogUtils.getLogger().error("Unable to summon {}", entry.entityType, error);
             message(player, "unsupported");
         }
@@ -122,6 +125,7 @@ public final class SoulService {
             ledger.setDirty();
             break;
         }
+        SoulMinions.dismiss(server, active);
     }
     public static void recallAll(ServerPlayer player) {
         data(player).entries.values().forEach(e -> recall(player.server, e));
