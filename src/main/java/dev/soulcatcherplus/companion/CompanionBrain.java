@@ -88,6 +88,7 @@ public final class CompanionBrain {
     private static final class FollowOwnerGoal extends Goal {
         private final Mob mob;
         private ServerPlayer player;
+        private int ticksUntilRepath;
         FollowOwnerGoal(Mob mob) { this.mob = mob; setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         public boolean canUse() {
             player = mob.getServer().getPlayerList().getPlayer(owner(mob));
@@ -95,12 +96,17 @@ public final class CompanionBrain {
                 && (mode(mob) == Mode.GUARD || mob.distanceToSqr(player) > 4 * 4);
         }
         public boolean canContinueToUse() { return canUse(); }
+        public void start() { ticksUntilRepath = 0; }
         public void stop() { mob.getNavigation().stop(); }
         public void tick() {
             BlockPos destination = mode(mob) == Mode.GUARD
                 ? BlockPos.of(mob.getPersistentData().getLong("scp_guard")) : player.blockPosition();
-            if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(destination.getX() + 0.5,
-                destination.getY(), destination.getZ() + 0.5, 1.1);
+            // Goals can tick only on odd mob ticks, so a global % 10 check can miss every update.
+            if (--ticksUntilRepath <= 0) {
+                ticksUntilRepath = adjustedTickDelay(10);
+                mob.getNavigation().moveTo(destination.getX() + 0.5,
+                    destination.getY(), destination.getZ() + 0.5, 1.1);
+            }
             if (mode(mob) == Mode.FOLLOW && mob.distanceToSqr(player) > 24 * 24) {
                 for (int i = 0; i < 12; i++) {
                     BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);

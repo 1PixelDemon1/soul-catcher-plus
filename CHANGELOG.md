@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-No changes yet.
+- Fix intermittent companion following caused by checking global mob ticks from a goal that may execute only on odd ticks. Use a goal-local path timer and request movement immediately when the goal starts; preserve native combat and command behavior.
+
+Source review only; this fix has not been built or tested in-game.
 
 ## 0.1.0+1.20.1 — 2026-10-25
 
