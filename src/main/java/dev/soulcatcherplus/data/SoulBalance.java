@@ -4,7 +4,7 @@ package dev.soulcatcherplus.data;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
-/** Shared integer economy: charge upward, reward downward, never below one. */
+/** Shared integer economy: round costs upward and energy returns downward. */
 public final class SoulBalance {
     public static double health(double maxHealth) {
         return Double.isFinite(maxHealth) && maxHealth > 0 ? maxHealth : 1;
@@ -14,6 +14,10 @@ public final class SoulBalance {
     }
     public static int victoryEnergy(double maxHealth) {
         return Math.max(1, (int)Math.floor(health(maxHealth) / 2));
+    }
+    public static int recallEnergy(double currentHealth) {
+        if (!Double.isFinite(currentHealth) || currentHealth <= 0) return 0;
+        return (int)Math.floor(currentHealth / 2);
     }
 
     /** Best-effort migration for old entries that stored attributes but no max-health field. */

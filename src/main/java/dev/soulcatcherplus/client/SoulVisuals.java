@@ -3,15 +3,41 @@ package dev.soulcatcherplus.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.soulcatcherplus.api.client.SoulVisualProvider;
+import dev.soulcatcherplus.companion.CompanionBrain;
 import java.util.*;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 public final class SoulVisuals {
     @FunctionalInterface interface VertexFade { float opacity(double x, double y, double z); }
     private static final Map<ResourceLocation, SoulVisualProvider> PROVIDERS = new HashMap<>();
     public static void register(ResourceLocation entityType, SoulVisualProvider provider) {
         PROVIDERS.put(entityType, provider);
+    }
+    /** Called by the client dispatcher hook; the echo replaces the departing world model. */
+    public static boolean hideDepartingSoul(Entity entity) {
+        return !SoulDissolves.renderingEcho() && SoulDissolves.contains(entity.getUUID());
+    }
+    /** Adapts the native renderer's buffers without rerendering or depending on its implementation. */
+    public static <T extends Entity> MultiBufferSource companionBuffers(T entity, MultiBufferSource buffers) {
+        // Dissolve echoes already supply their own tint and per-vertex fade.
+        if (SoulDissolves.renderingEcho()) return buffers;
+        // A renderer can dispatch another entity using its supplied source. Apply that entity's
+        // texture/provider from the raw source, rather than stacking the parent's color and alpha.
+        MultiBufferSource source = buffers instanceof CompanionBuffers spectral ? spectral.delegate() : buffers;
+        if (!CompanionBrain.isSoul(entity)) return source;
+        var renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+        ResourceLocation texture = renderer.getTextureLocation(entity);
+        ResourceLocation type = entity.getType().builtInRegistryHolder().key().location();
+        return new CompanionBuffers(source, type, texture);
+    }
+    private record CompanionBuffers(MultiBufferSource delegate, ResourceLocation type,
+            ResourceLocation texture) implements MultiBufferSource {
+        @Override public VertexConsumer getBuffer(RenderType original) {
+            return tint(delegate.getBuffer(remap(type, texture, original)));
+        }
     }
     static RenderType remap(ResourceLocation type, ResourceLocation texture, RenderType original) {
         SoulVisualProvider provider = PROVIDERS.get(type);

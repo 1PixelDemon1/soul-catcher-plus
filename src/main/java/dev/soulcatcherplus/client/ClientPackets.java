@@ -10,7 +10,12 @@ public final class ClientPackets {
     public static void open(SoulNetwork.State state) {
         Minecraft client = Minecraft.getInstance();
         if (client.screen instanceof SoulScreen screen) screen.update(state);
-        else if (state.openScreen()) client.setScreen(new SoulScreen(state));
+        else if (state.openScreen() && client.screen == null && ClientControls.canUseMenus(client))
+            client.setScreen(new SoulScreen(state));
+    }
+    public static void wheel(SoulNetwork.WheelState state) {
+        // A late response must never reopen a wheel after its trigger was released.
+        if (Minecraft.getInstance().screen instanceof SoulWheelScreen screen) screen.update(state);
     }
     public static void ghost(SoulNetwork.Ghost state) {
         Minecraft client = Minecraft.getInstance();

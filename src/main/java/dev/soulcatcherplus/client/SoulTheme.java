@@ -8,6 +8,10 @@ final class SoulTheme {
     static final int INK = 0xFF0B131C, PANEL = 0xFF101E28, BORDER = 0xFF2B454B;
     static final int LIGHT = 0xFFE4F0E9, MUTED = 0xFF89A5A4, TEAL = 0xFF7BE2C9;
     static final int GOLD = 0xFFC6AA76, RED = 0xFFD58F82;
+    private static final String[] STAR = {
+        "....#....", "...###...", "...###...", "#########", ".#######.",
+        "..#####..", "..#####..", ".###.###.", ".##...##."
+    };
 
     static void panel(GuiGraphics g, int x, int y, int w, int h) {
         g.fillGradient(x, y, x + w, y + h, PANEL, INK);
@@ -25,6 +29,18 @@ final class SoulTheme {
             int half = radius - Math.abs(offset);
             g.fill(x - half, y + offset, x + half + 1, y + offset + 1, color);
         }
+    }
+    static void star(GuiGraphics g, int x, int y, int color, boolean filled) {
+        int left = x - STAR[0].length() / 2, top = y - STAR.length / 2;
+        for (int row = 0; row < STAR.length; row++) for (int column = 0; column < STAR[row].length(); column++) {
+            if (!starPixel(column, row)) continue;
+            if (filled || !starPixel(column - 1, row) || !starPixel(column + 1, row)
+                    || !starPixel(column, row - 1) || !starPixel(column, row + 1))
+                g.fill(left + column, top + row, left + column + 1, top + row + 1, color);
+        }
+    }
+    private static boolean starPixel(int x, int y) {
+        return y >= 0 && y < STAR.length && x >= 0 && x < STAR[y].length() && STAR[y].charAt(x) == '#';
     }
     static void line(GuiGraphics g, float x1, float y1, float x2, float y2, int color) {
         int steps = Math.max(1, (int) Math.ceil(Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1))));

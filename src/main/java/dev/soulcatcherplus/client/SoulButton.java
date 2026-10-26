@@ -8,7 +8,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 final class SoulButton extends AbstractButton {
-    enum Style { PRIMARY, SUBTLE, DANGER, CARD }
+    enum Style { PRIMARY, SUBTLE, DANGER, CARD, FAVORITE }
     private final Runnable action;
     private final Style style;
     private Component subtitle = Component.empty();
@@ -33,7 +33,7 @@ final class SoulButton extends AbstractButton {
     @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         var font = Minecraft.getInstance().font;
         boolean hover = isHoveredOrFocused();
-        int accent = style == Style.DANGER ? SoulTheme.RED : SoulTheme.TEAL;
+        int accent = style == Style.FAVORITE ? SoulTheme.GOLD : style == Style.DANGER ? SoulTheme.RED : SoulTheme.TEAL;
         int border = active && (hover || selected) ? accent : SoulTheme.BORDER;
         int top = style == Style.PRIMARY ? 0xFF214A4B : 0xFF172C35;
         if (selected) top = 0xFF203E43;
@@ -47,6 +47,9 @@ final class SoulButton extends AbstractButton {
             g.drawString(font, title, getX() + 9, getY() + 7, color, false);
             g.drawString(font, fit(subtitle.getString(), width - 18), getX() + 9, getY() + 23, SoulTheme.MUTED, false);
             if (lit) SoulTheme.diamond(g, getX() + width - 10, getY() + 10, 2, SoulTheme.TEAL);
+        } else if (style == Style.FAVORITE) {
+            SoulTheme.star(g, getX() + width / 2, getY() + height / 2,
+                selected ? SoulTheme.GOLD : hover ? SoulTheme.LIGHT : SoulTheme.MUTED, selected);
         } else {
             g.drawCenteredString(font, Component.literal(fit(getMessage().getString(), width - 10)),
                 getX() + width / 2, getY() + (height - 8) / 2, color);

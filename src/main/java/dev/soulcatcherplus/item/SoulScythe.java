@@ -27,20 +27,10 @@ public final class SoulScythe extends SwordItem {
         if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;
         return player.getOffhandItem().getItem() instanceof SoulScythe scythe ? scythe : null;
     }
-    @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (player.isShiftKeyDown()) {
-            if (player instanceof ServerPlayer server) SoulService.open(server);
-            return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
-        }
-        return InteractionResultHolder.pass(player.getItemInHand(hand));
-    }
     @Override public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-        if (player.isShiftKeyDown()) {
-            if (player instanceof ServerPlayer server) SoulService.open(server);
-            return InteractionResult.sidedSuccess(player.level().isClientSide);
-        }
         if (!(target instanceof Mob mob)) return InteractionResult.PASS;
         if (player instanceof ServerPlayer server) {
+            SoulMinions.tryInherit(mob);
             PlayerSouls collection = SoulService.data(server);
             if (CompanionBrain.isSoul(mob)) {
                 if (CompanionBrain.owner(mob).equals(server.getUUID())) {

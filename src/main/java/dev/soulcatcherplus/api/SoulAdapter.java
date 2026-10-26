@@ -4,6 +4,7 @@ package dev.soulcatcherplus.api;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.Entity;
 
 /**
  * Server-side extension for an original entity type. Implementations must not
@@ -36,5 +37,13 @@ public interface SoulAdapter {
     }
     /** Optional support for nonstandard AI; called every five server ticks. */
     default void tick(Mob mob, ServerPlayer owner) {}
+    /** Immediate creator, or null if unknown. Must not load chunks or guess from nearby mobs. */
+    default Entity summoner(Mob mob) {
+        return dev.soulcatcherplus.companion.SoulMinions.defaultSummoner(mob);
+    }
+    /** Preserve native movement/attack goals while replacing independent victim selection. */
+    default void configureMinion(Mob mob) { mob.targetSelector.removeAllGoals(goal -> true); }
+    /** Called every five server ticks with the loaded root companion, after target inheritance. */
+    default void tickMinion(Mob minion, Mob root) {}
     default void onRecall(Mob mob, ServerPlayer owner) {}
 }

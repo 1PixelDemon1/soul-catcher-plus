@@ -4,5 +4,6 @@
   "package": "dev.soulcatcherplus.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": ["MowzieAreaTargetsMixin", "CompanionBossBarMixin"],
+  "client": ["client.SoulEntityRenderMixin"],
   "injectors": {"defaultRequire": 1}
 }
