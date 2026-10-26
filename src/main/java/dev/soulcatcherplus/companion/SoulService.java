@@ -94,19 +94,34 @@ public final class SoulService {
     }
     public static void recall(MinecraftServer server, SoulEntry entry) {
         if (entry.activeEntity == null) return;
+        SoulLedger ledger = SoulLedger.get(server);
         UUID active = entry.activeEntity;
         entry.activeEntity = null; entry.dimension = "";
+        // Invalidate before adapter callbacks, so repeated/reentrant recalls cannot refund twice.
+        ledger.setDirty();
         // Unloaded entities are invalidated now and discarded when their chunk loads.
         for (ServerLevel level : server.getAllLevels()) {
             Entity entity = level.getEntity(active);
-            if (entity instanceof Mob mob) {
-                ServerPlayer owner = server.getPlayerList().getPlayer(CompanionBrain.owner(mob));
+            if (!(entity instanceof Mob mob) || !CompanionBrain.isSoul(mob)
+                    || !mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)
+                    || !entry.id.equals(mob.getPersistentData().getUUID(CompanionBrain.ENTRY))) continue;
+            UUID ownerId = CompanionBrain.owner(mob);
+            PlayerSouls collection = ledger.player(ownerId);
+            if (collection.entries.get(entry.id) != entry) continue;
+            // Capture current HP before an integration's cleanup can change the mob.
+            int refund = mob.isAlive() ? SoulBalance.recallEnergy(mob.getHealth()) : 0;
+            ServerPlayer owner = server.getPlayerList().getPlayer(ownerId);
+            try {
                 if (owner != null) SoulAdapters.get(mob).onRecall(mob, owner);
-                SoulNetwork.dissolve(mob);
-                mob.discard();
+            } catch (RuntimeException error) {
+                com.mojang.logging.LogUtils.getLogger().warn("Failed soul recall cleanup: {}", entry.entityType, error);
             }
+            SoulNetwork.dissolve(mob);
+            mob.discard();
+            collection.energy = (int)Math.min(Integer.MAX_VALUE, (long)collection.energy + refund);
+            ledger.setDirty();
+            break;
         }
-        SoulLedger.get(server).setDirty();
     }
     public static void recallAll(ServerPlayer player) {
         data(player).entries.values().forEach(e -> recall(player.server, e));

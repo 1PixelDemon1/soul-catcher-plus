@@ -42,6 +42,8 @@ Lifecycle:
 6. `tick(mob, owner)`: every five server ticks. Avoid resetting native animations.
 7. `onRecall(mob, owner)`: optional cleanup for loaded entities. Unloaded entities
    are invalidated in the ledger and rejected when their chunk next loads.
+   The core samples the refund from current HP before this callback. A cleanup
+   `RuntimeException` is logged and does not prevent removal or the refund.
 
 All callbacks run on the server thread. Do not access client classes here.
 Do not call `configureCompanion` repeatedly each tick or retain entity references globally.
@@ -195,8 +197,18 @@ is created; ordinary kill energy is a separate reward.
 
 `SoulBalance` uses maximum health in health points: summon cost is `ceil(maxHP * 2)`
 and credited kill energy is `floor(maxHP / 2)`, both at least one. Invalid maximum
-health is treated as one. Current dying health is never used. Companion deaths
+health is treated as one. Kill rewards never use current dying health. Companion deaths
 give no energy; collecting an already owned form gives no second kill reward.
+
+Recall returns `floor(currentHP / 2)` energy from a living, loaded companion after
+checking its active UUID, owner and entry identity. Unlike kill rewards, this has
+no minimum: HP below two returns zero; invalid/nonfinite health also returns zero.
+Current HP is read before adapter cleanup; the active reservation is invalidated
+before callbacks to prevent duplicate refunds. Credits are capped at `Integer.MAX_VALUE`
+and saved to the owner's ledger even if the owner is offline. The shared recall
+path covers single, group and automatic recalls; companion death gives no refund.
+Unloaded/missing entities are invalidated without a refund or chunk loading because
+their current health is unknown. No save-schema or network-protocol change is needed.
 
 `SoulEntry` now takes maximum health as its final constructor argument, replacing
 the old cost/slots pair. It stores `MaxHealth` and derives `cost` from that value.
