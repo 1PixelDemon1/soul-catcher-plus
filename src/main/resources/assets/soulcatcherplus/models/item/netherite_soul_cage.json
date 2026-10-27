@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "soulcatcherplus:item/soul_cage",
   "textures": {
     "layer0": "soulcatcherplus:item/netherite_soul_cage"
   }

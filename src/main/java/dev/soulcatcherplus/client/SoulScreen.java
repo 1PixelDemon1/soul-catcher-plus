@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
+import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.SummonRules;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
@@ -230,7 +231,7 @@ public final class SoulScreen extends Screen {
         SoulTheme.diamond(g, 31, 29, 4, SoulTheme.TEAL);
         g.drawString(font, title, 50, 19, SoulTheme.LIGHT, false);
         g.drawString(font, text("subtitle"), 50, 34, SoulTheme.MUTED, false);
-        metric(g, 333, 119, text(state.cageSlot() < 0 ? "cage_missing" : "cage_slot", state.cageSlot() + 1),
+        metric(g, 333, 119, SoulCages.location(state.cageSlot()),
             state.cageCapacity() == 0 ? "—" : state.energy() + " / " + state.cageCapacity(), SoulTheme.TEAL);
         metric(g, 460, 125, text("capacity_label"), state.activeCount() + " / " + state.summonLimit(), SoulTheme.GOLD);
         SoulTheme.panel(g, 18, 60, 156, 240);

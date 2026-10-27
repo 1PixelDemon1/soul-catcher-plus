@@ -199,7 +199,7 @@ and polls physical keys/buttons as a fallback. Scancodes use matching input even
 instead of being treated as GLFW keycodes. Closing with a still-held trigger blocks
 wheel reopening until release; it does not block the collection shortcut.
 
-`WheelState` contains active cage energy/capacity/hotbar slot and active entries, with current/max HP read from
+`WheelState` contains active cage energy/capacity/inventory slot and active entries, with current/max HP read from
 loaded, canonically owned mobs. Unloaded entries carry explicit unknown health;
 menu snapshots never load chunks. Refreshes are throttled to 250 ms per player
 using session monotonic time, with a separate 100 ms command throttle.
@@ -332,7 +332,7 @@ checking its active UUID, owner and entry identity. Unlike kill rewards, this ha
 no minimum: HP below two returns zero; invalid/nonfinite health also returns zero.
 Current HP is read before adapter cleanup; the active reservation is invalidated
 before callbacks to prevent duplicate refunds. Credits fill the owner's hotbar
-cages from left to right. Without an available owner inventory or free cage space,
+cages from left to right, then the offhand cage. Without an available owner inventory or free cage space,
 the refund cannot be stored. `recallAll(player)` supplies its player directly for
 logout and death handling. The shared recall
 path covers single, group and automatic recalls; companion death gives no refund.
@@ -369,10 +369,10 @@ the bounded `SoulEnergy` integer in the item tag. Reads never create NBT. Vanill
 smithing transformation copies the diamond cage's tag into the netherite result,
 preserving stored energy and custom names. Netherite cages are fire-resistant.
 
-`SoulCages.active(player)` scans inventory slots 0–8, returning the first cage's
-slot and actual stack, or slot -1/EMPTY. It never skips an empty/full/undersized
-cage for a later one. Offhand, armor, other inventory slots and modded accessory
-slots do not participate. Harvest marking and remnant collection require a cage;
+`SoulCages.active(player)` scans inventory slots 0–8, then `Inventory.SLOT_OFFHAND`
+(40), returning the first cage's slot and actual stack, or slot -1/EMPTY. It never
+skips an empty/full/undersized hotbar cage for a later cage or the offhand. Armor,
+other inventory slots and modded accessory slots do not participate. Harvest marking and remnant collection require a cage;
 merely viewing menus or commanding existing companions does not. Soul capture
 does not spend cage energy or require spare capacity.
 
@@ -383,13 +383,22 @@ and restores the exact charged stack if spawning fails. The shared
 `SummonRules.context(collection, limit, energy, cageCapacity, gameTime)` provides
 both the server decision and menu state, including NO_CAGE and CAGE_TOO_SMALL.
 
-`SoulCages.credit(player, amount)` fills all hotbar cages from left to right and
-returns the accepted amount. Kill rewards and recall refunds use this same path;
+`SoulCages.credit(player, amount)` fills all hotbar cages from left to right, then
+the offhand, and returns the accepted amount. Selection and crediting share one
+ordered slot list. Kill rewards and recall refunds use this same path;
 any remainder after all cages are full is lost. `set(player, amount)` changes
 only the active cage and clamps to its capacity. Server callers mutate inventory
 and let the normal inventory synchronization carry NBT changes to clients.
 The admin `/soulcatcher energy <amount>` command sets that active cage, reports
-the actual bounded result and requires a hotbar cage.
+the actual bounded result and requires a hotbar or offhand cage.
+`SoulCages.location(slot)` supplies the translated location to both menu headers
+and the command reply, so offhand slot 40 is never presented as hotbar slot 41.
+The packet fields remain unchanged; the protocol stays at 9.
+
+All four item models inherit `item/soul_cage`, which supplies distinct first- and
+third-person transforms for both hands. Third-person rotation cancels the held
+layer's flat-item tilt; translation anchors the top chain texel at the fist.
+GUI, ground and fixed transforms continue to inherit the ordinary generated item.
 
 `PlayerSouls` no longer exposes or saves an energy balance. Schema 3 deliberately
 ignores old `Energy` fields: the user requested no legacy resource transfer.

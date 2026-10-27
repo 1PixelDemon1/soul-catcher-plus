@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.List;
 import java.util.Locale;
@@ -164,8 +165,7 @@ public final class SoulWheelScreen extends Screen {
         sector(g, 0, 58, 0, TAU, SoulTheme.INK);
         SoulTheme.ellipse(g, CX, CY, 58, 58, SoulTheme.GOLD);
         g.drawCenteredString(font, state == null ? Component.translatable("screen.soulcatcherplus.energy")
-            : Component.translatable("screen.soulcatcherplus." + (state.cageSlot() < 0 ? "cage_missing" : "cage_slot"),
-                state.cageSlot() + 1), CX, CY - 21, SoulTheme.MUTED);
+            : SoulCages.location(state.cageSlot()), CX, CY - 21, SoulTheme.MUTED);
         g.drawCenteredString(font, state == null ? "…" : state.cageCapacity() == 0 ? "—"
             : state.energy() + " / " + state.cageCapacity(), CX, CY - 3, SoulTheme.TEAL);
         g.drawCenteredString(font, text("active", state == null ? "—" : state.companions().size()), CX, CY + 17, SoulTheme.MUTED);

@@ -2,23 +2,31 @@
 package dev.soulcatcherplus.companion;
 
 import dev.soulcatcherplus.item.SoulCage;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-/** One hotbar rule shared by collection, summoning, rewards and menu snapshots. */
+/** Hotbar cages take priority; the offhand is last for both selection and incoming energy. */
 public final class SoulCages {
+    private static final int[] SLOTS = {0, 1, 2, 3, 4, 5, 6, 7, 8, Inventory.SLOT_OFFHAND};
     public record Active(int slot, ItemStack stack) {
         public boolean present() { return slot >= 0; }
         public int energy() { return SoulCage.energy(stack); }
         public int capacity() { return SoulCage.capacity(stack); }
     }
     public static Active active(Player player) {
-        for (int slot = 0; slot < 9; slot++) {
+        for (int slot : SLOTS) {
             ItemStack stack = player.getInventory().getItem(slot);
             if (stack.getItem() instanceof SoulCage) return new Active(slot, stack);
         }
         return new Active(-1, ItemStack.EMPTY);
+    }
+    public static Component location(int slot) {
+        if (slot < 0) return Component.translatable("screen.soulcatcherplus.cage_missing");
+        if (slot == Inventory.SLOT_OFFHAND) return Component.translatable("screen.soulcatcherplus.cage_offhand");
+        return Component.translatable("screen.soulcatcherplus.cage_slot", slot + 1);
     }
     public static boolean spend(ServerPlayer player, int amount) {
         Active active = active(player);
@@ -32,11 +40,12 @@ public final class SoulCages {
         player.getInventory().setChanged();
         return stored;
     }
-    /** Incoming energy spills rightwards through hotbar cages; spending never does. */
+    /** Incoming energy spills through the hotbar and then offhand; spending never does. */
     public static int credit(ServerPlayer player, int amount) {
         if (amount <= 0) return 0;
         int remaining = amount;
-        for (int slot = 0; slot < 9 && remaining > 0; slot++) {
+        for (int slot : SLOTS) {
+            if (remaining == 0) break;
             ItemStack stack = player.getInventory().getItem(slot);
             int stored = SoulCage.energy(stack);
             int accepted = Math.min(remaining, SoulCage.capacity(stack) - stored);

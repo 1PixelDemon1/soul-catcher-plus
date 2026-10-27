@@ -24,11 +24,11 @@ The artwork was generated and refined with the built-in `image_gen` tool.
 ## Mechanics
 
 - Soul energy moves from the character's ledger to item containers.
-- A soul cage must be in the hotbar to capture a soul.
+- A soul cage must be in the hotbar or offhand to capture a soul.
 - Summoning spends the energy stored in that container.
-- If several containers are in the hotbar, the leftmost one is used.
+- The leftmost hotbar cage is used; the offhand is used only when the hotbar has no cages.
 - Summon costs are not combined across containers; incoming rewards/refunds spill
-  to the next hotbar cage when one fills up.
+  to the next hotbar cage when one fills up, then to the offhand.
 - Capacities are 150 / 400 / 1000 / 2000 as listed above.
 - Old character energy is not transferred; the collection remains player-owned.
 
@@ -53,3 +53,13 @@ smithing table rather than using a separate shaped ingot recipe.
 
 Netherite smithing requires its usual upgrade template and preserves the cage's
 stored energy. New crafted cages start empty.
+
+## Held placement
+
+All runtime models inherit `item/soul_cage`. The generated 16x16 sprite has its
+top chain pixel centered at model coordinates (10.5, 15.5, 8), with model Y
+inverted from image rows. The third-person display uses 90 degrees around X to
+counter the held-item layer's flat orientation, scale 0.8, and a translation
+that brings this chain point to the fist. Left-hand X translation accounts for
+Minecraft's handedness flip. First-person display has its own upright framing
+and scale 0.75. Runtime placement has not been verified by an agent game launch.
