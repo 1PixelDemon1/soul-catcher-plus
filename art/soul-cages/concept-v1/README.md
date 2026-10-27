@@ -64,5 +64,7 @@ display uses the handheld +/-90-degree Y orientation and scale 0.85; the Z angle
 is adjusted for the cage's upright artwork so the body still hangs below the
 chain. Translation anchors the chain at the fist. First-person rotations and
 scale 0.68 match vanilla swords, with the lower grip position retained from the
-previous adjustment. Both hands have explicit transforms. Runtime placement
+previous adjustment. A 2-unit first-person X offset moves the item toward the
+screen edge; Minecraft mirrors it leftwards for the left hand. Third-person
+placement is unaffected. Both hands have explicit transforms. Runtime placement
 has not been verified by an agent game launch.
