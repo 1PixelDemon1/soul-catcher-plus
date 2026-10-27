@@ -3,6 +3,7 @@ package dev.soulcatcherplus.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.soulcatcherplus.SoulCatcherPlus;
+import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -28,7 +29,8 @@ public final class ClientControls {
 
     static boolean canUseMenus(Minecraft client) {
         return client.level != null && client.player != null && client.player.isAlive()
-            && !client.player.isSpectator() && client.getConnection() != null && client.isWindowActive();
+            && !client.player.isSpectator() && SoulScythe.heldBy(client.player) != null
+            && client.getConnection() != null && client.isWindowActive();
     }
     @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;

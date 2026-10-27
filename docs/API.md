@@ -157,15 +157,18 @@ selecting the card. This ordering applies to the collection screen only.
 ## Key-bound collection and command wheel
 
 Client-only `ClientControls` registers remappable defaults O (collection) and held R
-(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus and owned preview
-requests work without a held scythe. `SoulService.summon` still applies the held
-scythe rules; viewing or issuing orders does not grant summon capacity.
+(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus require a soul scythe
+of any tier in the main hand or offhand to open. Key presses without one are consumed
+without opening a screen or sending an open request. The client rechecks this rule
+when a collection reply arrives, and the server rejects opens without a held scythe.
+`SoulService.summon` still applies the held scythe's capacity rules.
 
 The wheel opens locally and receives update-only `WheelState` packets: late replies
 cannot reopen it after release. Hovering the inner ring selects an active entry;
 hovering the outer ring arms a command. Releasing the trigger commits only the
 currently hovered enabled command. Center, ring gaps, outside, Escape, lost focus,
-death, disconnect or a changed client level close without executing an armed action.
+death, disconnect, losing the held scythe or a changed client level close without
+executing an armed action.
 It is a non-pausing screen, unlike the collection.
 
 Minecraft clears key states on screen opening and deactivates IN_GAME key contexts.

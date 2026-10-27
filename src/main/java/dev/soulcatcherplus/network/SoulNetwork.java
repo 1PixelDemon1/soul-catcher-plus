@@ -142,7 +142,7 @@ public final class SoulNetwork {
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
     public static void open(ServerPlayer player) {
-        sendState(player, true);
+        if (SoulService.holdsScythe(player)) sendState(player, true);
     }
     private static void sendState(ServerPlayer player, boolean openScreen) {
         PlayerSouls data = SoulService.data(player);
@@ -201,7 +201,7 @@ public final class SoulNetwork {
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
-                case OPEN -> { sendState(player, true); return; }
+                case OPEN -> { open(player); return; }
                 case REFRESH -> { return; }
             }
             SoulService.changed(player);
@@ -230,6 +230,7 @@ public final class SoulNetwork {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator()) return;
+            if (packet.action == WheelAction.OPEN && !SoulService.holdsScythe(player)) return;
             long now = System.nanoTime();
             UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, p -> new UiRateLimit());
             if (packet.action == WheelAction.OPEN || packet.action == WheelAction.REFRESH) {
