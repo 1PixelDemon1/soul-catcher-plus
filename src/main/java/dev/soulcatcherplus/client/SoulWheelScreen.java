@@ -162,7 +162,8 @@ public final class SoulWheelScreen extends Screen {
         int hoveredCompanion = hit(x, y, COMPANION_INNER, COMPANION_OUTER, choices);
         int hoveredCommand = hit(x, y, COMMAND_INNER, COMMAND_OUTER, COMMANDS.size());
         g.drawCenteredString(font, title, CX, 10, SoulTheme.GOLD);
-        SoulTheme.soulFire(g, CX, CY);
+        sector(g, 0, 58, 0, TAU, SoulTheme.INK);
+        SoulTheme.ellipse(g, CX, CY, 58, 58, SoulTheme.GOLD);
         g.drawCenteredString(font, state == null ? Component.translatable("screen.soulcatcherplus.energy")
             : SoulCages.location(state.cageSlot()), CX, CY - 21, SoulTheme.MUTED);
         g.drawCenteredString(font, state == null ? "…" : state.cageCapacity() == 0 ? "—"

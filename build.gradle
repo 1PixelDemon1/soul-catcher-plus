@@ -47,6 +47,9 @@ dependencies {
         runtimeOnly fg.deobf('curse.maven:ice-and-fire-dragons-264231:5633453')
         runtimeOnly fg.deobf('curse.maven:citadel-331936:7476570')
     }
+    if (project.hasProperty('withTwilightForest')) {
+        runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:5468648')
+    }
 }
 tasks.named('processResources', ProcessResources).configure {
     inputs.property 'mod_version', mod_version

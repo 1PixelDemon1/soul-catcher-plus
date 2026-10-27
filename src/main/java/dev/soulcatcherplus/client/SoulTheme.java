@@ -12,36 +12,6 @@ final class SoulTheme {
         "....#....", "...###...", "...###...", "#########", ".#######.",
         "..#####..", "..#####..", ".###.###.", ".##...##."
     };
-    private static final String[] SOUL_FIRE = {
-        "...............b............",
-        "..............bb............",
-        ".............bcb............",
-        "............bcb.....b.......",
-        "...........bccb....bb.......",
-        "..........bchcb...bcb.......",
-        ".....b...bchhhcb.bcccb......",
-        "....bb..bchhhhhcbcccccb.....",
-        "...bkkbbkkkkkkkkkkkkkkkbb...",
-        "...bkkkkkkkkkkkkkkkkkkkkb...",
-        "..bckkkkkkkkkkkkkkkkkkkkcb..",
-        "..bckkkkkkkkkkkkkkkkkkkkcb..",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        ".bchkkkkkkkkkkkkkkkkkkkkccb.",
-        "..bckkkkkkkkkkkkkkkkkkkkcb..",
-        "..bckkkkkkkkkkkkkkkkkkkkcb..",
-        "...bkkkkkkkkkkkkkkkkkkkkb...",
-        "....bcccccchhhhhcccccccb....",
-        "....bcccccchhhhhcccccccb....",
-        ".....bccccchhhhhccccccb.....",
-        "......bbccchhhhhccccbb......",
-        "........bbbccccccbbb........",
-        "...........bbbbbb..........."
-    };
 
     static void panel(GuiGraphics g, int x, int y, int w, int h) {
         g.fillGradient(x, y, x + w, y + h, PANEL, INK);
@@ -58,30 +28,6 @@ final class SoulTheme {
         for (int offset = -radius; offset <= radius; offset++) {
             int half = radius - Math.abs(offset);
             g.fill(x - half, y + offset, x + half + 1, y + offset + 1, color);
-        }
-    }
-    /** Pixel flame with a dark core reserved for the wheel's three status lines. */
-    static void soulFire(GuiGraphics g, int centerX, int centerY) {
-        int pixelSize = 4;
-        int left = centerX - SOUL_FIRE[0].length() * pixelSize / 2;
-        int top = centerY - SOUL_FIRE.length * pixelSize / 2;
-        for (int y = 0; y < SOUL_FIRE.length; y++) {
-            String row = SOUL_FIRE[y];
-            for (int x = 0; x < row.length();) {
-                char pixel = row.charAt(x);
-                int end = x + 1;
-                while (end < row.length() && row.charAt(end) == pixel) end++;
-                int color = switch (pixel) {
-                    case 'b' -> 0xFF164456;
-                    case 'c' -> 0xFF29BBD2;
-                    case 'h' -> 0xFFBBF4FA;
-                    case 'k' -> INK;
-                    default -> 0;
-                };
-                if (color != 0) g.fill(left + x * pixelSize, top + y * pixelSize,
-                    left + end * pixelSize, top + (y + 1) * pixelSize, color);
-                x = end;
-            }
         }
     }
     static void star(GuiGraphics g, int x, int y, int color, boolean filled) {
