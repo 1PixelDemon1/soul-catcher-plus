@@ -19,18 +19,19 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 
-/** Hover an entry, then an outer command; release the trigger to address only that entry. */
+/** Hover an entry or the whole group, then an outer command; release the trigger to commit. */
 public final class SoulWheelScreen extends Screen {
-    private static final int W = 460, H = 430, CX = 230, CY = 205, PAGE_SIZE = 6;
+    private static final int W = 460, H = 430, CX = 230, CY = 205, PAGE_SIZE = 5;
     private static final int COMPANION_INNER = 64, COMPANION_OUTER = 116, COMMAND_INNER = 124, COMMAND_OUTER = 178;
     private static final double TAU = Math.PI * 2;
     private static final List<SoulNetwork.WheelAction> COMMANDS = List.of(SoulNetwork.WheelAction.FOLLOW,
-        SoulNetwork.WheelAction.WAIT, SoulNetwork.WheelAction.GUARD, SoulNetwork.WheelAction.RECALL);
+        SoulNetwork.WheelAction.AGGRESSIVE, SoulNetwork.WheelAction.WAIT,
+        SoulNetwork.WheelAction.GUARD, SoulNetwork.WheelAction.RECALL);
     private final Level openedLevel = Minecraft.getInstance().level;
     private SoulNetwork.WheelState state;
     private UUID selected;
     private SoulNetwork.WheelAction armed;
-    private boolean closed;
+    private boolean closed, allSelected;
     private double pointerX = CX, pointerY = CY;
     private int page, ticks;
     private float scale, originX, originY;
@@ -48,8 +49,10 @@ public final class SoulWheelScreen extends Screen {
     public void update(SoulNetwork.WheelState state) {
         this.state = state;
         page = Math.min(page, lastPage());
-        if (state.companions().stream().noneMatch(c -> c.entry().equals(selected))) {
+        if (state.companions().isEmpty()
+                || (selected != null && state.companions().stream().noneMatch(c -> c.entry().equals(selected)))) {
             selected = null;
+            allSelected = false;
             armed = null;
         }
     }
@@ -63,7 +66,7 @@ public final class SoulWheelScreen extends Screen {
         return state == null ? null : state.companions().stream().filter(c -> c.entry().equals(selected)).findFirst().orElse(null);
     }
     private void send(SoulNetwork.WheelAction action) {
-        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.WheelRequest(action, selected));
+        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.WheelRequest(action, selected, allSelected));
     }
     @Override public void tick() {
         if (!ClientControls.canUseMenus(minecraft) || minecraft.level != openedLevel) {
@@ -99,8 +102,11 @@ public final class SoulWheelScreen extends Screen {
         pointerX = (x - originX) / scale;
         pointerY = (y - originY) / scale;
         List<SoulNetwork.Companion> companions = visible();
-        int companion = hit(pointerX, pointerY, COMPANION_INNER, COMPANION_OUTER, companions.size());
-        if (companion >= 0) selected = companions.get(companion).entry();
+        int companion = hit(pointerX, pointerY, COMPANION_INNER, COMPANION_OUTER, choiceCount(companions));
+        if (companion >= 0) {
+            allSelected = companion == 0;
+            selected = allSelected ? null : companions.get(companion - 1).entry();
+        }
         int command = hit(pointerX, pointerY, COMMAND_INNER, COMMAND_OUTER, COMMANDS.size());
         armed = command >= 0 && enabled(COMMANDS.get(command)) ? COMMANDS.get(command) : null;
     }
@@ -121,13 +127,19 @@ public final class SoulWheelScreen extends Screen {
         if (next != page) {
             page = next;
             selected = null;
+            allSelected = false;
             armed = null;
         }
         return true;
     }
     private boolean enabled(SoulNetwork.WheelAction action) {
+        if (allSelected) return state != null && !state.companions().isEmpty()
+            && (action == SoulNetwork.WheelAction.RECALL || state.companions().stream().anyMatch(SoulNetwork.Companion::loaded));
         SoulNetwork.Companion companion = selected();
         return companion != null && (companion.loaded() || action == SoulNetwork.WheelAction.RECALL);
+    }
+    private static int choiceCount(List<SoulNetwork.Companion> companions) {
+        return companions.isEmpty() ? 0 : companions.size() + 1;
     }
     private static int hit(double x, double y, int inner, int outer, int count) {
         if (count == 0) return -1;
@@ -145,7 +157,8 @@ public final class SoulWheelScreen extends Screen {
         updatePointer(mouseX, mouseY);
         double x = pointerX, y = pointerY;
         List<SoulNetwork.Companion> companions = visible();
-        int hoveredCompanion = hit(x, y, COMPANION_INNER, COMPANION_OUTER, companions.size());
+        int choices = choiceCount(companions);
+        int hoveredCompanion = hit(x, y, COMPANION_INNER, COMPANION_OUTER, choices);
         int hoveredCommand = hit(x, y, COMMAND_INNER, COMMAND_OUTER, COMMANDS.size());
         g.drawCenteredString(font, title, CX, 10, SoulTheme.GOLD);
         sector(g, 0, 58, 0, TAU, SoulTheme.INK);
@@ -156,40 +169,48 @@ public final class SoulWheelScreen extends Screen {
         if (companions.isEmpty()) {
             sector(g, COMPANION_INNER, COMPANION_OUTER, 0, TAU, SoulTheme.PANEL);
         } else {
-            double step = TAU / companions.size();
-            for (int i = 0; i < companions.size(); i++) {
-                SoulNetwork.Companion companion = companions.get(i);
-                boolean chosen = companion.entry().equals(selected);
+            double step = TAU / choices;
+            for (int i = 0; i < choices; i++) {
+                boolean chosen = i == 0 ? allSelected : companions.get(i - 1).entry().equals(selected);
                 double center = -Math.PI / 2 + step * i;
                 sector(g, COMPANION_INNER, COMPANION_OUTER, center - step / 2 + 0.02, center + step / 2 - 0.02,
                     chosen ? 0xFF285A58 : i == hoveredCompanion ? 0xFF25434C : SoulTheme.PANEL);
             }
         }
+        double commandStep = TAU / COMMANDS.size();
         for (int i = 0; i < COMMANDS.size(); i++) {
-            double center = -Math.PI / 2 + Math.PI / 2 * i;
+            double center = -Math.PI / 2 + commandStep * i;
             boolean danger = COMMANDS.get(i) == SoulNetwork.WheelAction.RECALL;
-            sector(g, COMMAND_INNER, COMMAND_OUTER, center - Math.PI / 4 + 0.025, center + Math.PI / 4 - 0.025,
+            sector(g, COMMAND_INNER, COMMAND_OUTER, center - commandStep / 2 + 0.025, center + commandStep / 2 - 0.025,
                 !enabled(COMMANDS.get(i)) ? 0xE0101922 : i == hoveredCommand
                     ? danger ? 0xFF51383D : 0xFF315352 : 0xF0182B36);
         }
         // Draw labels after every sector so queued GUI text cannot be covered by a later ring.
-        for (int i = 0; i < companions.size(); i++) {
-            SoulNetwork.Companion companion = companions.get(i);
-            double angle = -Math.PI / 2 + TAU * i / companions.size();
+        for (int i = 0; i < choices; i++) {
+            double angle = -Math.PI / 2 + TAU * i / choices;
             int tx = CX + (int)(Math.cos(angle) * 90), ty = CY + (int)(Math.sin(angle) * 90);
+            if (i == 0) {
+                g.drawCenteredString(font, text("all"), tx, ty - 12, SoulTheme.GOLD);
+                g.drawCenteredString(font, text("group_count", state.companions().size()), tx, ty + 1, SoulTheme.TEAL);
+                continue;
+            }
+            SoulNetwork.Companion companion = companions.get(i - 1);
             g.drawCenteredString(font, fit(companion.name(), 96), tx, ty - 12, SoulTheme.LIGHT);
             Component health = companion.loaded() ? text("health", hp(companion.health()), hp(companion.maxHealth())) : text("unloaded");
             g.drawCenteredString(font, health, tx, ty + 1, companion.loaded() ? SoulTheme.TEAL : SoulTheme.MUTED);
             if (companion.loaded()) g.drawCenteredString(font, commandName(companion.command()), tx, ty + 13, SoulTheme.GOLD);
         }
         for (int i = 0; i < COMMANDS.size(); i++) {
-            double angle = -Math.PI / 2 + Math.PI / 2 * i;
-            g.drawCenteredString(font, commandName(COMMANDS.get(i).name()), CX + (int)(Math.cos(angle) * 151),
+            double angle = -Math.PI / 2 + commandStep * i;
+            Component label = allSelected && COMMANDS.get(i) == SoulNetwork.WheelAction.RECALL
+                ? Component.translatable("screen.soulcatcherplus.recall_all") : commandName(COMMANDS.get(i).name());
+            g.drawCenteredString(font, label, CX + (int)(Math.cos(angle) * 151),
                 CY + (int)(Math.sin(angle) * 151) - 4, !enabled(COMMANDS.get(i)) ? SoulTheme.MUTED
                     : COMMANDS.get(i) == SoulNetwork.WheelAction.RECALL ? SoulTheme.RED : SoulTheme.LIGHT);
         }
         if (companions.isEmpty()) g.drawCenteredString(font, text(state == null ? "loading" : "empty"), CX, CY - 92, SoulTheme.MUTED);
-        Component hint = selected() != null && !selected().loaded() ? text("unloaded_hint")
+        Component hint = allSelected ? text("group_hint", ClientControls.COMMAND_WHEEL.getTranslatedKeyMessage())
+            : selected() != null && !selected().loaded() ? text("unloaded_hint")
             : text("hint", ClientControls.COMMAND_WHEEL.getTranslatedKeyMessage());
         if (lastPage() > 0) g.drawCenteredString(font, text("page", page + 1, lastPage() + 1), CX, 386, SoulTheme.GOLD);
         g.drawWordWrap(font, hint, 30, 401, W - 60, SoulTheme.MUTED);
@@ -201,6 +222,7 @@ public final class SoulWheelScreen extends Screen {
     private static Component commandName(String command) {
         return switch (command) {
             case "FOLLOW" -> Component.translatable("screen.soulcatcherplus.follow_short");
+            case "AGGRESSIVE" -> Component.translatable("screen.soulcatcherplus.aggressive_short");
             case "WAIT" -> Component.translatable("screen.soulcatcherplus.wait");
             case "GUARD" -> Component.translatable("screen.soulcatcherplus.guard_short");
             case "RECALL" -> Component.translatable("screen.soulcatcherplus.recall");

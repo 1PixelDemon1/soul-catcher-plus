@@ -130,8 +130,8 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development builds use protocol **7**, adding synchronized soul-remnant
-appearance data; clients and servers must update together. Released 0.2.0 artifacts
+Current development builds use protocol **8**, including synchronized soul-remnant
+appearance data and explicit wheel group scope; clients and servers must update together. Released 0.2.0 artifacts
 use protocol 6, and released 0.1.0 artifacts remain on protocol 4.
 
 ## Soul remnant appearance
@@ -182,9 +182,12 @@ when a collection reply arrives, and the server rejects opens without a held scy
 `SoulService.summon` still applies the held scythe's capacity rules.
 
 The wheel opens locally and receives update-only `WheelState` packets: late replies
-cannot reopen it after release. Hovering the inner ring selects an active entry;
-hovering the outer ring arms a command. Releasing the trigger commits only the
-currently hovered enabled command. Center, ring gaps, outside, Escape, lost focus,
+cannot reopen it after release. The inner ring has an All sector plus up to five
+active entries per page. All addresses the full group across pages. The outer ring
+offers FOLLOW, AGGRESSIVE, WAIT, GUARD and RECALL; All + RECALL recalls everyone.
+Hovering an inner sector selects the recipient; hovering the outer ring arms a
+command. Releasing the trigger commits only the currently hovered enabled command.
+Center, ring gaps, outside, Escape, lost focus,
 death, disconnect, losing the held scythe or a changed client level close without
 executing an armed action.
 It is a non-pausing screen, unlike the collection.
@@ -200,11 +203,33 @@ loaded, canonically owned mobs. Unloaded entries carry explicit unknown health;
 menu snapshots never load chunks. Refreshes are throttled to 250 ms per player
 using session monotonic time, with a separate 100 ms command throttle.
 
-`SoulService.commandOne(player, entryId, mode)` looks up the entry in that player's
-ledger and shares command application with collection orders. Loaded entity UUID,
-owner and entry identity are checked. Wheel orders never modify `selected` or
-`commandGroup`; a single order cannot silently become a group order. Recall also
-works for an unloaded active reservation through the normal ledger invalidation.
+`WheelRequest` carries an explicit group flag; its two-argument constructor still
+means a single entry. `SoulService.commandOne(player, entryId, mode)` looks up the
+entry in that player's ledger; `commandAll(player, mode)` iterates only that same
+player's ledger. Both share command application with collection orders, checking
+loaded entity UUID, owner and entry identity. The server also requires a held
+scythe for wheel requests. Wheel orders never modify `selected` or `commandGroup`;
+a single order cannot silently become a group order. Group modes affect loaded
+companions only; recalls also invalidate unloaded reservations through the normal
+ledger path. Existing command buttons remain in the collection, with AGGRESSIVE
+added there as well. Direct target attacks remain scythe interactions.
+
+### Aggressive follow
+
+`CompanionBrain.Mode.AGGRESSIVE` uses normal owner following and return teleportation
+when idle. Every five ticks, it may acquire the nearest visible, attackable hostile
+Mob within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
+the companion abandons combat and returns; a target beyond that owner radius is
+also dropped. Existing WAIT, GUARD and reactive FOLLOW rules are unchanged.
+
+`SoulAdapters.get(candidate).isHostile(candidate, owner)` classifies automatic
+targets. Its default recognizes `Enemy`, `MobCategory.MONSTER` or a mob currently
+targeting the owner; neutral monster types may therefore qualify. Override this
+hook on the candidate's adapter for faction or other custom hostility rules.
+`CompanionBrain.canAttack` still rejects the owner, allied companions, the owner's
+pets, team allies and otherwise unattackable targets before the hook is used.
+Native attacks and integration ticks remain in place; inherited minions use their
+root companion's chosen target rather than running their own target search.
 
 ## Summoned minions
 

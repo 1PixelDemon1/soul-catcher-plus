@@ -17,7 +17,8 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";
-    public enum Mode { FOLLOW, WAIT, GUARD }
+    private static final int AGGRESSIVE_RANGE = 16, OWNER_LEASH = 24;
+    public enum Mode { FOLLOW, WAIT, GUARD, AGGRESSIVE }
     public static boolean isSoul(Entity entity) { return entity.getPersistentData().hasUUID(OWNER); }
     public static UUID owner(Entity entity) { return entity.getPersistentData().getUUID(OWNER); }
     /** Roots own the active UUID; minions validate their separately persisted root UUID. */
@@ -65,12 +66,18 @@ public final class CompanionBrain {
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
         if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }
         if (mob.getTarget() != null && !canAttack(mob, mob.getTarget())) mob.setTarget(null);
-        if (mode(mob) == Mode.WAIT) mob.setTarget(null);
-        else if (mode(mob) == Mode.GUARD) {
+        Mode mode = mode(mob);
+        if (mode == Mode.WAIT) mob.setTarget(null);
+        else if (mode == Mode.GUARD) {
             BlockPos guard = BlockPos.of(mob.getPersistentData().getLong("scp_guard"));
             if (mob.getTarget() != null && mob.getTarget().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(guard)) > 16 * 16)
                 mob.setTarget(null);
             if (mob.getTarget() == null) findEnemy(mob, guard);
+        } else if (mode == Mode.AGGRESSIVE) {
+            boolean nearOwner = mob.distanceToSqr(player) <= OWNER_LEASH * OWNER_LEASH;
+            if (!nearOwner || (mob.getTarget() != null && mob.getTarget().distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH))
+                mob.setTarget(null);
+            if (nearOwner && mob.getTarget() == null) findHostile(mob, player);
         } else if (mob.getTarget() == null) {
             LivingEntity attacker = player.getLastHurtByMob();
             LivingEntity victim = player.getLastHurtMob();
@@ -86,6 +93,13 @@ public final class CompanionBrain {
         mob.level().getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(12),
             e -> e instanceof Enemy && canAttack(mob, e)
                 && e.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(guard)) < 16 * 16)
+            .stream().min(java.util.Comparator.comparingDouble(mob::distanceToSqr)).ifPresent(mob::setTarget);
+    }
+    private static void findHostile(Mob mob, ServerPlayer owner) {
+        mob.level().getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(AGGRESSIVE_RANGE),
+            target -> canAttack(mob, target) && mob.distanceToSqr(target) <= AGGRESSIVE_RANGE * AGGRESSIVE_RANGE
+                && target.distanceToSqr(owner) <= AGGRESSIVE_RANGE * AGGRESSIVE_RANGE
+                && mob.getSensing().hasLineOfSight(target) && SoulAdapters.get(target).isHostile(target, owner))
             .stream().min(java.util.Comparator.comparingDouble(mob::distanceToSqr)).ifPresent(mob::setTarget);
     }
     private static final class HoldPositionGoal extends Goal {
@@ -117,7 +131,8 @@ public final class CompanionBrain {
                 mob.getNavigation().moveTo(destination.getX() + 0.5,
                     destination.getY(), destination.getZ() + 0.5, 1.1);
             }
-            if (mode(mob) == Mode.FOLLOW && mob.distanceToSqr(player) > 24 * 24) {
+            if ((mode(mob) == Mode.FOLLOW || mode(mob) == Mode.AGGRESSIVE)
+                    && mob.distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH) {
                 for (int i = 0; i < 12; i++) {
                     BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);
                     if (mob.level().hasChunkAt(pos) && mob.level().getBlockState(pos.below()).isSolidRender(mob.level(), pos.below())

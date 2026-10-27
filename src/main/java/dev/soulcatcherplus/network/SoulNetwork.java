@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "7";
+    private static final String VERSION = "8";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -60,19 +60,23 @@ public final class SoulNetwork {
                 b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE }
     public record Request(Action action, UUID entry) {
         static Request read(FriendlyByteBuf b) {
             return new Request(b.readEnum(Action.class), b.readBoolean() ? b.readUUID() : null);
         }
         void write(FriendlyByteBuf b) { b.writeEnum(action); b.writeBoolean(entry != null); if (entry != null) b.writeUUID(entry); }
     }
-    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL }
-    public record WheelRequest(WheelAction action, UUID entry) {
+    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL, AGGRESSIVE }
+    public record WheelRequest(WheelAction action, UUID entry, boolean group) {
+        public WheelRequest(WheelAction action, UUID entry) { this(action, entry, false); }
         static WheelRequest read(FriendlyByteBuf b) {
-            return new WheelRequest(b.readEnum(WheelAction.class), b.readBoolean() ? b.readUUID() : null);
+            return new WheelRequest(b.readEnum(WheelAction.class), b.readBoolean() ? b.readUUID() : null, b.readBoolean());
         }
-        void write(FriendlyByteBuf b) { b.writeEnum(action); b.writeBoolean(entry != null); if (entry != null) b.writeUUID(entry); }
+        void write(FriendlyByteBuf b) {
+            b.writeEnum(action); b.writeBoolean(entry != null); if (entry != null) b.writeUUID(entry);
+            b.writeBoolean(group);
+        }
     }
     public record Companion(UUID entry, String name, float health, float maxHealth, String command, boolean loaded) {}
     /** Active-only snapshot: health is live server data; unloaded companions have explicitly unknown HP. */
@@ -198,6 +202,7 @@ public final class SoulNetwork {
                 case FOLLOW -> SoulService.command(player, CompanionBrain.Mode.FOLLOW);
                 case WAIT -> SoulService.command(player, CompanionBrain.Mode.WAIT);
                 case GUARD -> SoulService.command(player, CompanionBrain.Mode.GUARD);
+                case AGGRESSIVE -> SoulService.command(player, CompanionBrain.Mode.AGGRESSIVE);
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
@@ -230,7 +235,7 @@ public final class SoulNetwork {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator()) return;
-            if (packet.action == WheelAction.OPEN && !SoulService.holdsScythe(player)) return;
+            if (!SoulService.holdsScythe(player)) return;
             long now = System.nanoTime();
             UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, p -> new UiRateLimit());
             if (packet.action == WheelAction.OPEN || packet.action == WheelAction.REFRESH) {
@@ -239,14 +244,22 @@ public final class SoulNetwork {
             } else {
                 if (rate.action != 0 && now - rate.action < 0) return;
                 rate.action = now + 100_000_000L;
-                SoulEntry entry = SoulService.data(player).entries.get(packet.entry);
-                if (entry == null || entry.activeEntity == null) return;
-                switch (packet.action) {
-                    case FOLLOW -> SoulService.commandOne(player, entry.id, CompanionBrain.Mode.FOLLOW);
-                    case WAIT -> SoulService.commandOne(player, entry.id, CompanionBrain.Mode.WAIT);
-                    case GUARD -> SoulService.commandOne(player, entry.id, CompanionBrain.Mode.GUARD);
-                    case RECALL -> SoulService.recall(player.server, entry);
-                    default -> { return; }
+                SoulEntry entry = packet.group ? null : SoulService.data(player).entries.get(packet.entry);
+                if (!packet.group && (entry == null || entry.activeEntity == null)) return;
+                if (packet.action == WheelAction.RECALL) {
+                    if (packet.group) SoulService.recallAll(player);
+                    else SoulService.recall(player.server, entry);
+                } else {
+                    CompanionBrain.Mode mode = switch (packet.action) {
+                        case FOLLOW -> CompanionBrain.Mode.FOLLOW;
+                        case WAIT -> CompanionBrain.Mode.WAIT;
+                        case GUARD -> CompanionBrain.Mode.GUARD;
+                        case AGGRESSIVE -> CompanionBrain.Mode.AGGRESSIVE;
+                        default -> null;
+                    };
+                    if (mode == null) return;
+                    if (packet.group) SoulService.commandAll(player, mode);
+                    else SoulService.commandOne(player, entry.id, mode);
                 }
             }
             sendWheelState(player);

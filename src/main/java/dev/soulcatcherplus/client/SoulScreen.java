@@ -26,7 +26,7 @@ public final class SoulScreen extends Screen {
     private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
-    private SoulButton primary, previousForm, nextForm, follow, wait, guard, scope, recallAll;
+    private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll;
 
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
         SoulNetwork.Row active() { return forms.stream().filter(SoulNetwork.Row::active).findFirst().orElse(null); }
@@ -146,13 +146,15 @@ public final class SoulScreen extends Screen {
             if (active == null) send(SoulNetwork.Action.SUMMON);
             else send(SoulNetwork.Action.RECALL, active.id());
         });
-        follow = button(448, 235, 45, 24, text("follow_short"), SoulButton.Style.SUBTLE,
+        follow = button(448, 231, 70, 20, text("follow_short"), SoulButton.Style.SUBTLE,
             () -> send(SoulNetwork.Action.FOLLOW)).hint(text("follow_hint"));
-        wait = button(498, 235, 44, 24, text("wait"), SoulButton.Style.SUBTLE,
+        wait = button(522, 231, 70, 20, text("wait"), SoulButton.Style.SUBTLE,
             () -> send(SoulNetwork.Action.WAIT)).hint(text("wait_hint"));
-        guard = button(547, 235, 45, 24, text("guard_short"), SoulButton.Style.SUBTLE,
+        guard = button(448, 254, 70, 20, text("guard_short"), SoulButton.Style.SUBTLE,
             () -> send(SoulNetwork.Action.GUARD)).hint(text("guard_hint"));
-        scope = button(448, 271, 144, 20, text(state.group() ? "group" : "single"), SoulButton.Style.SUBTLE,
+        aggressive = button(522, 254, 70, 20, text("aggressive_short"), SoulButton.Style.SUBTLE,
+            () -> send(SoulNetwork.Action.AGGRESSIVE)).hint(text("aggressive_hint"));
+        scope = button(448, 279, 144, 16, text(state.group() ? "group" : "single"), SoulButton.Style.SUBTLE,
             () -> send(SoulNetwork.Action.TOGGLE_GROUP)).hint(text("scope_hint"));
         button(18, 311, 156, 24, text(state.commandMode() ? "command" : "harvest"), SoulButton.Style.SUBTLE,
             () -> send(SoulNetwork.Action.TOGGLE_MODE)).hint(text(state.commandMode() ? "command_hint" : "harvest_hint"));
@@ -184,10 +186,11 @@ public final class SoulScreen extends Screen {
         primary.active = active != null || (row != null && row.status() == SummonRules.Status.READY);
         previousForm.active = nextForm.active = group != null && group.forms().size() > 1;
         boolean hasCommands = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
-        follow.active = wait.active = guard.active = hasCommands;
+        follow.active = wait.active = guard.active = aggressive.active = hasCommands;
         follow.selected(!state.group() && active != null && active.command().equals("FOLLOW"));
         wait.selected(!state.group() && active != null && active.command().equals("WAIT"));
         guard.selected(!state.group() && active != null && active.command().equals("GUARD"));
+        aggressive.selected(!state.group() && active != null && active.command().equals("AGGRESSIVE"));
         scope.setMessage(text(state.group() ? "group" : "single"));
         recallAll.active = state.rows().stream().anyMatch(SoulNetwork.Row::active);
         // Keep card indicators and toggle labels current without losing mouse/keyboard focus.

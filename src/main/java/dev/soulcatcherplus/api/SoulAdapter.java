@@ -13,6 +13,12 @@ import net.minecraft.world.entity.Entity;
  */
 public interface SoulAdapter {
     default boolean canCapture(Mob mob, ServerPlayer player) { return true; }
+    /** Whether this original mob is an automatic target for the owner's aggressive companions. */
+    default boolean isHostile(Mob mob, ServerPlayer owner) {
+        return mob instanceof net.minecraft.world.entity.monster.Enemy
+            || mob.getType().getCategory() == net.minecraft.world.entity.MobCategory.MONSTER
+            || mob.getTarget() == owner;
+    }
     default CompoundTag capture(Mob mob) { return mob.saveWithoutId(new CompoundTag()); }
     /** Stable appearance identity, excluding health, UUID, equipment and transient state. */
     default CompoundTag variantData(CompoundTag snapshot) {

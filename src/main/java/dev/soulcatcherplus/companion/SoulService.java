@@ -137,6 +137,11 @@ public final class SoulService {
             .forEach(e -> applyCommand(player, e, mode));
         changed(player);
     }
+    /** Address the whole owned group without changing the collection's saved command scope. */
+    public static void commandAll(ServerPlayer player, CompanionBrain.Mode mode) {
+        data(player).entries.values().forEach(entry -> applyCommand(player, entry, mode));
+        changed(player);
+    }
     /** Address one owned entry without changing the collection's selected species or group scope. */
     public static void commandOne(ServerPlayer player, UUID id, CompanionBrain.Mode mode) {
         SoulEntry entry = data(player).entries.get(id);
