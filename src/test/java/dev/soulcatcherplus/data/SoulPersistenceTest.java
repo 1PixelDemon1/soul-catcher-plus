@@ -14,10 +14,13 @@ class SoulPersistenceTest {
         PlayerSouls data = ledger.player(owner);
         SoulEntry entry = new SoulEntry(UUID.randomUUID(), "minecraft:skeleton", "Archer", new CompoundTag(), 15);
         entry.activeEntity = active; entry.dimension = "minecraft:the_nether"; entry.readyAt = 1200;
-        data.energy = 91; data.commandMode = true; data.commandGroup = false;
+        data.commandMode = true; data.commandGroup = false;
         data.selected = entry.id; data.entries.put(entry.id, entry);
-        PlayerSouls restored = SoulLedger.load(ledger.save(root)).player(owner);
-        assertEquals(91, restored.energy);
+        ledger.save(root);
+        // Old ledger energy is intentionally ignored; collection ownership still survives.
+        root.getCompound("Players").getCompound(owner.toString()).putInt("Energy", 91);
+        PlayerSouls restored = SoulLedger.load(root).player(owner);
+        assertFalse(restored.save().contains("Energy"));
         assertEquals(entry.id, restored.selected);
         assertTrue(restored.commandMode); assertFalse(restored.commandGroup);
         assertEquals(active, restored.entries.get(entry.id).activeEntity);

@@ -13,7 +13,6 @@ import net.minecraft.nbt.Tag;
 
 public final class PlayerSouls {
     public static final int MAX_ENTRIES = 4096;
-    public int energy;
     public UUID selected;
     public boolean commandMode;
     public boolean commandGroup = true;
@@ -30,7 +29,7 @@ public final class PlayerSouls {
     }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("Energy", energy); tag.putBoolean("CommandMode", commandMode);
+        tag.putBoolean("CommandMode", commandMode);
         tag.putBoolean("Group", commandGroup);
         if (selected != null) tag.putUUID("Selected", selected);
         ListTag list = new ListTag();
@@ -43,7 +42,7 @@ public final class PlayerSouls {
     }
     public static PlayerSouls load(CompoundTag tag) {
         PlayerSouls data = new PlayerSouls();
-        data.energy = Math.max(0, tag.getInt("Energy")); data.commandMode = tag.getBoolean("CommandMode");
+        data.commandMode = tag.getBoolean("CommandMode");
         data.commandGroup = tag.getBoolean("Group");
         if (tag.hasUUID("Selected")) data.selected = tag.getUUID("Selected");
         Set<String> ownedTypes = new HashSet<>();

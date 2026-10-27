@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "soulcatcherplus:item/diamond_soul_cage"
+  }
+}

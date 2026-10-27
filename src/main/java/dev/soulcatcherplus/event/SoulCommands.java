@@ -3,7 +3,7 @@ package dev.soulcatcherplus.event;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.soulcatcherplus.SoulCatcherPlus;
-import dev.soulcatcherplus.companion.SoulService;
+import dev.soulcatcherplus.companion.SoulCages;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -19,9 +19,14 @@ public final class SoulCommands {
                 .then(Commands.argument("amount", IntegerArgumentType.integer(0, 1000000))
                     .executes(context -> {
                         var player = context.getSource().getPlayerOrException();
-                        SoulService.data(player).energy = IntegerArgumentType.getInteger(context, "amount");
-                        SoulService.changed(player);
-                        context.getSource().sendSuccess(() -> Component.literal("Soul energy: " + SoulService.data(player).energy), false);
+                        SoulCages.Active cage = SoulCages.active(player);
+                        if (!cage.present()) {
+                            context.getSource().sendFailure(Component.translatable("message.soulcatcherplus.cage_needed"));
+                            return 0;
+                        }
+                        int stored = SoulCages.set(player, IntegerArgumentType.getInteger(context, "amount"));
+                        context.getSource().sendSuccess(() -> Component.translatable("command.soulcatcherplus.energy",
+                            stored, cage.capacity(), cage.slot() + 1), false);
                         return 1;
                     }))));
     }

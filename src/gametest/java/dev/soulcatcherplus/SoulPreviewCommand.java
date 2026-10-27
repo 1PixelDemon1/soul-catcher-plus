@@ -4,7 +4,9 @@ package dev.soulcatcherplus;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.SoulService;
+import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.*;
+import dev.soulcatcherplus.item.SoulCage;
 import java.util.*;
 import java.util.function.Consumer;
 import net.minecraft.commands.CommandSourceStack;
@@ -13,7 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Skeleton;
@@ -76,12 +77,12 @@ public final class SoulPreviewCommand {
             source.sendFailure(Component.translatable("command.soulcatcherplus.qa.running"));
             return 0;
         }
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
+        replaceItem(player, player.getInventory().selected, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
         for (var item : List.of(SoulCatcherPlus.IRON_SCYTHE, SoulCatcherPlus.DIAMOND_SCYTHE)) {
             ItemStack stack = new ItemStack(item.get());
-            if (!player.getInventory().contains(stack)) player.getInventory().add(stack);
+            if (!player.getInventory().contains(stack)) player.getInventory().placeItemBackInInventory(stack);
         }
-        SoulService.data(player).energy = 1000;
+        prepareCage(player);
         SoulService.changed(player);
         if (all) {
             FillJob job = new FillJob();
@@ -99,6 +100,23 @@ public final class SoulPreviewCommand {
             finish(player, counts, 0);
         }
         return 1;
+    }
+    private static void prepareCage(ServerPlayer player) {
+        int slot = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.isEmpty() || stack.getItem() instanceof SoulCage) { slot = i; break; }
+        }
+        if (slot < 0) slot = (player.getInventory().selected + 1) % 9;
+        if (!player.getInventory().getItem(slot).is(SoulCatcherPlus.SUPREME_CAGE.get()))
+            replaceItem(player, slot, new ItemStack(SoulCatcherPlus.SUPREME_CAGE.get()));
+        SoulCages.set(player, 1000);
+    }
+    private static void replaceItem(ServerPlayer player, int slot, ItemStack replacement) {
+        ItemStack previous = player.getInventory().getItem(slot);
+        player.getInventory().setItem(slot, replacement);
+        if (!previous.isEmpty()) player.getInventory().placeItemBackInInventory(previous);
+        player.getInventory().setChanged();
     }
     @SubscribeEvent public static void tick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;

@@ -5,6 +5,7 @@ import dev.soulcatcherplus.api.*;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.network.SoulNetwork;
 import dev.soulcatcherplus.item.SoulScythe;
+import dev.soulcatcherplus.item.SoulCage;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -12,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.*;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -27,7 +29,9 @@ public final class SoulService {
     }
     public static SummonRules.Context summonContext(ServerPlayer player) {
         SoulScythe scythe = SoulScythe.heldBy(player);
-        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(), player.server.overworld().getGameTime());
+        SoulCages.Active cage = SoulCages.active(player);
+        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(),
+            cage.energy(), cage.capacity(), player.server.overworld().getGameTime());
     }
     public static void summon(ServerPlayer player, UUID id) {
         SoulEntry entry = data(player).entries.get(id);
@@ -40,6 +44,8 @@ public final class SoulService {
                 case OTHER_FORM_ACTIVE -> message(player, "variant_active");
                 case RECOVERING -> message(player, "cooldown", availability.recoverySeconds());
                 case NO_SCYTHE -> message(player, "scythe_needed");
+                case NO_CAGE -> message(player, "cage_needed");
+                case CAGE_TOO_SMALL -> message(player, "cage_too_small", entry.cost);
                 case LIMIT_REACHED -> message(player, "capacity", context.limit());
                 case LOW_ENERGY -> message(player, "energy_needed", entry.cost);
                 case READY -> { }
@@ -50,6 +56,8 @@ public final class SoulService {
         if (type == null) { message(player, "missing_mod"); return; }
         Entity created = type.create(player.serverLevel());
         if (!(created instanceof Mob mob)) { message(player, "unsupported"); return; }
+        ItemStack paidCage = ItemStack.EMPTY;
+        boolean completed = false;
         try {
             mob.load(SoulSnapshots.sanitize(entry.snapshot()));
             mob.setUUID(UUID.randomUUID());
@@ -63,6 +71,13 @@ public final class SoulService {
             SoulBossBars.suppress(mob);
             if (!place(mob, player)) { message(player, "no_space"); return; }
             if (MinecraftForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob))) return;
+            // Charge only after integrations approve, before join callbacks can use the companion.
+            SoulCages.Active cage = SoulCages.active(player);
+            if (!SoulCages.spend(player, entry.cost)) {
+                message(player, cage.present() ? "energy_needed" : "cage_needed", entry.cost);
+                return;
+            }
+            paidCage = cage.stack();
             // Canonical identity must be visible to EntityJoinLevelEvent.
             entry.activeEntity = mob.getUUID();
             entry.dimension = player.level().dimension().location().toString();
@@ -71,15 +86,21 @@ public final class SoulService {
                 SoulMinions.dismiss(player.server, mob.getUUID());
                 return;
             }
-            data(player).energy -= entry.cost;
             changed(player);
             message(player, "summoned", entry.name);
+            completed = true;
         } catch (RuntimeException error) {
             entry.activeEntity = null; entry.dimension = "";
             if (created.isAddedToWorld()) created.discard();
             SoulMinions.dismiss(player.server, created.getUUID());
             com.mojang.logging.LogUtils.getLogger().error("Unable to summon {}", entry.entityType, error);
             message(player, "unsupported");
+        } finally {
+            if (!completed && !paidCage.isEmpty()) {
+                // Roll back to the exact charged item, even if a callback moved it to another slot.
+                SoulCage.setEnergy(paidCage, SoulCage.energy(paidCage) + entry.cost);
+                player.getInventory().setChanged();
+            }
         }
     }
     private static boolean place(Mob mob, ServerPlayer player) {
@@ -96,6 +117,9 @@ public final class SoulService {
         return false;
     }
     public static void recall(MinecraftServer server, SoulEntry entry) {
+        recall(server, entry, null);
+    }
+    private static void recall(MinecraftServer server, SoulEntry entry, ServerPlayer ownerHint) {
         if (entry.activeEntity == null) return;
         SoulLedger ledger = SoulLedger.get(server);
         UUID active = entry.activeEntity;
@@ -113,7 +137,8 @@ public final class SoulService {
             if (collection.entries.get(entry.id) != entry) continue;
             // Capture current HP before an integration's cleanup can change the mob.
             int refund = mob.isAlive() ? SoulBalance.recallEnergy(mob.getHealth()) : 0;
-            ServerPlayer owner = server.getPlayerList().getPlayer(ownerId);
+            ServerPlayer owner = ownerHint != null && ownerHint.getUUID().equals(ownerId)
+                ? ownerHint : server.getPlayerList().getPlayer(ownerId);
             try {
                 if (owner != null) SoulAdapters.get(mob).onRecall(mob, owner);
             } catch (RuntimeException error) {
@@ -121,14 +146,13 @@ public final class SoulService {
             }
             SoulNetwork.dissolve(mob);
             mob.discard();
-            collection.energy = (int)Math.min(Integer.MAX_VALUE, (long)collection.energy + refund);
-            ledger.setDirty();
+            if (owner != null) SoulCages.credit(owner, refund);
             break;
         }
         SoulMinions.dismiss(server, active);
     }
     public static void recallAll(ServerPlayer player) {
-        data(player).entries.values().forEach(e -> recall(player.server, e));
+        data(player).entries.values().forEach(e -> recall(player.server, e, player));
         changed(player);
     }
     public static void command(ServerPlayer player, CompanionBrain.Mode mode) {

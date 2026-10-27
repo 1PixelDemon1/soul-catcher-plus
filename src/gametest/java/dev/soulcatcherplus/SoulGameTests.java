@@ -34,13 +34,14 @@ public final class SoulGameTests {
         BlockPos pos = helper.absolutePos(new BlockPos(8, 1, 8));
         player.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0, 0);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
+        player.getInventory().setItem(1, new ItemStack(SoulCatcherPlus.SUPREME_CAGE.get()));
         return player;
     }
     private static SoulEntry entry(ServerPlayer player, Mob mob) {
         SoulEntry entry = new SoulEntry(UUID.randomUUID(), mob.getType().builtInRegistryHolder().key().location().toString(),
             mob.getName().getString(), SoulSnapshots.sanitize(SoulAdapters.get(mob).capture(mob)), mob.getMaxHealth());
         SoulService.data(player).entries.put(entry.id, entry);
-        SoulService.data(player).energy = 1000;
+        SoulCages.set(player, 1000);
         SoulService.changed(player);
         return entry;
     }
@@ -57,13 +58,13 @@ public final class SoulGameTests {
         remnants.get(0).interact(player, InteractionHand.MAIN_HAND);
         helper.assertTrue(SoulService.data(player).entries.size() == 1, "Soul must enter collection");
         SoulEntry entry = SoulService.data(player).entries.values().iterator().next();
-        SoulService.data(player).energy = 1000;
+        SoulCages.set(player, 1000);
         SoulService.summon(player, entry.id);
         helper.assertTrue(entry.activeEntity != null, "Soul must summon successfully");
         Entity summoned = helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(summoned != null && summoned.getType() == EntityType.ZOMBIE, "Must restore original entity type");
         helper.assertTrue(!summoned.getUUID().equals(zombie.getUUID()), "Summon must have a new UUID");
-        helper.assertTrue(SoulService.data(player).energy == 1000 - entry.cost, "Summon must spend energy once");
+        helper.assertTrue(SoulCages.active(player).energy() == 1000 - entry.cost, "Summon must spend energy once");
         UUID active = entry.activeEntity;
         SoulService.summon(player, entry.id);
         helper.assertTrue(entry.activeEntity.equals(active), "Cannot duplicate active soul");
@@ -91,15 +92,15 @@ public final class SoulGameTests {
         ServerPlayer player = player(helper);
         var zombie = helper.spawn(EntityType.ZOMBIE, 8, 1, 10);
         SoulEntry entry = entry(player, zombie);
-        SoulService.data(player).energy = 19;
+        SoulCages.set(player, 19);
         SoulService.summon(player, entry.id);
-        helper.assertTrue(entry.activeEntity == null && SoulService.data(player).energy == 19, "Insufficient energy cannot summon");
+        helper.assertTrue(entry.activeEntity == null && SoulCages.active(player).energy() == 19, "Insufficient energy cannot summon");
         for (EntityType<?> type : java.util.List.of(EntityType.SKELETON, EntityType.HUSK, EntityType.COW)) {
             SoulEntry blocker = entry(player, (Mob) type.create(helper.getLevel()));
             blocker.activeEntity = UUID.randomUUID(); // Ledger reservations count even when their chunks are unloaded.
         }
         SoulService.summon(player, entry.id);
-        helper.assertTrue(entry.activeEntity == null && SoulService.data(player).energy == 1000, "Capacity failure cannot spend energy");
+        helper.assertTrue(entry.activeEntity == null && SoulCages.active(player).energy() == 1000, "Capacity failure cannot spend energy");
         player.discard(); helper.succeed();
     }
     @GameTest(template = "arena")
@@ -151,15 +152,15 @@ public final class SoulGameTests {
         original.discard(); SoulService.summon(player, entry.id);
         Mob summoned = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(summoned != null, "Summon exists");
-        int energy = SoulService.data(player).energy;
+        int energy = SoulCages.active(player).energy();
         summoned.hurt(summoned.damageSources().genericKill(), 10000);
         helper.assertTrue(entry.activeEntity == null && SoulService.data(player).entries.containsKey(entry.id), "Defeat must retain collection entry");
         helper.assertTrue(entry.readyAt > player.server.overworld().getGameTime(), "Defeat starts cooldown");
-        helper.assertTrue(SoulService.data(player).energy == energy, "Defeating companion cannot farm energy");
+        helper.assertTrue(SoulCages.active(player).energy() == energy, "Defeating companion cannot farm energy");
         helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
             summoned.getBoundingBox().inflate(4)).isEmpty(), "Companion cannot drop duplicated equipment");
         SoulService.summon(player, entry.id);
-        helper.assertTrue(entry.activeEntity == null && SoulService.data(player).energy == energy, "Cooldown must block resummoning without spending");
+        helper.assertTrue(entry.activeEntity == null && SoulCages.active(player).energy() == energy, "Cooldown must block resummoning without spending");
         player.discard(); helper.succeed();
     }
     @GameTest(template = "arena", timeoutTicks = 200)

@@ -5,6 +5,7 @@ import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.compat.WroughtnautAdapter;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.item.SoulScythe;
+import dev.soulcatcherplus.item.SoulCage;
 import dev.soulcatcherplus.item.ScytheTier;
 import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,10 @@ public final class SoulCatcherPlus {
     public static final RegistryObject<Item> IRON_SCYTHE = ITEMS.register("soul_scythe", () -> new SoulScythe(ScytheTier.IRON));
     public static final RegistryObject<Item> DIAMOND_SCYTHE = ITEMS.register("diamond_soul_scythe", () -> new SoulScythe(ScytheTier.DIAMOND));
     public static final RegistryObject<Item> NETHERITE_SCYTHE = ITEMS.register("netherite_soul_scythe", () -> new SoulScythe(ScytheTier.NETHERITE));
+    public static final RegistryObject<Item> IRON_CAGE = ITEMS.register("iron_soul_cage", () -> new SoulCage(150, new Item.Properties()));
+    public static final RegistryObject<Item> DIAMOND_CAGE = ITEMS.register("diamond_soul_cage", () -> new SoulCage(400, new Item.Properties()));
+    public static final RegistryObject<Item> NETHERITE_CAGE = ITEMS.register("netherite_soul_cage", () -> new SoulCage(1000, new Item.Properties().fireResistant()));
+    public static final RegistryObject<Item> SUPREME_CAGE = ITEMS.register("supreme_soul_cage", () -> new SoulCage(2000, new Item.Properties()));
     /** Compatibility alias for the original iron scythe. */
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<EntityType<SoulRemnant>> REMNANT = ENTITIES.register("soul_remnant",
@@ -44,6 +49,7 @@ public final class SoulCatcherPlus {
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey() == CreativeModeTabs.COMBAT) {
                 event.accept(IRON_SCYTHE); event.accept(DIAMOND_SCYTHE); event.accept(NETHERITE_SCYTHE);
+                event.accept(IRON_CAGE); event.accept(DIAMOND_CAGE); event.accept(NETHERITE_CAGE); event.accept(SUPREME_CAGE);
             }
         });
         bus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) ->

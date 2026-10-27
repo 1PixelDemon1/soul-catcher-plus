@@ -163,8 +163,11 @@ public final class SoulWheelScreen extends Screen {
         g.drawCenteredString(font, title, CX, 10, SoulTheme.GOLD);
         sector(g, 0, 58, 0, TAU, SoulTheme.INK);
         SoulTheme.ellipse(g, CX, CY, 58, 58, SoulTheme.GOLD);
-        g.drawCenteredString(font, Component.translatable("screen.soulcatcherplus.energy"), CX, CY - 21, SoulTheme.MUTED);
-        g.drawCenteredString(font, state == null ? "…" : Integer.toString(state.energy()), CX, CY - 3, SoulTheme.TEAL);
+        g.drawCenteredString(font, state == null ? Component.translatable("screen.soulcatcherplus.energy")
+            : Component.translatable("screen.soulcatcherplus." + (state.cageSlot() < 0 ? "cage_missing" : "cage_slot"),
+                state.cageSlot() + 1), CX, CY - 21, SoulTheme.MUTED);
+        g.drawCenteredString(font, state == null ? "…" : state.cageCapacity() == 0 ? "—"
+            : state.energy() + " / " + state.cageCapacity(), CX, CY - 3, SoulTheme.TEAL);
         g.drawCenteredString(font, text("active", state == null ? "—" : state.companions().size()), CX, CY + 17, SoulTheme.MUTED);
         if (companions.isEmpty()) {
             sector(g, COMPANION_INNER, COMPANION_OUTER, 0, TAU, SoulTheme.PANEL);

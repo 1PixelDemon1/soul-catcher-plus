@@ -54,9 +54,7 @@ public final class SoulEvents {
         ServerPlayer player = creditedPlayer(event.getSource().getEntity());
         if (player == null) return;
         SoulProfiles.Profile profile = SoulProfiles.get(mob);
-        PlayerSouls collection = SoulService.data(player);
-        collection.energy = (int) Math.min(Integer.MAX_VALUE, (long) collection.energy + profile.energy());
-        SoulService.changed(player);
+        SoulCages.credit(player, profile.energy());
         CompoundTag tag = mob.getPersistentData();
         long now = player.server.overworld().getGameTime();
         if (!tag.hasUUID("scp_mark_owner") || !tag.getUUID("scp_mark_owner").equals(player.getUUID())

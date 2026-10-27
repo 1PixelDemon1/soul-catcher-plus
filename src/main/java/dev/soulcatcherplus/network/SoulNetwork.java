@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "8";
+    private static final String VERSION = "9";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -35,11 +35,12 @@ public final class SoulNetwork {
         new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
     public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
             long cooldown, String command, SummonRules.Status status, boolean favorite) {}
-    public record State(boolean openScreen, int energy, int activeCount, int summonLimit,
+    public record State(boolean openScreen, int energy, int cageCapacity, int cageSlot, int activeCount, int summonLimit,
             boolean commandMode, boolean group, UUID selected, List<Row> rows) {
         static State read(FriendlyByteBuf b) {
             boolean open = b.readBoolean();
-            int energy = b.readVarInt(), activeCount = b.readVarInt(), limit = b.readVarInt();
+            int energy = b.readVarInt(), cageCapacity = b.readVarInt(), cageSlot = b.readInt();
+            int activeCount = b.readVarInt(), limit = b.readVarInt();
             boolean mode = b.readBoolean(), group = b.readBoolean();
             UUID selected = b.readBoolean() ? b.readUUID() : null;
             int size = b.readVarInt();
@@ -47,11 +48,12 @@ public final class SoulNetwork {
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
                 b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
-            return new State(open, energy, activeCount, limit, mode, group, selected, List.copyOf(rows));
+            return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, List.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
             b.writeBoolean(openScreen);
-            b.writeVarInt(energy); b.writeVarInt(activeCount); b.writeVarInt(summonLimit);
+            b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot);
+            b.writeVarInt(activeCount); b.writeVarInt(summonLimit);
             b.writeBoolean(commandMode); b.writeBoolean(group);
             b.writeBoolean(selected != null); if (selected != null) b.writeUUID(selected);
             b.writeVarInt(rows.size());
@@ -80,17 +82,17 @@ public final class SoulNetwork {
     }
     public record Companion(UUID entry, String name, float health, float maxHealth, String command, boolean loaded) {}
     /** Active-only snapshot: health is live server data; unloaded companions have explicitly unknown HP. */
-    public record WheelState(int energy, List<Companion> companions) {
+    public record WheelState(int energy, int cageCapacity, int cageSlot, List<Companion> companions) {
         static WheelState read(FriendlyByteBuf b) {
-            int energy = b.readVarInt(), size = b.readVarInt();
+            int energy = b.readVarInt(), cageCapacity = b.readVarInt(), cageSlot = b.readInt(), size = b.readVarInt();
             if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid companion count");
             List<Companion> companions = new ArrayList<>();
             for (int i = 0; i < size; i++) companions.add(new Companion(b.readUUID(), b.readUtf(256),
                 b.readFloat(), b.readFloat(), b.readUtf(16), b.readBoolean()));
-            return new WheelState(energy, List.copyOf(companions));
+            return new WheelState(energy, cageCapacity, cageSlot, List.copyOf(companions));
         }
         void write(FriendlyByteBuf b) {
-            b.writeVarInt(energy); b.writeVarInt(companions.size());
+            b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot); b.writeVarInt(companions.size());
             for (Companion companion : companions) {
                 b.writeUUID(companion.entry); b.writeUtf(companion.name, 256);
                 b.writeFloat(companion.health); b.writeFloat(companion.maxHealth);
@@ -150,6 +152,7 @@ public final class SoulNetwork {
     }
     private static void sendState(ServerPlayer player, boolean openScreen) {
         PlayerSouls data = SoulService.data(player);
+        SoulCages.Active cage = SoulCages.active(player);
         SummonRules.Context availabilityContext = SoulService.summonContext(player);
         List<Row> rows = data.entries.values().stream().map(e -> {
             Entity active = e.activeEntity == null ? null : player.serverLevel().getEntity(e.activeEntity);
@@ -159,7 +162,7 @@ public final class SoulNetwork {
                 availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
         }).toList();
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-            new State(openScreen, data.energy, availabilityContext.activeCount(), availabilityContext.limit(),
+            new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
                 data.commandMode, data.commandGroup, data.selected, rows));
     }
     public static void ghost(ServerPlayer player, Entity entity) {
@@ -222,13 +225,14 @@ public final class SoulNetwork {
     }
     private static void sendWheelState(ServerPlayer player) {
         PlayerSouls data = SoulService.data(player);
+        SoulCages.Active cage = SoulCages.active(player);
         List<Companion> companions = data.entries.values().stream().filter(e -> e.activeEntity != null).map(entry -> {
             Mob mob = SoulService.activeMob(player, entry);
             boolean loaded = mob != null && Float.isFinite(mob.getHealth()) && Float.isFinite(mob.getMaxHealth());
             return new Companion(entry.id, abbreviate(entry.name), loaded ? Math.max(0, mob.getHealth()) : 0,
                 loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? CompanionBrain.mode(mob).name() : "", loaded);
         }).toList();
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WheelState(data.energy, companions));
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WheelState(cage.energy(), cage.capacity(), cage.slot(), companions));
     }
     private static void wheelRequest(WheelRequest packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();

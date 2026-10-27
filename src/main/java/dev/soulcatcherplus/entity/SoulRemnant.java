@@ -2,6 +2,7 @@
 package dev.soulcatcherplus.entity;
 
 import dev.soulcatcherplus.companion.SoulService;
+import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.*;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
@@ -62,6 +63,10 @@ public final class SoulRemnant extends Entity {
         if (!(player.getItemInHand(hand).getItem() instanceof dev.soulcatcherplus.item.SoulScythe)) return InteractionResult.PASS;
         if (player instanceof ServerPlayer server && server.getUUID().equals(owner) && soul != null
                 && player.distanceToSqr(this) <= 6 * 6) {
+            if (!SoulCages.active(server).present()) {
+                SoulService.message(server, "cage_needed");
+                return InteractionResult.FAIL;
+            }
             PlayerSouls data = SoulService.data(server);
             boolean known = data.entries.values().stream().anyMatch(e -> SoulVariants.same(e, soul));
             if (!known) {

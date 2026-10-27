@@ -172,6 +172,8 @@ public final class SoulScreen extends Screen {
             case RECOVERING -> text("recovering", cooldown(row));
             case LIMIT_REACHED -> text("capacity_hint");
             case NO_SCYTHE -> text("scythe_needed");
+            case NO_CAGE -> text("cage_needed");
+            case CAGE_TOO_SMALL -> text("cage_too_small", row.cost());
             case LOW_ENERGY -> text("need_energy", Math.max(0, row.cost() - state.energy()));
             default -> text("summon_hint");
         };
@@ -228,7 +230,8 @@ public final class SoulScreen extends Screen {
         SoulTheme.diamond(g, 31, 29, 4, SoulTheme.TEAL);
         g.drawString(font, title, 50, 19, SoulTheme.LIGHT, false);
         g.drawString(font, text("subtitle"), 50, 34, SoulTheme.MUTED, false);
-        metric(g, 333, 119, text("energy"), Integer.toString(state.energy()), SoulTheme.TEAL);
+        metric(g, 333, 119, text(state.cageSlot() < 0 ? "cage_missing" : "cage_slot", state.cageSlot() + 1),
+            state.cageCapacity() == 0 ? "—" : state.energy() + " / " + state.cageCapacity(), SoulTheme.TEAL);
         metric(g, 460, 125, text("capacity_label"), state.activeCount() + " / " + state.summonLimit(), SoulTheme.GOLD);
         SoulTheme.panel(g, 18, 60, 156, 240);
         SoulTheme.panel(g, 182, 60, 248, 240);
@@ -299,6 +302,8 @@ public final class SoulScreen extends Screen {
                 status = switch (row.status()) {
                     case RECOVERING -> text("recovering", cooldown(row));
                     case NO_SCYTHE -> text("status_no_scythe");
+                    case NO_CAGE -> text("cage_missing");
+                    case CAGE_TOO_SMALL -> text("status_cage_too_small");
                     case LIMIT_REACHED -> text("status_limit");
                     case LOW_ENERGY -> text("status_low_energy");
                     default -> text("status_ready");

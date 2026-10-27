@@ -43,6 +43,9 @@ public final class SoulScythe extends SwordItem {
                 SoulService.attack(server, mob);
                 SoulService.message(server, "attack", mob.getName());
             } else {
+                if (!SoulCages.active(server).present()) {
+                    SoulService.message(server, "cage_needed"); return InteractionResult.FAIL;
+                }
                 if (!SoulProfiles.get(mob).enabled() || !SoulAdapters.get(mob).canCapture(mob, server)) {
                     SoulService.message(server, "unsupported"); return InteractionResult.FAIL;
                 }

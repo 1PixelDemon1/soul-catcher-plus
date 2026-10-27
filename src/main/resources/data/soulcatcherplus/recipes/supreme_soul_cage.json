@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MCM",
+    "GSG",
+    "MMM"
+  ],
+  "key": {
+    "M": {
+      "item": "minecraft:bone"
+    },
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "S": {
+      "item": "minecraft:nether_star"
+    }
+  },
+  "result": {
+    "item": "soulcatcherplus:supreme_soul_cage"
+  }
+}

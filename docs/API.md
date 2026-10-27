@@ -130,8 +130,9 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development builds use protocol **8**, including synchronized soul-remnant
-appearance data and explicit wheel group scope; clients and servers must update together. Released 0.2.0 artifacts
+Current development builds use protocol **9**, adding active cage capacity/slot
+to collection and wheel snapshots and new cage availability states; clients and
+servers must update together. Released 0.2.0 artifacts
 use protocol 6, and released 0.1.0 artifacts remain on protocol 4.
 
 ## Soul remnant appearance
@@ -198,7 +199,7 @@ and polls physical keys/buttons as a fallback. Scancodes use matching input even
 instead of being treated as GLFW keycodes. Closing with a still-held trigger blocks
 wheel reopening until release; it does not block the collection shortcut.
 
-`WheelState` contains energy and active entries only, with current/max HP read from
+`WheelState` contains active cage energy/capacity/hotbar slot and active entries, with current/max HP read from
 loaded, canonically owned mobs. Unloaded entries carry explicit unknown health;
 menu snapshots never load chunks. Refreshes are throttled to 250 ms per player
 using session monotonic time, with a separate 100 ms command throttle.
@@ -330,18 +331,21 @@ Recall returns `floor(currentHP / 2)` energy from a living, loaded companion aft
 checking its active UUID, owner and entry identity. Unlike kill rewards, this has
 no minimum: HP below two returns zero; invalid/nonfinite health also returns zero.
 Current HP is read before adapter cleanup; the active reservation is invalidated
-before callbacks to prevent duplicate refunds. Credits are capped at `Integer.MAX_VALUE`
-and saved to the owner's ledger even if the owner is offline. The shared recall
+before callbacks to prevent duplicate refunds. Credits fill the owner's hotbar
+cages from left to right. Without an available owner inventory or free cage space,
+the refund cannot be stored. `recallAll(player)` supplies its player directly for
+logout and death handling. The shared recall
 path covers single, group and automatic recalls; companion death gives no refund.
 Unloaded/missing entities are invalidated without a refund or chunk loading because
-their current health is unknown. No save-schema or network-protocol change is needed.
+their current health is unknown.
 
 `SoulEntry` now takes maximum health as its final constructor argument, replacing
 the old cost/slots pair. It stores `MaxHealth` and derives `cost` from that value.
-Ledger schema 2 loads older entries using their saved maximum-health attribute
+Ledger schema 3 loads older entries using their saved maximum-health attribute
 (including saved modifiers); without it, old cost / 2 is a best-effort fallback.
-Transient modifiers absent from NBT cannot be reconstructed. Existing energy,
-ownership, selection, active identity, snapshots and cooldowns are retained.
+Transient modifiers absent from NBT cannot be reconstructed. Old ledger energy
+is intentionally not transferred; ownership, selection, active identity, snapshots
+and cooldowns are retained.
 `PlayerSouls.activeCount()` replaces weighted slot accounting.
 
 `SoulScythe.summonLimit()` is 1 / 2 / 3 for iron / diamond / netherite.
@@ -350,10 +354,47 @@ ownership, selection, active identity, snapshots and cooldowns are retained.
 Existing companions remain when the held limit decreases or no scythe is held;
 only new summons check the current limit. Every companion counts as one, including
 unloaded active ledger reservations. The collection belongs to the player's UUID
-in overworld saved data; no collection or energy is stored in item stacks.
+in overworld saved data. Collection entries are not stored in item stacks; soul
+energy is stored exclusively in cage item stacks.
 
 The legacy `soulcatcherplus:soul_scythe` registry ID and `SCYTHE` field alias refer
 to the iron tier. New registry IDs are `diamond_soul_scythe` and `netherite_soul_scythe`.
+
+## Soul cage storage
+
+`SoulCage` is a non-stackable item with capacities 150 / 400 / 1000 / 2000 for
+`iron_soul_cage`, `diamond_soul_cage`, `netherite_soul_cage` and `supreme_soul_cage`.
+`SoulCage.energy(stack)`, `capacity(stack)` and `setEnergy(stack, amount)` access
+the bounded `SoulEnergy` integer in the item tag. Reads never create NBT. Vanilla
+smithing transformation copies the diamond cage's tag into the netherite result,
+preserving stored energy and custom names. Netherite cages are fire-resistant.
+
+`SoulCages.active(player)` scans inventory slots 0–8, returning the first cage's
+slot and actual stack, or slot -1/EMPTY. It never skips an empty/full/undersized
+cage for a later one. Offhand, armor, other inventory slots and modded accessory
+slots do not participate. Harvest marking and remnant collection require a cage;
+merely viewing menus or commanding existing companions does not. Soul capture
+does not spend cage energy or require spare capacity.
+
+`SoulCages.spend(player, amount)` uses only that active cage. The whole summon
+cost must fit in it; energy from several cages is not combined. The summon path
+charges after adapters and the cancelable event approve, before entity insertion,
+and restores the exact charged stack if spawning fails. The shared
+`SummonRules.context(collection, limit, energy, cageCapacity, gameTime)` provides
+both the server decision and menu state, including NO_CAGE and CAGE_TOO_SMALL.
+
+`SoulCages.credit(player, amount)` fills all hotbar cages from left to right and
+returns the accepted amount. Kill rewards and recall refunds use this same path;
+any remainder after all cages are full is lost. `set(player, amount)` changes
+only the active cage and clamps to its capacity. Server callers mutate inventory
+and let the normal inventory synchronization carry NBT changes to clients.
+The admin `/soulcatcher energy <amount>` command sets that active cage, reports
+the actual bounded result and requires a hotbar cage.
+
+`PlayerSouls` no longer exposes or saves an energy balance. Schema 3 deliberately
+ignores old `Energy` fields: the user requested no legacy resource transfer.
+Existing entries, favorites, selection, active identities and cooldowns are retained.
+There is no migration escrow, automatic cage grant or hidden player energy balance.
 
 ## Capture availability through datapacks
 
@@ -375,7 +416,9 @@ capture does not delete collected souls. Avoid multiple profile files targeting 
 
 The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
 `--all`. The bare command keeps its sample species and two sheep colors; both
-forms grant the existing scythe loadout and set energy to 1000.
+forms grant the existing scythe loadout and put a supreme cage with 1000 energy
+before any other cage in the hotbar. Displaced items return to inventory or drop
+if it is full. The command does not silently delete an existing cage.
 
 Bulk population takes a sorted snapshot of registered entity types and creates
 samples on the server thread in small tick batches. Only returned `Mob` instances
