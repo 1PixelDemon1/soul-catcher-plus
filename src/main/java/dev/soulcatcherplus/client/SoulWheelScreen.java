@@ -175,9 +175,12 @@ public final class SoulWheelScreen extends Screen {
             double step = TAU / choices;
             for (int i = 0; i < choices; i++) {
                 boolean chosen = i == 0 ? allSelected : companions.get(i - 1).entry().equals(selected);
+                int baseColor = i == 0 ? 0xFF2B2923 : SoulTheme.PANEL;
+                int hoverColor = i == 0 ? 0xFF403A2B : 0xFF25434C;
+                int selectedColor = i == 0 ? 0xFF55492F : 0xFF285A58;
                 double center = -Math.PI / 2 + step * i;
                 sector(g, COMPANION_INNER, COMPANION_OUTER, center - step / 2 + 0.02, center + step / 2 - 0.02,
-                    chosen ? 0xFF285A58 : i == hoveredCompanion ? 0xFF25434C : SoulTheme.PANEL);
+                    chosen ? selectedColor : i == hoveredCompanion ? hoverColor : baseColor);
             }
         }
         double commandStep = TAU / COMMANDS.size();
