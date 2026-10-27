@@ -26,9 +26,9 @@ The artwork was generated and refined with the built-in `image_gen` tool.
 - Soul energy moves from the character's ledger to item containers.
 - A soul cage must be in the hotbar or offhand to capture a soul.
 - Summoning spends the energy stored in that container.
-- The leftmost hotbar cage is used; the offhand is used only when the hotbar has no cages.
+- The offhand cage is used first; without one, the leftmost hotbar cage is used.
 - Summon costs are not combined across containers; incoming rewards/refunds spill
-  to the next hotbar cage when one fills up, then to the offhand.
+  from the offhand to hotbar cages in left-to-right order when one fills up.
 - Capacities are 150 / 400 / 1000 / 2000 as listed above.
 - Old character energy is not transferred; the collection remains player-owned.
 

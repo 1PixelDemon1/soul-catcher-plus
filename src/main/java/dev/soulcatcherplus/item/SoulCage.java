@@ -34,7 +34,6 @@ public final class SoulCage extends Item {
     }
     @Override public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity));
-        tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.tip"));
     }
     @Override public boolean isBarVisible(ItemStack stack) { return energy(stack) > 0; }
     @Override public int getBarWidth(ItemStack stack) { return Math.round(13f * energy(stack) / capacity); }

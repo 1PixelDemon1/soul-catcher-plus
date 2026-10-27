@@ -64,7 +64,6 @@ public final class SoulScythe extends SwordItem {
         return InteractionResult.sidedSuccess(player.level().isClientSide);
     }
     @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.soul_scythe.tip"));
         tooltip.add(Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));
     }
 }

@@ -8,9 +8,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-/** Hotbar cages take priority; the offhand is last for both selection and incoming energy. */
+/** Offhand cages take priority, followed by the hotbar from left to right. */
 public final class SoulCages {
-    private static final int[] SLOTS = {0, 1, 2, 3, 4, 5, 6, 7, 8, Inventory.SLOT_OFFHAND};
+    private static final int[] SLOTS = {Inventory.SLOT_OFFHAND, 0, 1, 2, 3, 4, 5, 6, 7, 8};
     public record Active(int slot, ItemStack stack) {
         public boolean present() { return slot >= 0; }
         public int energy() { return SoulCage.energy(stack); }
@@ -40,7 +40,7 @@ public final class SoulCages {
         player.getInventory().setChanged();
         return stored;
     }
-    /** Incoming energy spills through the hotbar and then offhand; spending never does. */
+    /** Incoming energy fills the offhand, then spills through the hotbar; spending never does. */
     public static int credit(ServerPlayer player, int amount) {
         if (amount <= 0) return 0;
         int remaining = amount;

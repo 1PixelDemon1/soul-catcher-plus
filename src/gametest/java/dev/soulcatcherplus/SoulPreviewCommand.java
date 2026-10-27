@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.*;
@@ -102,8 +103,8 @@ public final class SoulPreviewCommand {
         return 1;
     }
     private static void prepareCage(ServerPlayer player) {
-        int slot = -1;
-        for (int i = 0; i < 9; i++) {
+        int slot = player.getOffhandItem().getItem() instanceof SoulCage ? Inventory.SLOT_OFFHAND : -1;
+        for (int i = 0; slot < 0 && i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
             if (stack.isEmpty() || stack.getItem() instanceof SoulCage) { slot = i; break; }
         }

@@ -331,8 +331,8 @@ Recall returns `floor(currentHP / 2)` energy from a living, loaded companion aft
 checking its active UUID, owner and entry identity. Unlike kill rewards, this has
 no minimum: HP below two returns zero; invalid/nonfinite health also returns zero.
 Current HP is read before adapter cleanup; the active reservation is invalidated
-before callbacks to prevent duplicate refunds. Credits fill the owner's hotbar
-cages from left to right, then the offhand cage. Without an available owner inventory or free cage space,
+before callbacks to prevent duplicate refunds. Credits fill the owner's offhand
+cage first, then hotbar cages from left to right. Without an available owner inventory or free cage space,
 the refund cannot be stored. `recallAll(player)` supplies its player directly for
 logout and death handling. The shared recall
 path covers single, group and automatic recalls; companion death gives no refund.
@@ -369,9 +369,9 @@ the bounded `SoulEnergy` integer in the item tag. Reads never create NBT. Vanill
 smithing transformation copies the diamond cage's tag into the netherite result,
 preserving stored energy and custom names. Netherite cages are fire-resistant.
 
-`SoulCages.active(player)` scans inventory slots 0–8, then `Inventory.SLOT_OFFHAND`
-(40), returning the first cage's slot and actual stack, or slot -1/EMPTY. It never
-skips an empty/full/undersized hotbar cage for a later cage or the offhand. Armor,
+`SoulCages.active(player)` scans `Inventory.SLOT_OFFHAND` (40), then inventory slots
+0–8, returning the first cage's slot and actual stack, or slot -1/EMPTY. It never
+skips an empty/full/undersized offhand cage for a hotbar cage, or a hotbar cage for a later one. Armor,
 other inventory slots and modded accessory slots do not participate. Harvest marking and remnant collection require a cage;
 merely viewing menus or commanding existing companions does not. Soul capture
 does not spend cage energy or require spare capacity.
@@ -383,8 +383,8 @@ and restores the exact charged stack if spawning fails. The shared
 `SummonRules.context(collection, limit, energy, cageCapacity, gameTime)` provides
 both the server decision and menu state, including NO_CAGE and CAGE_TOO_SMALL.
 
-`SoulCages.credit(player, amount)` fills all hotbar cages from left to right, then
-the offhand, and returns the accepted amount. Selection and crediting share one
+`SoulCages.credit(player, amount)` fills the offhand first, then all hotbar cages
+from left to right, and returns the accepted amount. Selection and crediting share one
 ordered slot list. Kill rewards and recall refunds use this same path;
 any remainder after all cages are full is lost. `set(player, amount)` changes
 only the active cage and clamps to its capacity. Server callers mutate inventory
@@ -427,7 +427,8 @@ capture does not delete collected souls. Avoid multiple profile files targeting 
 The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
 `--all`. The bare command keeps its sample species and two sheep colors; both
 forms grant the existing scythe loadout and put a supreme cage with 1000 energy
-before any other cage in the hotbar. Displaced items return to inventory or drop
+in the offhand if a cage is already there, otherwise before other hotbar cages.
+Displaced items return to inventory or drop
 if it is full. The command does not silently delete an existing cage.
 
 Bulk population takes a sorted snapshot of registered entity types and creates
