@@ -58,11 +58,11 @@ stored energy. New crafted cages start empty.
 
 All runtime models inherit `item/soul_cage`. The generated 16x16 sprite has its
 top chain pixel centered at model coordinates (10.5, 15.5, 8), with model Y
-inverted from image rows. The third-person display uses 90 degrees around X to
-counter the held-item layer's flat orientation, a 35-degree turn around the
-sprite's vertical axis, scale 0.8, and a translation that keeps this chain point
-at the fist. Left-hand translations account for Minecraft's handedness flip.
-First-person display has scale 0.75, a 35-degree turn and a grip 6 model units
-lower than the initial upright framing. X/Z offsets compensate for rotation
-around the chain instead of the sprite center. Runtime placement has not been
-verified by an agent game launch.
+inverted from image rows. The shared model inherits Minecraft's `item/handheld`
+so the sprite's plane runs along the hand as it does for a sword. Third-person
+display uses the handheld +/-90-degree Y orientation and scale 0.85; the Z angle
+is adjusted for the cage's upright artwork so the body still hangs below the
+chain. Translation anchors the chain at the fist. First-person rotations and
+scale 0.68 match vanilla swords, with the lower grip position retained from the
+previous adjustment. Both hands have explicit transforms. Runtime placement
+has not been verified by an agent game launch.

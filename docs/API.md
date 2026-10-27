@@ -395,10 +395,11 @@ the actual bounded result and requires a hotbar or offhand cage.
 and the command reply, so offhand slot 40 is never presented as hotbar slot 41.
 The packet fields remain unchanged; the protocol stays at 9.
 
-All four item models inherit `item/soul_cage`, which supplies distinct first- and
-third-person transforms for both hands. Third-person rotation cancels the held
-layer's flat-item tilt; translation anchors the top chain texel at the fist.
-GUI, ground and fixed transforms continue to inherit the ordinary generated item.
+All four item models inherit `item/soul_cage`, based on vanilla `item/handheld`.
+The sprite's plane follows the sword orientation along the hand. Third-person
+Z rotation accounts for upright cage artwork, with the top chain texel anchored
+at the fist. First-person rotations and scale match vanilla swords while retaining
+the lowered grip. GUI, ground and fixed transforms inherit the normal item defaults.
 
 `PlayerSouls` no longer exposes or saves an energy balance. Schema 3 deliberately
 ignores old `Energy` fields: the user requested no legacy resource transfer.
