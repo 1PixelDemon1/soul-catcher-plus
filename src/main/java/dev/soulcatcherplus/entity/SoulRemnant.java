@@ -6,6 +6,9 @@ import dev.soulcatcherplus.data.*;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.*;
@@ -16,15 +19,36 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
 
 public final class SoulRemnant extends Entity {
+    private static final EntityDataAccessor<String> APPEARANCE =
+        SynchedEntityData.defineId(SoulRemnant.class, EntityDataSerializers.STRING);
+
+    public enum Appearance {
+        SMALL("small"), MEDIUM("medium"), LARGE("large"), SKULL("skull");
+        private final String id;
+        Appearance(String id) { this.id = id; }
+        public String id() { return id; }
+        private static Appearance forHealth(double maxHealth) {
+            if (maxHealth >= 150) return SKULL;
+            int energy = SoulBalance.victoryEnergy(maxHealth);
+            return energy < 20 ? SMALL : energy <= 40 ? MEDIUM : LARGE;
+        }
+        private static Appearance byId(String id) {
+            for (Appearance appearance : values()) if (appearance.id.equals(id)) return appearance;
+            return SMALL;
+        }
+    }
+
     private UUID owner;
     private SoulEntry soul;
     private long expires;
     public SoulRemnant(EntityType<? extends SoulRemnant> type, Level level) { super(type, level); }
     public void initialize(ServerPlayer player, SoulEntry soul) {
         this.owner = player.getUUID(); this.soul = soul;
+        entityData.set(APPEARANCE, Appearance.forHealth(soul.maxHealth).id());
         expires = player.server.overworld().getGameTime() + 20 * 60;
     }
-    @Override protected void defineSynchedData() {}
+    public Appearance appearance() { return Appearance.byId(entityData.get(APPEARANCE)); }
+    @Override protected void defineSynchedData() { entityData.define(APPEARANCE, Appearance.SMALL.id()); }
     @Override public boolean isPickable() { return true; }
     @Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) { return true; }
     @Override public void tick() {
@@ -60,6 +84,8 @@ public final class SoulRemnant extends Entity {
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");
         if (tag.contains("Soul")) soul = SoulEntry.load(tag.getCompound("Soul"));
+        // Derive the visual from saved health, including remnants created before these textures existed.
+        entityData.set(APPEARANCE, (soul == null ? Appearance.SMALL : Appearance.forHealth(soul.maxHealth)).id());
         expires = tag.getLong("Expires");
     }
     @Override protected void addAdditionalSaveData(CompoundTag tag) {

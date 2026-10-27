@@ -130,8 +130,26 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Release 0.2.0 uses protocol **6** for collection, wheel and departure messages;
-clients and servers must update together. Released 0.1.0 artifacts remain on protocol 4.
+Current development builds use protocol **7**, adding synchronized soul-remnant
+appearance data; clients and servers must update together. Released 0.2.0 artifacts
+use protocol 6, and released 0.1.0 artifacts remain on protocol 4.
+
+## Soul remnant appearance
+
+`SoulRemnant` chooses a visual from the captured `SoulEntry.maxHealth`. At **150 HP
+or above**, the soul is a skull in blue fire. Below that threshold, the lantern tier
+uses `SoulBalance.victoryEnergy(maxHealth)`: less than 20 is small, 20 through 40
+inclusive is medium, and more than 40 is large. The skull rule takes priority.
+Current health, summon cost, boss bars and boss tags do not affect this choice.
+
+The server synchronizes only the appearance's stable string ID through entity
+metadata; the captured snapshot remains server-side. On chunk/world reload,
+appearance is derived from the already saved max health, including older remnants.
+No extra NBT fields, collection-schema change or captured-mob instantiation is needed.
+
+`SoulRemnantRenderer` draws the four transparent 32x32 textures as camera-facing
+quads with full-bright lighting and gentle vertical bobbing. The existing pickup
+ownership, scythe requirement, soul particles and one-minute lifetime are unchanged.
 
 The collection screen pauses an unpublished integrated singleplayer server.
 Recovery remains authoritative on world game time; cosmetic screen ticks do not
@@ -212,8 +230,8 @@ only changes metadata and sends the existing Ghost packet to current trackers.
 Target-selector configuration runs on join or before AI on a living tick, never
 while a target/attack callback might be iterating goals. A transient weak-key set
 prevents repeated configuration without retaining entity instances or save state.
-Existing tracking synchronization supplies the spectral tint; the wire protocol
-remains 6.
+Existing tracking synchronization supplies the spectral tint; minion allegiance
+does not add fields to the collection, wheel or Ghost packets.
 
 `configureMinion(mob)` defaults to clearing only `targetSelector`; native movement
 and attack goals remain. Every five ticks a loaded root's permitted target is
