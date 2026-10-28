@@ -4,6 +4,7 @@ package dev.soulcatcherplus.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -150,7 +150,8 @@ public final class SoulWheelScreen extends Screen {
         double angle = (Math.atan2(dy, dx) + Math.PI / 2 + step / 2 + TAU) % TAU;
         return Math.min(count - 1, (int)(angle / step));
     }
-    @Override public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override public void render(PoseStack pose, int mouseX, int mouseY, float partialTick) {
+        SoulGui g = new SoulGui(pose);
         g.fill(0, 0, width, height, 0x95030910);
         g.pose().pushPose();
         g.pose().translate(originX, originY, 0);
@@ -238,11 +239,12 @@ public final class SoulWheelScreen extends Screen {
     private String fit(String value, int maxWidth) {
         return font.width(value) <= maxWidth ? value : font.plainSubstrByWidth(value, maxWidth - font.width("…")) + "…";
     }
-    private static void sector(GuiGraphics g, int inner, int outer, double start, double end, int color) {
+    private static void sector(SoulGui g, int inner, int outer, double start, double end, int color) {
         g.flush();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
+        RenderSystem.disableTexture();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.setShaderColor(1, 1, 1, 1);
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
@@ -258,6 +260,7 @@ public final class SoulWheelScreen extends Screen {
             buffer.vertex(matrix, CX + (float)Math.cos(q) * inner, CY + (float)Math.sin(q) * inner, 0).color(r, green, b, a).endVertex();
         }
         BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.enableTexture();
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
     }

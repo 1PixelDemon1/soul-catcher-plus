@@ -155,7 +155,7 @@ public final class SoulNetwork {
         SoulCages.Active cage = SoulCages.active(player);
         SummonRules.Context availabilityContext = SoulService.summonContext(player);
         List<Row> rows = data.entries.values().stream().map(e -> {
-            Entity active = e.activeEntity == null ? null : player.serverLevel().getEntity(e.activeEntity);
+            Entity active = e.activeEntity == null ? null : player.getLevel().getEntity(e.activeEntity);
             String command = active == null ? "" : active.getPersistentData().getString(CompanionBrain.MODE);
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
@@ -172,11 +172,11 @@ public final class SoulNetwork {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
     }
     public static void dissolve(Mob mob) {
-        if (mob.level().isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
+        if (mob.level.isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
         mob.getPersistentData().putBoolean("scp_dissolving", true);
         // Send before the removal packet; clients retain a short-lived visual echo only.
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> mob), new Dissolve(mob.getId(), mob.getUUID(),
-            mob.level().dimension().location(), mob.getX(), mob.getY(), mob.getZ(), mob.getBbWidth(), mob.getBbHeight()));
+            mob.level.dimension().location(), mob.getX(), mob.getY(), mob.getZ(), mob.getBbWidth(), mob.getBbHeight()));
     }
     private static void request(Request packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();

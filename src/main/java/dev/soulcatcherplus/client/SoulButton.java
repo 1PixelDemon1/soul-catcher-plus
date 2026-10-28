@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -26,11 +26,14 @@ final class SoulButton extends AbstractButton {
     SoulButton selected(boolean value) { selected = value; return this; }
     SoulButton lit(boolean value) { lit = value; return this; }
     Component hint() { return hint; }
+    int getX() { return x; }
+    int getY() { return y; }
     @Override public void onPress() { action.run(); }
-    @Override protected void updateWidgetNarration(NarrationElementOutput narration) {
+    @Override public void updateNarration(NarrationElementOutput narration) {
         defaultButtonNarrationText(narration);
     }
-    @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override public void renderButton(PoseStack pose, int mouseX, int mouseY, float partialTick) {
+        SoulGui g = new SoulGui(pose);
         var font = Minecraft.getInstance().font;
         boolean hover = isHoveredOrFocused();
         int accent = style == Style.FAVORITE ? SoulTheme.GOLD : style == Style.DANGER ? SoulTheme.RED : SoulTheme.TEAL;

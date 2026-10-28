@@ -2,8 +2,12 @@
 
 ## Target
 
-Soul Catcher Plus currently targets Minecraft 1.20.1, Forge 47.4.28 and Java 17.
+This port branch targets Minecraft 1.19.2, Forge 43.5.2 and Java 17.
+Declared runtime support starts at Forge 43.2.0, based on source/API comparison.
+The `develop` and `main` lines remain on Minecraft 1.20.1 / Forge 47.4.28.
 Follow the installed `minecraft-modding` skill when changing mod code.
+For this older target, verify APIs against the 1.19.2 mappings and Forge sources;
+the skill's 1.20.1 examples are not directly interchangeable.
 
 ## Git branches
 

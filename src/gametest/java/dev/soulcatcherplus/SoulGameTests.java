@@ -52,7 +52,7 @@ public final class SoulGameTests {
         zombie.setNoAi(true);
         ((SoulScythe) player.getMainHandItem().getItem()).interactLivingEntity(player.getMainHandItem(), player, zombie, InteractionHand.MAIN_HAND);
         helper.assertTrue(zombie.getPersistentData().hasUUID("scp_mark_owner"), "Scythe must mark enemy");
-        zombie.hurt(player.damageSources().playerAttack(player), 1000);
+        zombie.hurt(net.minecraft.world.damagesource.DamageSource.playerAttack(player), 1000);
         var remnants = helper.getLevel().getEntitiesOfClass(SoulRemnant.class, zombie.getBoundingBox().inflate(4));
         helper.assertTrue(remnants.size() == 1, "A marked kill must leave exactly one soul");
         remnants.get(0).interact(player, InteractionHand.MAIN_HAND);
@@ -114,7 +114,7 @@ public final class SoulGameTests {
         var ally = helper.spawn(EntityType.HUSK, 8, 1, 12);
         ally.getPersistentData().putUUID(CompanionBrain.OWNER, player.getUUID());
         float health = ally.getHealth();
-        ally.hurt(summoned.damageSources().mobAttack(summoned), 8);
+        ally.hurt(net.minecraft.world.damagesource.DamageSource.mobAttack(summoned), 8);
         helper.assertTrue(ally.getHealth() == health, "Companion cannot damage allied companion");
         ally.discard();
         summoned.setTarget(player);
@@ -153,7 +153,7 @@ public final class SoulGameTests {
         Mob summoned = (Mob) helper.getLevel().getEntity(entry.activeEntity);
         helper.assertTrue(summoned != null, "Summon exists");
         int energy = SoulCages.active(player).energy();
-        summoned.hurt(summoned.damageSources().genericKill(), 10000);
+        summoned.hurt(net.minecraft.world.damagesource.DamageSource.OUT_OF_WORLD, 10000);
         helper.assertTrue(entry.activeEntity == null && SoulService.data(player).entries.containsKey(entry.id), "Defeat must retain collection entry");
         helper.assertTrue(entry.readyAt > player.server.overworld().getGameTime(), "Defeat starts cooldown");
         helper.assertTrue(SoulCages.active(player).energy() == energy, "Defeating companion cannot farm energy");

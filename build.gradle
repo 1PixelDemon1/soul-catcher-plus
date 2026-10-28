@@ -6,6 +6,7 @@ plugins {
 version = mod_version
 group = mod_group_id
 base { archivesName = mod_id }
+layout.buildDirectory = layout.projectDirectory.dir("build/${minecraft_version}")
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
     withSourcesJar()
@@ -15,15 +16,15 @@ minecraft {
     copyIdeResources = true
     runs {
         configureEach {
-            workingDirectory project.file('run')
+            workingDirectory project.file("run/${minecraft_version}")
             property 'forge.logging.console.level', 'info'
             property 'forge.enabledGameTestNamespaces', mod_id
             property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            property 'mixin.env.refMapRemappingFile', "${layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
             args '--mixin', 'soulcatcherplus.mixins.json'
             mods { "${mod_id}" { source sourceSets.main } }
         }
-        client { workingDirectory project.file('run-client') }
+        client { workingDirectory project.file("run-client/${minecraft_version}") }
         server { args '--nogui' }
         gameTestServer {}
     }
@@ -33,6 +34,7 @@ if (project.hasProperty('gameTests')) {
     sourceSets.main.resources.srcDir 'src/gametest/resources'
 }
 repositories {
+    maven { url = 'https://libraries.minecraft.net' }
     mavenCentral()
     maven { url = 'https://cursemaven.com'; content { includeGroup 'curse.maven' } }
 }
@@ -40,15 +42,15 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     if (project.hasProperty('withMowzies')) {
-        runtimeOnly fg.deobf('curse.maven:mowzies-mobs-250498:7815705')
-        runtimeOnly fg.deobf('curse.maven:geckolib-388172:7553267')
+        runtimeOnly fg.deobf('curse.maven:mowzies-mobs-250498:5180680')
+        runtimeOnly fg.deobf('curse.maven:geckolib-388172:4407241')
     }
     if (project.hasProperty('withIceAndFire')) {
-        runtimeOnly fg.deobf('curse.maven:ice-and-fire-dragons-264231:5633453')
-        runtimeOnly fg.deobf('curse.maven:citadel-331936:7476570')
+        runtimeOnly fg.deobf('curse.maven:ice-and-fire-dragons-264231:5037952')
+        runtimeOnly fg.deobf('curse.maven:citadel-331936:4556677')
     }
     if (project.hasProperty('withTwilightForest')) {
-        runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:5468648')
+        runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:4389567')
     }
 }
 tasks.named('processResources', ProcessResources).configure {

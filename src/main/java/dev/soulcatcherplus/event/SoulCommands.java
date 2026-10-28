@@ -25,7 +25,7 @@ public final class SoulCommands {
                             return 0;
                         }
                         int stored = SoulCages.set(player, IntegerArgumentType.getInteger(context, "amount"));
-                        context.getSource().sendSuccess(() -> Component.translatable("command.soulcatcherplus.energy",
+                        context.getSource().sendSuccess(Component.translatable("command.soulcatcherplus.energy",
                             SoulCages.location(cage.slot()), stored, cage.capacity()), false);
                         return 1;
                     }))));

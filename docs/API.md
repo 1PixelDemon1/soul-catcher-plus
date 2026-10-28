@@ -1,6 +1,8 @@
 # Soul Catcher Plus API — 0.1 (experimental)
 
-Target: Minecraft 1.20.1, Forge 47.4.28, Java 17. API stability is not yet guaranteed.
+Target on branch `feature/forge-1.19.2`: Minecraft 1.19.2, Forge 43.5.2, Java 17.
+The declared runtime range is Forge 43.2.0 through 43.x, based on source/API comparison.
+API stability is not yet guaranteed. The main development line still targets 1.20.1.
 The main mod is required on client and server. Third-party creature mods remain optional.
 
 ## Entity adapters
@@ -235,7 +237,9 @@ root companion's chosen target rather than running their own target search.
 ## Summoned minions
 
 `SoulMinions` discovers Mob descendants through `SoulAdapter.summoner(mob)`. Its
-default follows `TraceableEntity.getOwner()` and `OwnableEntity` ownership. Because
+default follows native projectile, vex, evoker-fang, area-effect-cloud and TNT
+owners, plus `OwnableEntity` ownership. Minecraft 1.19.2 does not yet have
+`TraceableEntity`. Because
 the default `OwnableEntity.getOwner()` resolves players only, a null result also
 tries the owner UUID among loaded entities in the same server level. Discovery
 requires a chain reaching a marked companion; player-owned pets and unrelated

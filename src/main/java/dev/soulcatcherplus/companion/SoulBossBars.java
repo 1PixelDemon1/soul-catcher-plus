@@ -53,7 +53,7 @@ public final class SoulBossBars {
 
     /** Called before tracking begins, and again to cover lazily replaced event instances. */
     public static void suppress(Mob mob) {
-        if (mob.level().isClientSide || !CompanionBrain.isSoul(mob)) return;
+        if (mob.level.isClientSide || !CompanionBrain.isSoul(mob)) return;
         for (ServerBossEvent event : SoulAdapters.get(mob).bossBars(mob)) {
             if (event == null) continue;
             if (event instanceof Control control) control.soulcatcherplus$markSuppressed();

@@ -21,7 +21,7 @@ def download(url, path):
 
 def mdk():
     archive = TOOLS / 'forge-mdk.zip'
-    download('https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.28/forge-1.20.1-47.4.28-mdk.zip', archive)
+    download('https://maven.minecraftforge.net/net/minecraftforge/forge/1.19.2-43.5.2/forge-1.19.2-43.5.2-mdk.zip', archive)
     with zipfile.ZipFile(archive) as source:
         for name in source.namelist():
             if name in ('gradlew', 'gradlew.bat', 'settings.gradle') or name.startswith('gradle/wrapper/'):

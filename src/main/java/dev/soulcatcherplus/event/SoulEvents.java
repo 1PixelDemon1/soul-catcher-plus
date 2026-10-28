@@ -44,7 +44,7 @@ public final class SoulEvents {
     }
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void death(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide) return;
+        if (!(event.getEntity() instanceof Mob mob) || mob.level.isClientSide) return;
         SoulMinions.tryInherit(mob);
         if (CompanionBrain.isSoul(mob)) {
             SoulNetwork.dissolve(mob);
@@ -64,10 +64,10 @@ public final class SoulEvents {
         try {
             SoulEntry soul = new SoulEntry(UUID.randomUUID(), mob.getType().builtInRegistryHolder().key().location().toString(),
                 mob.getName().getString(), SoulSnapshots.sanitize(adapter.capture(mob)), mob.getMaxHealth());
-            SoulRemnant remnant = SoulCatcherPlus.REMNANT.get().create(player.serverLevel());
+            SoulRemnant remnant = SoulCatcherPlus.REMNANT.get().create(player.getLevel());
             if (remnant != null) {
                 remnant.initialize(player, soul); remnant.moveTo(mob.getX(), mob.getY() + 0.5, mob.getZ());
-                player.serverLevel().addFreshEntity(remnant);
+                player.getLevel().addFreshEntity(remnant);
             }
         } catch (RuntimeException error) {
             com.mojang.logging.LogUtils.getLogger().error("Failed soul capture: {}", mob.getType(), error);
@@ -75,12 +75,12 @@ public final class SoulEvents {
         }
     }
     @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide) return;
+        if (!(event.getEntity() instanceof Mob mob) || mob.level.isClientSide) return;
         if (mob.tickCount % 5 == 0) SoulMinions.tryInherit(mob);
         if (CompanionBrain.isSoul(mob)) CompanionBrain.tick(mob);
         else if (mob.tickCount % 10 == 0 && mob.getPersistentData().hasUUID("scp_mark_owner")
                 && mob.getPersistentData().getLong("scp_mark_until") >= mob.getServer().overworld().getGameTime())
-            ((net.minecraft.server.level.ServerLevel) mob.level()).sendParticles(ParticleTypes.SOUL,
+            ((net.minecraft.server.level.ServerLevel) mob.level).sendParticles(ParticleTypes.SOUL,
                 mob.getX(), mob.getY() + mob.getBbHeight() + 0.2, mob.getZ(), 1, 0.1, 0.05, 0.1, 0);
     }
     @SubscribeEvent public static void join(EntityJoinLevelEvent event) {
@@ -108,7 +108,7 @@ public final class SoulEvents {
         SoulMinions.dismiss(mob.getServer(), mob.getUUID());
     }
     @SubscribeEvent public static void tracking(PlayerEvent.StartTracking event) {
-        if (event.getTarget() instanceof Mob mob && !mob.level().isClientSide) SoulMinions.tryInherit(mob);
+        if (event.getTarget() instanceof Mob mob && !mob.level.isClientSide) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof ServerPlayer player && CompanionBrain.isSoul(event.getTarget()))
             SoulNetwork.ghost(player, event.getTarget());
     }
@@ -123,7 +123,7 @@ public final class SoulEvents {
     }
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void damage(LivingAttackEvent event) {
-        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity().level.isClientSide) return;
         Entity attacker = event.getSource().getEntity();
         if (attacker instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof Mob mob) SoulMinions.tryInherit(mob);
@@ -133,18 +133,18 @@ public final class SoulEvents {
                 && CompanionBrain.allied(mob, attacker)) event.setCanceled(true);
     }
     @SubscribeEvent public static void drops(LivingDropsEvent event) {
-        if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide) SoulMinions.tryInherit(mob);
+        if (event.getEntity() instanceof Mob mob && !mob.level.isClientSide) SoulMinions.tryInherit(mob);
         if (CompanionBrain.isSoul(event.getEntity())) { event.getDrops().clear(); event.setCanceled(true); }
     }
     @SubscribeEvent public static void xp(LivingExperienceDropEvent event) {
-        if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide) SoulMinions.tryInherit(mob);
+        if (event.getEntity() instanceof Mob mob && !mob.level.isClientSide) SoulMinions.tryInherit(mob);
         if (CompanionBrain.isSoul(event.getEntity())) { event.setDroppedExperience(0); event.setCanceled(true); }
     }
     @SubscribeEvent public static void conversion(LivingConversionEvent.Pre event) {
         if (CompanionBrain.isSoul(event.getEntity())) event.setCanceled(true);
     }
     @SubscribeEvent public static void target(LivingChangeTargetEvent event) {
-        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity().level.isClientSide) return;
         if (event.getEntity() instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getNewTarget() instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof Mob mob && CompanionBrain.isSoul(mob)

@@ -49,12 +49,12 @@ public final class CompanionBrain {
         GoalSelector targets = mob.targetSelector;
         GoalSelector goals = mob.goalSelector;
         if (targets == null || goals == null) throw new IllegalStateException("Missing mob goal selectors");
-        targets.removeAllGoals(goal -> true);
+        targets.removeAllGoals();
         goals.addGoal(0, new HoldPositionGoal(mob));
         goals.addGoal(2, new FollowOwnerGoal(mob));
     }
     public static void tick(Mob mob) {
-        if (mob.level().isClientSide || mob.tickCount % 5 != 0) return;
+        if (mob.level.isClientSide || mob.tickCount % 5 != 0) return;
         SoulEntry entry = activeEntry(mob);
         if (entry == null) { mob.discard(); return; }
         if (SoulMinions.isMinion(mob)) {
@@ -64,7 +64,7 @@ public final class CompanionBrain {
         }
         SoulBossBars.suppress(mob);
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
-        if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }
+        if (player == null || player.level != mob.level) { SoulService.recall(mob.getServer(), entry); return; }
         if (mob.getTarget() != null && !canAttack(mob, mob.getTarget())) mob.setTarget(null);
         Mode mode = mode(mob);
         if (mode == Mode.WAIT) mob.setTarget(null);
@@ -90,13 +90,13 @@ public final class CompanionBrain {
         mob.setPersistenceRequired();
     }
     private static void findEnemy(Mob mob, BlockPos guard) {
-        mob.level().getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(12),
+        mob.level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(12),
             e -> e instanceof Enemy && canAttack(mob, e)
                 && e.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(guard)) < 16 * 16)
             .stream().min(java.util.Comparator.comparingDouble(mob::distanceToSqr)).ifPresent(mob::setTarget);
     }
     private static void findHostile(Mob mob, ServerPlayer owner) {
-        mob.level().getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(AGGRESSIVE_RANGE),
+        mob.level.getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(AGGRESSIVE_RANGE),
             target -> canAttack(mob, target) && mob.distanceToSqr(target) <= AGGRESSIVE_RANGE * AGGRESSIVE_RANGE
                 && target.distanceToSqr(owner) <= AGGRESSIVE_RANGE * AGGRESSIVE_RANGE
                 && mob.getSensing().hasLineOfSight(target) && SoulAdapters.get(target).isHostile(target, owner))
@@ -135,8 +135,8 @@ public final class CompanionBrain {
                     && mob.distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH) {
                 for (int i = 0; i < 12; i++) {
                     BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);
-                    if (mob.level().hasChunkAt(pos) && mob.level().getBlockState(pos.below()).isSolidRender(mob.level(), pos.below())
-                            && mob.level().noCollision(mob, mob.getBoundingBox().move(
+                    if (mob.level.hasChunkAt(pos) && mob.level.getBlockState(pos.below()).isSolidRender(mob.level, pos.below())
+                            && mob.level.noCollision(mob, mob.getBoundingBox().move(
                                 pos.getX() + 0.5 - mob.getX(), pos.getY() - mob.getY(), pos.getZ() + 0.5 - mob.getZ()))) {
                         mob.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5); break;
                     }

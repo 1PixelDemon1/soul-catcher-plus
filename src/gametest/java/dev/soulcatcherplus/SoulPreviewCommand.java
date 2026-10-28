@@ -88,7 +88,7 @@ public final class SoulPreviewCommand {
         if (all) {
             FillJob job = new FillJob();
             FILLS.computeIfAbsent(player.server, server -> new LinkedHashMap<>()).put(player.getUUID(), job);
-            source.sendSuccess(() -> Component.translatable("command.soulcatcherplus.qa.started", job.types.size()), false);
+            source.sendSuccess(Component.translatable("command.soulcatcherplus.qa.started", job.types.size()), false);
         } else {
             Counts counts = new Counts();
             for (EntityType<?> type : List.of(EntityType.ZOMBIE, EntityType.SKELETON))
@@ -143,7 +143,7 @@ public final class SoulPreviewCommand {
         if (type == null) return Result.SKIPPED;
         Entity sample = null;
         try {
-            sample = type.create(player.serverLevel());
+            sample = type.create(player.getLevel());
             if (!(sample instanceof Mob mob)) return Result.SKIPPED;
             if (mob instanceof Skeleton) mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
             configure.accept(mob);

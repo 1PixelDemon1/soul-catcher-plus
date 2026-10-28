@@ -3,7 +3,7 @@ package dev.soulcatcherplus.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
+import com.mojang.math.Vector3f;
 import dev.soulcatcherplus.SoulCatcherPlus;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import java.util.Map;
@@ -25,7 +25,7 @@ public final class SoulRemnantRenderer extends EntityRenderer<SoulRemnant> {
         pose.pushPose();
         pose.translate(0, 0.4 + Math.sin((entity.tickCount + partial) * 0.08) * 0.08, 0);
         pose.mulPose(entityRenderDispatcher.cameraOrientation());
-        pose.mulPose(Axis.YP.rotationDegrees(180));
+        pose.mulPose(Vector3f.YP.rotationDegrees(180));
         VertexConsumer vertices = buffers.getBuffer(RenderType.entityCutoutNoCull(getTextureLocation(entity)));
         PoseStack.Pose frame = pose.last();
         vertex(vertices, frame, -0.4f, -0.4f, 0, 1);

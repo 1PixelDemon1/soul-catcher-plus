@@ -15,7 +15,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
-import net.minecraft.world.entity.TraceableEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.EvokerFangs;
+import net.minecraft.world.entity.AreaEffectCloud;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.monster.Vex;
 
 /** Descendants share a root reservation, never a separate collection entry or refund. */
@@ -30,15 +33,18 @@ public final class SoulMinions {
 
     /** Default discovery is based on explicit ownership, never proximity or spawn timing. */
     public static Entity defaultSummoner(Entity entity) {
-        if (entity instanceof TraceableEntity traceable) {
-            Entity owner = traceable.getOwner();
-            if (owner != null) return owner;
-        }
+        // 1.19.2 predates TraceableEntity; native owner-bearing types expose the same link separately.
+        Entity creator = entity instanceof Projectile projectile ? projectile.getOwner()
+            : entity instanceof Vex vex ? vex.getOwner()
+            : entity instanceof EvokerFangs fangs ? fangs.getOwner()
+            : entity instanceof AreaEffectCloud cloud ? cloud.getOwner()
+            : entity instanceof PrimedTnt tnt ? tnt.getOwner() : null;
+        if (creator != null) return creator;
         if (entity instanceof OwnableEntity ownable) {
-            LivingEntity owner = ownable.getOwner();
+            Entity owner = ownable.getOwner();
             if (owner != null) return owner;
             UUID id = ownable.getOwnerUUID();
-            if (id != null && entity.level() instanceof ServerLevel level) return level.getEntity(id);
+            if (id != null && entity.level instanceof ServerLevel level) return level.getEntity(id);
         }
         return null;
     }
@@ -47,12 +53,12 @@ public final class SoulMinions {
     }
     /** May be retried after spawn for mods that assign a creator after world insertion. */
     public static boolean tryInherit(Mob mob) {
-        if (mob.level().isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
+        if (mob.level.isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
         return attach(mob, summoner(mob));
     }
     /** Server-only integration hook for summons that do not expose their creator. */
     public static boolean attach(Mob child, Entity creator) {
-        if (creator == null || !(child.level() instanceof ServerLevel level)
+        if (creator == null || !(child.level instanceof ServerLevel level)
                 || child.isRemoved() || CompanionBrain.isSoul(child)) return false;
         Bond bond = findBond(creator, level, child.getUUID());
         if (bond == null) return false;
@@ -70,7 +76,7 @@ public final class SoulMinions {
         Set<UUID> seen = new HashSet<>();
         seen.add(child);
         for (int depth = 0; creator != null && depth < MAX_CREATOR_DEPTH; depth++) {
-            if (creator.level() != level || !seen.add(creator.getUUID())) return null;
+            if (creator.level != level || !seen.add(creator.getUUID())) return null;
             if (creator instanceof Mob mob && CompanionBrain.isSoul(mob)) {
                 if (!mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)) return null;
                 UUID root = isMinion(mob) ? mob.getPersistentData().getUUID(ROOT) : mob.getUUID();
@@ -93,7 +99,7 @@ public final class SoulMinions {
     static void tick(Mob minion) {
         configure(minion);
         SoulBossBars.suppress(minion);
-        Entity entity = ((ServerLevel)minion.level()).getEntity(minion.getPersistentData().getUUID(ROOT));
+        Entity entity = ((ServerLevel)minion.level).getEntity(minion.getPersistentData().getUUID(ROOT));
         if (!(entity instanceof Mob root)) {
             if (minion.getTarget() != null) minion.setTarget(null);
             return;

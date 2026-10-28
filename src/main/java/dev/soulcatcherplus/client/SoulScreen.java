@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.SummonRules;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -219,7 +219,8 @@ public final class SoulScreen extends Screen {
         preview.request(selected, ticks);
         if (ticks % 20 == 0) send(SoulNetwork.Action.REFRESH);
     }
-    @Override public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override public void render(PoseStack pose, int mouseX, int mouseY, float partialTick) {
+        SoulGui g = new SoulGui(pose);
         g.fillGradient(0, 0, width, height, 0xEB030810, 0xF2071019);
         g.pose().pushPose();
         g.pose().translate(originX, originY, 0);
@@ -246,19 +247,19 @@ public final class SoulScreen extends Screen {
         renderSoul(g, partialTick);
         renderDetails(g);
         if (groups.isEmpty()) g.drawWordWrap(font, text("empty"), 30, 118, 132, SoulTheme.MUTED);
-        super.render(g, (int)localX(mouseX), (int)localY(mouseY), partialTick);
+        super.render(pose, (int)localX(mouseX), (int)localY(mouseY), partialTick);
         Component hint = text("preview_controls");
         for (SoulButton button : controls) if (button.isHoveredOrFocused() && !button.hint().getString().isEmpty()) hint = button.hint();
         g.drawWordWrap(font, hint, 185, 312, 239, SoulTheme.MUTED);
         g.pose().popPose();
     }
-    private void metric(GuiGraphics g, int x, int width, Component label, String value, int accent) {
+    private void metric(SoulGui g, int x, int width, Component label, String value, int accent) {
         g.fill(x, 14, x + width, 46, 0xFF0B1720);
         g.fill(x, 18, x + 1, 42, accent);
         g.drawString(font, label, x + 10, 18, SoulTheme.MUTED, false);
         g.drawString(font, value, x + 10, 32, accent, false);
     }
-    private void renderSoul(GuiGraphics g, float partialTick) {
+    private void renderSoul(SoulGui g, float partialTick) {
         var group = group();
         var row = row();
         String name = group == null ? text("unbound").getString() : name(group);
@@ -291,7 +292,7 @@ public final class SoulScreen extends Screen {
             g.drawCenteredString(font, text(group.forms().size() > 1 ? "captured_forms" : "capture_more_forms"), 306, 279, SoulTheme.MUTED);
         } else g.drawCenteredString(font, text("no_soul_selected"), 306, 252, SoulTheme.MUTED);
     }
-    private void renderDetails(GuiGraphics g) {
+    private void renderDetails(SoulGui g) {
         var row = row();
         var group = group();
         Component status = text("empty_short");

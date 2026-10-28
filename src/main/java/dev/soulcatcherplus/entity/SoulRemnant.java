@@ -11,7 +11,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.*;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.*;
@@ -54,7 +53,7 @@ public final class SoulRemnant extends Entity {
     @Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) { return true; }
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel server) {
+        if (level instanceof ServerLevel server) {
             if (owner == null || soul == null || server.getServer().overworld().getGameTime() >= expires) { discard(); return; }
             if (tickCount % 5 == 0) server.sendParticles(ParticleTypes.SOUL, getX(), getY() + 0.4, getZ(), 2, 0.15, 0.2, 0.15, 0.01);
         }
@@ -84,7 +83,7 @@ public final class SoulRemnant extends Entity {
             SoulService.changed(server);
             discard();
         }
-        return InteractionResult.sidedSuccess(level().isClientSide);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");
@@ -98,5 +97,5 @@ public final class SoulRemnant extends Entity {
         if (soul != null) tag.put("Soul", soul.save());
         tag.putLong("Expires", expires);
     }
-    @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
+    @Override public Packet<?> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
 }

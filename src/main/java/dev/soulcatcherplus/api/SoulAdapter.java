@@ -48,7 +48,7 @@ public interface SoulAdapter {
         return dev.soulcatcherplus.companion.SoulMinions.defaultSummoner(mob);
     }
     /** Preserve native movement/attack goals while replacing independent victim selection. */
-    default void configureMinion(Mob mob) { mob.targetSelector.removeAllGoals(goal -> true); }
+    default void configureMinion(Mob mob) { mob.targetSelector.removeAllGoals(); }
     /** Called every five server ticks with the loaded root companion, after target inheritance. */
     default void tickMinion(Mob minion, Mob root) {}
     default void onRecall(Mob mob, ServerPlayer owner) {}

@@ -4,17 +4,16 @@ package dev.soulcatcherplus.client;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.mojang.math.Vector3f;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Matrix4f;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 
 /** Detached visual entities: never inserted into a level and never AI-ticked. */
 final class SoulPreview {
@@ -68,15 +67,15 @@ final class SoulPreview {
     boolean available(UUID entry) { return cache.containsKey(entry) && !failed.contains(entry); }
     void clear() { cache.clear(); failed.clear(); requested = null; }
 
-    void render(GuiGraphics graphics, UUID entry, int centerX, int baseline, int width, int height, float partialTick) {
+    void render(SoulGui graphics, UUID entry, int centerX, int baseline, int width, int height, float partialTick) {
         Mob mob = cache.get(entry);
         if (mob == null || failed.contains(entry)) return;
         var client = Minecraft.getInstance();
         var dispatcher = client.getEntityRenderDispatcher();
-        Quaternionf previousCamera = new Quaternionf(dispatcher.cameraOrientation());
+        Quaternion previousCamera = dispatcher.cameraOrientation().copy();
         PoseStack pose = new PoseStack();
-        pose.last().pose().set(graphics.pose().last().pose());
-        pose.last().normal().set(graphics.pose().last().normal());
+        pose.last().pose().load(graphics.pose().last().pose());
+        pose.last().normal().load(graphics.pose().last().normal());
         // Reserve visible space around the model, including protruding weapons and horns.
         // Width/depth jointly bound the footprint while it rotates.
         float usableWidth = width * 0.66f;
@@ -85,12 +84,12 @@ final class SoulPreview {
         float scale = Math.min(usableWidth / footprint, usableHeight / Math.max(0.75f, mob.getBbHeight()));
         scale = Math.max(0.5f, Math.min(58, scale)) * zoom;
         pose.translate(centerX, baseline, 60);
-        pose.mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
-        pose.mulPose(Axis.ZP.rotationDegrees(180));
-        pose.mulPose(Axis.YP.rotationDegrees(rotation));
+        pose.mulPoseMatrix(Matrix4f.createScaleMatrix(scale, scale, -scale));
+        pose.mulPose(Vector3f.ZP.rotationDegrees(180));
+        pose.mulPose(Vector3f.YP.rotationDegrees(rotation));
         Lighting.setupForEntityInInventory();
         dispatcher.setRenderShadow(false);
-        dispatcher.overrideCameraOrientation(new Quaternionf());
+        dispatcher.overrideCameraOrientation(Quaternion.ONE.copy());
         try {
             RenderSystem.runAsFancy(() -> dispatcher.render(mob, 0, 0, 0, 0, partialTick,
                 pose, graphics.bufferSource(), LightTexture.FULL_BRIGHT));

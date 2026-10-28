@@ -19,8 +19,8 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector4f;
 
 /** Short client-only echoes. No combat entity survives a recall for the animation. */
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID, value = Dist.CLIENT)
@@ -93,7 +93,7 @@ public final class SoulDissolves {
     }
 
     @SubscribeEvent public static void render(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         var client = Minecraft.getInstance();
         if (client.level == null || ECHOES.isEmpty()) return;
         var dispatcher = client.getEntityRenderDispatcher();
@@ -115,17 +115,19 @@ public final class SoulDissolves {
                 float shrink = 1 - progress * 0.07f;
                 pose.scale(shrink, shrink, shrink);
                 // Invert only the root transform, retaining native model-part coordinates.
-                Matrix4f inverse = new Matrix4f(pose.last().pose()).invert();
-                Vector3f sample = new Vector3f();
+                Matrix4f inverse = pose.last().pose().copy();
+                if (!inverse.invert()) continue;
+                Vector4f sample = new Vector4f();
                 float feather = Math.max(0.12f, echo.height * 0.14f);
                 float cutoff = progress * (echo.height + feather) - feather;
                 SoulVisuals.VertexFade fade = (x, y, z) -> {
-                    inverse.transformPosition((float)x, (float)y, (float)z, sample);
+                    sample.set((float)x, (float)y, (float)z, 1);
+                    sample.transform(inverse);
                     // A stable cell pattern breaks the travelling burn edge into fragments.
-                    int cell = (int)Math.floor(sample.x * 9) * 734287
-                        ^ (int)Math.floor(sample.y * 9) * 912931 ^ (int)Math.floor(sample.z * 9) * 438289;
+                    int cell = (int)Math.floor(sample.x() * 9) * 734287
+                        ^ (int)Math.floor(sample.y() * 9) * 912931 ^ (int)Math.floor(sample.z() * 9) * 438289;
                     float noise = (cell & 255) / 255f;
-                    return (sample.y - cutoff + (noise - 0.5f) * feather) / feather;
+                    return (sample.y() - cutoff + (noise - 0.5f) * feather) / feather;
                 };
                 var renderer = dispatcher.getRenderer(mob);
                 var texture = renderer.getTextureLocation(mob);

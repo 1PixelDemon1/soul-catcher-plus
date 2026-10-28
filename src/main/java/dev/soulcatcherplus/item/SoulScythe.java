@@ -18,7 +18,8 @@ public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().fireResistant() : new Item.Properties());
+            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(CreativeModeTab.TAB_COMBAT).fireResistant()
+                : new Item.Properties().tab(CreativeModeTab.TAB_COMBAT));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
@@ -61,7 +62,7 @@ public final class SoulScythe extends SwordItem {
             }
             player.getCooldowns().addCooldown(this, 5);
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide);
+        return InteractionResult.sidedSuccess(player.level.isClientSide);
     }
     @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));

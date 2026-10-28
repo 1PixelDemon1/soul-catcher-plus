@@ -54,7 +54,7 @@ public final class SoulService {
         }
         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(entry.entityType));
         if (type == null) { message(player, "missing_mod"); return; }
-        Entity created = type.create(player.serverLevel());
+        Entity created = type.create(player.getLevel());
         if (!(created instanceof Mob mob)) { message(player, "unsupported"); return; }
         ItemStack paidCage = ItemStack.EMPTY;
         boolean completed = false;
@@ -80,8 +80,8 @@ public final class SoulService {
             paidCage = cage.stack();
             // Canonical identity must be visible to EntityJoinLevelEvent.
             entry.activeEntity = mob.getUUID();
-            entry.dimension = player.level().dimension().location().toString();
-            if (!player.serverLevel().addFreshEntity(mob)) {
+            entry.dimension = player.level.dimension().location().toString();
+            if (!player.getLevel().addFreshEntity(mob)) {
                 entry.activeEntity = null; entry.dimension = "";
                 SoulMinions.dismiss(player.server, mob.getUUID());
                 return;
@@ -110,9 +110,9 @@ public final class SoulService {
             double x = ahead.x + Math.cos(angle) * 2, z = ahead.z + Math.sin(angle) * 2;
             mob.moveTo(x, player.getY() + y, z, player.getYRot(), 0);
             BlockPos pos = mob.blockPosition();
-            if (player.level().hasChunkAt(pos) && player.level().getWorldBorder().isWithinBounds(mob.getBoundingBox())
-                && player.level().noCollision(mob) && !player.level().containsAnyLiquid(mob.getBoundingBox())
-                && !player.level().getBlockState(pos.below()).getCollisionShape(player.level(), pos.below()).isEmpty()) return true;
+            if (player.level.hasChunkAt(pos) && player.level.getWorldBorder().isWithinBounds(mob.getBoundingBox())
+                && player.level.noCollision(mob) && !player.level.containsAnyLiquid(mob.getBoundingBox())
+                && !player.level.getBlockState(pos.below()).getCollisionShape(player.level, pos.below()).isEmpty()) return true;
         }
         return false;
     }
@@ -173,7 +173,7 @@ public final class SoulService {
     }
     /** Resolve canonical ownership without loading a chunk for a menu request. */
     public static Mob activeMob(ServerPlayer player, SoulEntry entry) {
-        Entity entity = entry.activeEntity == null ? null : player.serverLevel().getEntity(entry.activeEntity);
+        Entity entity = entry.activeEntity == null ? null : player.getLevel().getEntity(entry.activeEntity);
         if (!(entity instanceof Mob mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob)
                 || !player.getUUID().equals(CompanionBrain.owner(mob))
                 || !mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)
@@ -193,7 +193,7 @@ public final class SoulService {
         PlayerSouls collection = data(player);
         collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
             .filter(e -> e.activeEntity != null).forEach(e -> {
-                Entity entity = player.serverLevel().getEntity(e.activeEntity);
+                Entity entity = player.getLevel().getEntity(e.activeEntity);
                 if (entity instanceof Mob mob && CompanionBrain.canAttack(mob, target)) {
                     mob.getPersistentData().putString(CompanionBrain.MODE, "FOLLOW"); mob.setTarget(target);
                 }

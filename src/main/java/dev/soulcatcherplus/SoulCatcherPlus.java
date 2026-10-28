@@ -11,8 +11,6 @@ import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -41,17 +39,11 @@ public final class SoulCatcherPlus {
             .sized(0.6f, 0.8f).clientTrackingRange(8).updateInterval(10)
             .build(ID + ":soul_remnant"));
 
-    public SoulCatcherPlus(FMLJavaModLoadingContext context) {
-        IEventBus bus = context.getModEventBus();
+    public SoulCatcherPlus() {
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         ITEMS.register(bus);
         ENTITIES.register(bus);
         SoulNetwork.register();
-        bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
-            if (event.getTabKey() == CreativeModeTabs.COMBAT) {
-                event.accept(IRON_SCYTHE); event.accept(DIAMOND_SCYTHE); event.accept(NETHERITE_SCYTHE);
-                event.accept(IRON_CAGE); event.accept(DIAMOND_CAGE); event.accept(NETHERITE_CAGE); event.accept(SUPREME_CAGE);
-            }
-        });
         bus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) ->
             event.enqueueWork(() -> {
                 if (ModList.get().isLoaded("mowziesmobs")) {

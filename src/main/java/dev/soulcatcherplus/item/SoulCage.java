@@ -4,6 +4,7 @@ package dev.soulcatcherplus.item;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -14,7 +15,7 @@ public final class SoulCage extends Item {
     private final int capacity;
 
     public SoulCage(int capacity, Properties properties) {
-        super(properties.stacksTo(1));
+        super(properties.stacksTo(1).tab(CreativeModeTab.TAB_COMBAT));
         if (capacity < 1) throw new IllegalArgumentException("Soul cage capacity must be positive");
         this.capacity = capacity;
     }
