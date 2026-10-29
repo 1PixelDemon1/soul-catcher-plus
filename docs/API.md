@@ -98,6 +98,12 @@ Generic suppression is not a guarantee for every mod's overlay.
 
 ## Collection model previews
 
+The O archive uses a clipped, virtualized species list with pixel scrolling and a
+draggable scrollbar. Only visible cards are registered; search keeps its widget
+and keyboard focus while rebuilding cards. Search changes reset the scroll offset;
+ordinary server refreshes preserve it. PgUp/PgDown and Home/End scroll when the
+archive or one of its cards has keyboard focus. Wheel R pagination is unchanged.
+
 `previewData(snapshot)` returns a small NBT compound containing client-safe visual
 state. The default implementation includes common appearance keys and visible
 equipment. Override it for custom skin IDs or render-state flags. The Wroughtnaut

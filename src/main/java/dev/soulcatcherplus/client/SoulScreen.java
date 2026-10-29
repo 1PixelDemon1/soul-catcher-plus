@@ -15,8 +15,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Species archive, detached 3D model, captured-form selector and companion orders. */
 public final class SoulScreen extends Screen {
-    private static final int W = 620, H = 350, PAGE_SIZE = 4;
-    private static final int LIST_TOP = 112, CARD_STEP = 37, CARD_HEIGHT = 34;
+    private static final int W = 620, H = 350;
+    private static final int LIST_TOP = 112, LIST_BOTTOM = 292, CARD_STEP = 37, CARD_HEIGHT = 34;
+    private static final int LIST_LEFT = 26, LIST_RIGHT = 156, SCROLL_LEFT = 160, SCROLL_RIGHT = 166;
     private static final int PX = 190, PY = 88, PW = 232, PH = 146;
     private SoulNetwork.State state;
     private final SoulPreview preview = new SoulPreview();
@@ -28,25 +29,26 @@ public final class SoulScreen extends Screen {
     private String query = "", normalizedQuery = "";
     private EditBox searchBox;
     private UUID selected;
-    private int page, ticks;
+    private int ticks;
+    private double scrollAmount, scrollGrabOffset;
+    private boolean scrolling;
     private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
     private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll;
-    private SoulButton previousPage, nextPage;
 
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
         SoulNetwork.Row active() { return forms.stream().filter(SoulNetwork.Row::active).findFirst().orElse(null); }
         boolean favorite() { return forms.get(0).favorite(); }
     }
-    private record CardControls(String entityType, SoulButton body, SoulButton favorite) {}
+    private record CardControls(int index, String entityType, SoulButton body, SoulButton favorite) {}
     public SoulScreen(SoulNetwork.State state) {
         super(text("title"));
         this.state = state;
         receivedGameTime = worldTime();
         selected = state.selected();
         regroup();
-        for (int i = 0; i < groups.size(); i++) if (groups.get(i).equals(group())) page = i / PAGE_SIZE;
+        for (int i = 0; i < groups.size(); i++) if (groups.get(i).equals(group())) scrollAmount = Math.min(i * CARD_STEP, maxScroll());
     }
     public void update(SoulNetwork.State state) {
         this.state = state;
@@ -67,7 +69,6 @@ public final class SoulScreen extends Screen {
             .sorted(Comparator.comparing(SoulGroup::favorite).reversed()).toList();
         filterGroups();
         if (state.rows().stream().noneMatch(r -> r.id().equals(selected))) selected = state.rows().isEmpty() ? null : state.rows().get(0).id();
-        page = Math.min(page, lastPage());
         // New species or favorite ordering change the layout; ordinary refreshes do not.
         if (searchBox != null && !before.equals(filteredGroups.stream().map(SoulGroup::entityType).toList())) rebuildCards();
     }
@@ -94,11 +95,39 @@ public final class SoulScreen extends Screen {
         String normalized = value.strip().toLowerCase(Locale.ROOT);
         if (normalized.equals(normalizedQuery)) return;
         normalizedQuery = normalized;
-        page = 0;
+        scrollAmount = 0;
+        scrolling = false;
         filterGroups();
         rebuildCards();
     }
-    private int lastPage() { return Math.max(0, (filteredGroups.size() - 1) / PAGE_SIZE); }
+    private int contentHeight() { return Math.max(0, filteredGroups.size() * CARD_STEP - (CARD_STEP - CARD_HEIGHT)); }
+    private int maxScroll() { return Math.max(0, contentHeight() - (LIST_BOTTOM - LIST_TOP)); }
+    private int scrollOffset() { return (int)Math.round(scrollAmount); }
+    private int firstCard() { return (scrollOffset() + CARD_STEP - CARD_HEIGHT) / CARD_STEP; }
+    private int endCard() { return Math.min(filteredGroups.size(), (scrollOffset() + LIST_BOTTOM - LIST_TOP + CARD_STEP - 1) / CARD_STEP); }
+    private void scrollTo(double amount) {
+        scrollAmount = net.minecraft.util.Mth.clamp(amount, 0, maxScroll());
+        if (cards.size() != endCard() - firstCard() || (!cards.isEmpty() && cards.get(0).index() != firstCard())) rebuildCards();
+        else positionCards();
+    }
+    private void positionCards() {
+        for (CardControls card : cards) {
+            int y = LIST_TOP + card.index() * CARD_STEP - scrollOffset();
+            card.body().setY(y);
+            card.favorite().setY(y);
+        }
+    }
+    private int thumbHeight() {
+        int height = LIST_BOTTOM - LIST_TOP;
+        return Math.min(height, Math.max(18, height * height / Math.max(1, contentHeight())));
+    }
+    private double thumbTop() {
+        return LIST_TOP + (maxScroll() == 0 ? 0 : scrollAmount / maxScroll() * (LIST_BOTTOM - LIST_TOP - thumbHeight()));
+    }
+    private void dragScroll(double y) {
+        int travel = LIST_BOTTOM - LIST_TOP - thumbHeight();
+        if (travel > 0) scrollTo((y - LIST_TOP - scrollGrabOffset) / travel * maxScroll());
+    }
     private static long worldTime() {
         var level = Minecraft.getInstance().level;
         return level == null ? 0 : level.getGameTime();
@@ -140,7 +169,7 @@ public final class SoulScreen extends Screen {
     @Override protected void init() {
         controls.clear();
         cards.clear();
-        turning = false;
+        turning = scrolling = false;
         scale = Math.max(0.25f, Math.min(1.5f, Math.min((width - 12f) / W, (height - 12f) / H)));
         originX = (width - W * scale) / 2;
         originY = (height - H * scale) / 2;
@@ -152,10 +181,6 @@ public final class SoulScreen extends Screen {
         searchBox.setHint(text("search_hint"));
         searchBox.setValue(query);
         searchBox.setResponder(this::searchChanged);
-        previousPage = button(26, 273, 25, 18, Component.literal("‹"), SoulButton.Style.SUBTLE,
-            () -> { page--; rebuildCards(); }).hint(text("previous"));
-        nextPage = button(141, 273, 25, 18, Component.literal("›"), SoulButton.Style.SUBTLE,
-            () -> { page++; rebuildCards(); }).hint(text("next"));
         previousForm = button(198, 245, 24, 22, Component.literal("‹"), SoulButton.Style.SUBTLE,
             () -> changeForm(-1)).hint(text("previous_form"));
         nextForm = button(390, 245, 24, 22, Component.literal("›"), SoulButton.Style.SUBTLE,
@@ -193,21 +218,47 @@ public final class SoulScreen extends Screen {
             controls.remove(card.favorite());
         }
         cards.clear();
-        page = net.minecraft.util.Mth.clamp(page, 0, lastPage());
-        for (int i = page * PAGE_SIZE; i < Math.min(filteredGroups.size(), (page + 1) * PAGE_SIZE); i++) {
+        scrollAmount = net.minecraft.util.Mth.clamp(scrollAmount, 0, maxScroll());
+        if (maxScroll() == 0) scrolling = false;
+        for (int i = firstCard(); i < endCard(); i++) {
             SoulGroup group = filteredGroups.get(i);
-            int y = LIST_TOP + (i % PAGE_SIZE) * CARD_STEP;
-            SoulButton body = button(26, y, 118, CARD_HEIGHT, Component.literal(name(group)), SoulButton.Style.CARD,
+            int y = LIST_TOP + i * CARD_STEP - scrollOffset();
+            SoulButton body = archiveButton(LIST_LEFT, y, 108, Component.literal(name(group)), SoulButton.Style.CARD,
                 () -> select(group)).subtitle(text("forms_short", group.forms().size())).selected(group.equals(group()))
                 .lit(group.active() != null).hint(text("choose_soul"));
             Component favoriteHint = text(group.favorite() ? "remove_favorite" : "add_favorite");
-            SoulButton favorite = button(146, y, 20, CARD_HEIGHT, favoriteHint, SoulButton.Style.FAVORITE,
+            SoulButton favorite = archiveButton(136, y, 20, favoriteHint, SoulButton.Style.FAVORITE,
                 () -> send(SoulNetwork.Action.TOGGLE_FAVORITE, group.forms().get(0).id()))
                 .selected(group.favorite()).hint(favoriteHint);
-            cards.add(new CardControls(group.entityType(), body, favorite));
+            cards.add(new CardControls(i, group.entityType(), body, favorite));
         }
-        previousPage.active = page > 0;
-        nextPage.active = page < lastPage();
+    }
+    /** Card widgets take part in focus/input, but are rendered separately inside the viewport. */
+    private SoulButton archiveButton(int x, int y, int width, Component label, SoulButton.Style style, Runnable action) {
+        SoulButton button = new SoulButton(x, y, width, CARD_HEIGHT, label, style, action);
+        controls.add(button);
+        return addWidget(button);
+    }
+    private boolean cardWidget(net.minecraft.client.gui.components.events.GuiEventListener widget) {
+        return cards.stream().anyMatch(card -> card.body() == widget || card.favorite() == widget);
+    }
+    private void renderCards(GuiGraphics g, double mouseX, double mouseY, float partialTick) {
+        g.enableScissor((int)Math.ceil(originX + LIST_LEFT * scale), (int)Math.ceil(originY + LIST_TOP * scale),
+            (int)Math.floor(originX + LIST_RIGHT * scale), (int)Math.floor(originY + LIST_BOTTOM * scale));
+        try {
+            int hoverY = overCards(mouseX, mouseY) ? (int)mouseY : Integer.MIN_VALUE;
+            for (CardControls card : cards) {
+                card.body().render(g, (int)mouseX, hoverY, partialTick);
+                card.favorite().render(g, (int)mouseX, hoverY, partialTick);
+            }
+        } finally { g.disableScissor(); }
+        if (maxScroll() > 0) {
+            g.fill(SCROLL_LEFT, LIST_TOP, SCROLL_RIGHT, LIST_BOTTOM, SoulTheme.INK);
+            int top = (int)Math.round(thumbTop());
+            boolean hover = mouseX >= SCROLL_LEFT && mouseX < SCROLL_RIGHT && mouseY >= LIST_TOP && mouseY < LIST_BOTTOM;
+            g.fill(SCROLL_LEFT, top, SCROLL_RIGHT, top + thumbHeight(), scrolling || hover ? SoulTheme.TEAL : SoulTheme.BORDER);
+            g.fill(SCROLL_LEFT + 2, top + 3, SCROLL_RIGHT - 2, top + thumbHeight() - 3, SoulTheme.MUTED);
+        }
     }
     private Component summonHint() {
         var row = row();
@@ -288,13 +339,13 @@ public final class SoulScreen extends Screen {
         g.drawString(font, total, 164 - font.width(total), 71, SoulTheme.MUTED, false);
         g.fill(26, 88, 166, 106, SoulTheme.INK);
         g.renderOutline(26, 88, 140, 18, searchBox.isFocused() ? SoulTheme.TEAL : SoulTheme.BORDER);
-        g.drawCenteredString(font, Component.literal((filteredGroups.isEmpty() ? 0 : page + 1) + " / " + (lastPage() + 1)), 96, 278, SoulTheme.MUTED);
         g.drawString(font, text("orders"), 448, 71, SoulTheme.GOLD, false);
         updateControls();
         renderSoul(g, partialTick);
         renderDetails(g);
         if (filteredGroups.isEmpty()) g.drawWordWrap(font, text(groups.isEmpty() ? "empty" : "no_search_results"), 30, 139, 132, SoulTheme.MUTED);
         super.render(g, (int)localX(mouseX), (int)localY(mouseY), partialTick);
+        renderCards(g, localX(mouseX), localY(mouseY), partialTick);
         Component hint = text("preview_controls");
         for (SoulButton button : controls) if (button.isHoveredOrFocused() && !button.hint().getString().isEmpty()) hint = button.hint();
         g.drawWordWrap(font, hint, 185, 312, 239, SoulTheme.MUTED);
@@ -378,27 +429,50 @@ public final class SoulScreen extends Screen {
     private double localX(double x) { return (x - originX) / scale; }
     private double localY(double y) { return (y - originY) / scale; }
     private boolean overPreview(double x, double y) { return x >= PX && x < PX + PW && y >= PY && y < PY + PH; }
+    private boolean overCards(double x, double y) { return x >= LIST_LEFT && x < LIST_RIGHT && y >= LIST_TOP && y < LIST_BOTTOM; }
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         double x = localX(mouseX), y = localY(mouseY);
+        if (button == 0 && maxScroll() > 0 && x >= SCROLL_LEFT && x < SCROLL_RIGHT && y >= LIST_TOP && y < LIST_BOTTOM) {
+            setFocused(null);
+            setDragging(false);
+            scrolling = true;
+            scrollGrabOffset = y >= thumbTop() && y < thumbTop() + thumbHeight() ? y - thumbTop() : thumbHeight() / 2.0;
+            dragScroll(y);
+            return true;
+        }
+        if (!overCards(x, y) && getChildAt(x, y).map(this::cardWidget).orElse(false)) return false;
         if (button == 0 && overPreview(x, y)) { setFocused(null); turning = true; return true; }
         return super.mouseClicked(x, y, button);
     }
     @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (scrolling && button == 0) { dragScroll(localY(mouseY)); return true; }
         if (turning && button == 0) { preview.turn(dx / scale); return true; }
         return super.mouseDragged(localX(mouseX), localY(mouseY), button, dx / scale, dy / scale);
     }
     @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (scrolling && button == 0) { scrolling = false; return true; }
         if (turning && button == 0) { turning = false; return true; }
         return super.mouseReleased(localX(mouseX), localY(mouseY), button);
     }
     @Override public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         double x = localX(mouseX), y = localY(mouseY);
         if (overPreview(x, y)) { preview.zoom(delta); return true; }
-        if (x >= 18 && x < 174 && y >= 60 && y < 300) {
-            page = net.minecraft.util.Mth.clamp(page + (delta < 0 ? 1 : -1), 0, lastPage());
-            rebuildCards(); return true;
+        if (x >= LIST_LEFT && x < SCROLL_RIGHT && y >= LIST_TOP && y < LIST_BOTTOM) {
+            scrollTo(scrollAmount - delta * CARD_STEP);
+            return true;
         }
         return super.mouseScrolled(x, y, delta);
+    }
+    @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (!searchBox.isFocused() && (getFocused() == null || cardWidget(getFocused()))) {
+            switch (key) {
+                case org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP -> { scrollTo(scrollAmount - (LIST_BOTTOM - LIST_TOP)); return true; }
+                case org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN -> { scrollTo(scrollAmount + (LIST_BOTTOM - LIST_TOP)); return true; }
+                case org.lwjgl.glfw.GLFW.GLFW_KEY_HOME -> { scrollTo(0); return true; }
+                case org.lwjgl.glfw.GLFW.GLFW_KEY_END -> { scrollTo(maxScroll()); return true; }
+            }
+        }
+        return super.keyPressed(key, scanCode, modifiers);
     }
     @Override public void removed() { preview.clear(); }
     // Minecraft applies this pause to an unpublished integrated server, not multiplayer/LAN.
