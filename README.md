@@ -78,7 +78,7 @@ HP на момент захвата, а не оставшееся здоровь
 | Железная | 150 | `soulcatcherplus:iron_soul_cage` |
 | Алмазная | 400 | `soulcatcherplus:diamond_soul_cage` |
 | Незеритовая | 1000 | `soulcatcherplus:netherite_soul_cage` |
-| Высшая | 2000 | `soulcatcherplus:supreme_soul_cage` |
+| Высшая | 100 000 (временно, для проверки 1.16.5) | `soulcatcherplus:supreme_soul_cage` |
 
 Клетки не складываются в стопки. Подсказка предмета и голубая полоска показывают
 заполнение; меню O и R показывают ресурс активной клетки и её слот либо «Вторая рука».
