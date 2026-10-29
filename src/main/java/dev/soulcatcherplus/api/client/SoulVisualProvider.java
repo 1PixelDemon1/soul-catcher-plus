@@ -2,7 +2,7 @@
 package dev.soulcatcherplus.api.client;
 
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /** Client-only hook for third-party renderers; register only on Dist.CLIENT. */
 @FunctionalInterface

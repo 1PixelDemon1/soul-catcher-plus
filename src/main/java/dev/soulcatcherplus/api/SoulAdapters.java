@@ -3,8 +3,8 @@ package dev.soulcatcherplus.api;
 
 import java.util.HashMap;
 import java.util.Map;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.MobEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 
 /** Explicit adapters take priority over the standard goal-based implementation. */
@@ -16,8 +16,8 @@ public final class SoulAdapters {
                 java.util.Objects.requireNonNull(adapter)) != null)
             throw new IllegalArgumentException("Duplicate soul adapter: " + entityType);
     }
-    public static SoulAdapter get(Mob mob) {
-        return get(ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()));
+    public static SoulAdapter get(MobEntity mob) {
+        return get(ForgeRegistries.ENTITIES.getKey(mob.getType()));
     }
     public static SoulAdapter get(ResourceLocation entityType) { return ADAPTERS.getOrDefault(entityType, STANDARD); }
     private SoulAdapters() {}

@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
-"""Fetch the official Forge MDK wrapper and a project-local Java 17 toolchain."""
+"""Install local Java 17 build tooling and Java 8 for the legacy Forge client."""
 import concurrent.futures
 import hashlib
 import json
+import time
 from pathlib import Path
 import urllib.request
 import zipfile
@@ -20,30 +21,40 @@ def download(url, path):
 
 
 def mdk():
+    if (ROOT / 'gradlew.bat').exists() and (ROOT / 'gradle/wrapper/gradle-wrapper.jar').exists():
+        return
     archive = TOOLS / 'forge-mdk.zip'
     download('https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.28/forge-1.20.1-47.4.28-mdk.zip', archive)
     with zipfile.ZipFile(archive) as source:
         for name in source.namelist():
-            if name in ('gradlew', 'gradlew.bat', 'settings.gradle') or name.startswith('gradle/wrapper/'):
+            if name in ('gradlew', 'gradlew.bat') or name.startswith('gradle/wrapper/'):
                 source.extract(name, ROOT)
     print('Official Forge wrapper installed', flush=True)
 
 
-def java():
-    if list(TOOLS.glob('jdk-*/bin/javac.exe')):
+def java(version):
+    pattern = 'jdk8*' if version == 8 else f'jdk-{version}*'
+    if list(TOOLS.glob(pattern + '/bin/javac.exe')):
         return
-    request = urllib.request.Request('https://api.adoptium.net/v3/assets/latest/17/hotspot?architecture=x64&image_type=jdk&os=windows', headers={'User-Agent': 'SoulCatcherPlus-development'})
+    request = urllib.request.Request(
+        f'https://api.github.com/repos/adoptium/temurin{version}-binaries/releases/latest',
+        headers={'User-Agent': 'SoulCatcherPlus-development'})
     with urllib.request.urlopen(request, timeout=60) as response:
-        package = json.load(response)[0]['binary']['package']
-    archive = TOOLS / 'jdk17.zip'
-    download(package['link'], archive)
-    if hashlib.sha256(archive.read_bytes()).hexdigest() != package['checksum']:
+        release = json.load(response)
+    prefix = f'OpenJDK{version}U-jdk_x64_windows_hotspot_'
+    package = next(a for a in release['assets'] if a['name'].startswith(prefix) and a['name'].endswith('.zip'))
+    checksum = next(a for a in release['assets'] if a['name'] == package['name'] + '.sha256.txt')
+    checksum_path = TOOLS / f'jdk{version}.sha256'
+    download(checksum['browser_download_url'] + '?t=' + str(time.time_ns()), checksum_path)
+    archive = TOOLS / f'jdk{version}.zip'
+    download(package['browser_download_url'] + '?t=' + str(time.time_ns()), archive)
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != checksum_path.read_text(encoding='ascii').split()[0]:
         raise RuntimeError('Java archive checksum mismatch')
     with zipfile.ZipFile(archive) as source:
         source.extractall(TOOLS)
-    print('Project-local Java 17 installed (SHA-256 verified)', flush=True)
+    print(f'Project-local Java {version} installed (SHA-256 verified)', flush=True)
 
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-    for result in (pool.submit(mdk), pool.submit(java)):
+with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+    for result in (pool.submit(mdk), pool.submit(java, 17), pool.submit(java, 8)):
         result.result()

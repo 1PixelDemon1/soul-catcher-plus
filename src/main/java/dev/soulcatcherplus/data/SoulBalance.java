@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.data;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 
 /** Shared integer economy: round costs upward and energy returns downward. */
 public final class SoulBalance {
@@ -21,14 +21,14 @@ public final class SoulBalance {
     }
 
     /** Best-effort migration for old entries that stored attributes but no max-health field. */
-    public static double legacyHealth(CompoundTag snapshot, int oldCost) {
-        for (Tag raw : snapshot.getList("Attributes", Tag.TAG_COMPOUND)) {
-            CompoundTag attribute = (CompoundTag) raw;
+    public static double legacyHealth(CompoundNBT snapshot, int oldCost) {
+        for (INBT raw : snapshot.getList("Attributes", 10)) {
+            CompoundNBT attribute = (CompoundNBT) raw;
             String name = attribute.getString("Name");
             if (!name.equals("minecraft:generic.max_health") && !name.equals("generic.max_health")) continue;
             double base = attribute.getDouble("Base"), add = 0, multiplyBase = 0, totalFactor = 1;
-            for (Tag modifierRaw : attribute.getList("Modifiers", Tag.TAG_COMPOUND)) {
-                CompoundTag modifier = (CompoundTag) modifierRaw;
+            for (INBT modifierRaw : attribute.getList("Modifiers", 10)) {
+                CompoundNBT modifier = (CompoundNBT) modifierRaw;
                 double amount = modifier.getDouble("Amount");
                 switch (modifier.getInt("Operation")) {
                     case 0 -> add += amount;

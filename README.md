@@ -1,14 +1,9 @@
 # Soul Catcher Plus
 
-Релиз **0.2.0** для **Minecraft Java 1.20.1 / Forge 47.4.28 / Java 17**.
-Помечайте врагов косой, побеждайте их, собирайте души и призывайте призрачных напарников.
-[Описание релиза](docs/releases/0.2.0.md).
-
-Релиз включает управление клавишами, колесо команд, избранное, возврат энергии
-при отзыве и наследование союзности прислужниками напарников.
-
-Текущая ветка `develop` также содержит ещё не выпущенные изменения, включая клетки
-душ. В готовом JAR релиза 0.2.0 этой механики нет.
+Port: **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**.
+Branch: `codex/forge-1.16.5`, based on current 1.20.1 development features.
+[Installation and playtest bundle](docs/PLAYTEST_1.16.5.md).
+This is a development port; the 1.20.1, 1.19.2 and 1.20.4 branches remain separate.
 
 ## Как играть
 
@@ -255,146 +250,33 @@ HP на момент захвата, а не оставшееся здоровь
 временные модификаторы, отсутствующие в снимке, восстановить нельзя.
 Существующие косы со старым ID `soul_scythe` становятся железными.
 
-## Сборка и запуск
-
-Если Java 17 уже установлена, задайте `JAVA_HOME` и используйте `gradlew.bat build`.
-На Linux/macOS: `./gradlew build` с JDK 17.
-
-Для подготовленной Windows-среды:
+## Build and playtest (1.16.5)
 
 ```powershell
 python scripts/bootstrap.py
-.\scripts\gradle.ps1 build
-.\scripts\gradle.ps1 runClient
+.\scripts\gradle.ps1 build -x test
+.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest
+.\scripts\gradle.ps1 runClient -PgameTests -PwithAoA -PwithTwilightForest
 ```
 
-Bootstrap скачивает официальный Gradle wrapper из Forge MDK и локальный Temurin JDK 17
-в `.tools/`, проверяя SHA-256 JDK. Системная Java не меняется. Кеш Gradle локален проекту.
-Первая сборка загружает зависимости Minecraft/Forge и занимает заметно больше времени.
+See [the installation guide](docs/PLAYTEST_1.16.5.md) for the pinned mods and limitations.
+The archive contains original installable dependency JARs. Development launches use
+remapped copies supplied by Gradle; do not copy those remapped JARs to a launcher.
 
-Устанавливаемый файл: `build/libs/soulcatcherplus-0.2.0+1.20.1.jar`.
-Установите его в `mods` клиента и сервера с указанной версией Forge.
-Файл с суффиксом `-sources` предназначен для разработчиков.
+Java 17 runs Gradle/javac; Jabel emits Java 8 bytecode with `--release 8`.
+Minecraft runs on the separate Java 8 JDK. The build plugin is compile-only.
+Bootstrap installs both local JDKs and preserves project configuration. Other
+systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
-## Mowzie's Mobs
+Standalone JAR: `build/1.16.5/libs/soulcatcherplus-0.2.0+1.16.5.jar`.
+Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-aoa-twilight-playtest.zip`.
+Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 
-Для игрового клиента установите Mowzie's Mobs **1.8.2 для 1.20.1** и GeckoLib
-**4.8.3 для Forge 1.20.1** отдельно. Их код и ресурсы в наш JAR не включены.
-Без этих модов базовая механика продолжает работать.
-
-Запуск среды разработки с проверенными необязательными зависимостями:
-
-```powershell
-.\scripts\gradle.ps1 runClient -PwithMowzies
-```
-
-Для ручного просмотра нового меню можно запустить клиент с `-PgameTests -PwithMowzies`
-и в мире с читами выполнить `/soulcatcherqa`. Команда выдаёт незеритовую косу в руку,
-железную и алмазную в инвентарь, высшую клетку с 1000 энергии во вторую руку
-(если там уже была клетка) или в хотбар,
-зомби, скелета, два цветовых облика овцы и рыцаря при наличии Mowzie's Mobs.
-Это служебное наполнение коллекции доступно только в dev-сборке с `-PgameTests`;
-обычная игра открывает облики захватом.
-
-Необязательный флаг **`/soulcatcherqa --all`** заполняет коллекцию по реестру
-текущей сборки, включая модовые виды. Добавляется по одному базовому облику каждого
-типа `Mob`, разрешённого профилем и адаптером захвата. Все цвета, профессии и другие
-варианты автоматически не перебираются; обычные правила спавна не запускаются.
-Образцы создаются вне мира, сохраняются в коллекцию и освобождаются — сами существа
-не призываются. Обработка идёт небольшими порциями на серверных тиках.
-Уже известные облики пропускаются; существующие души, активные напарники,
-перезарядки и выбор в коллекции сохраняются. Лимит коллекции — 4096 записей.
-После завершения команда сообщает число добавленных, известных, пропущенных типов
-и ошибок; подробности ошибок отдельных модов находятся в логе. Затем открывается
-коллекция. Повторный запуск не дублирует известные облики.
-Команда предназначена для тестового мира: поведение конструкторов и адаптеров
-сторонних мобов зависит от их модов. Релизный JAR не включает QA-команду;
-автоматические проверки этого флага при подготовке релиза не выполнялись.
-
-Для релиза 0.2.0 выполнена свежая чистая сборка: `.\scripts\gradle.ps1 clean build -x test`.
-Проверены версия и состав итогового JAR: новые системы и клиентский Mixin включены,
-служебные классы QA и сторонние моды не упакованы. Автотесты, Minecraft и UI-автоматизацию
-при подготовке релиза не запускали. Пользователь вручную подтвердил следование,
-управление, прозрачность, избранное и прислужников; это не полная проверка всех модпаков.
-Релиз 0.2.0 использует протокол 6, а 0.1.0 — протокол 4: клиент и сервер
-должны использовать одинаковую сборку мода.
-
-Ferrous Wroughtnaut сохраняет родной тип, атаки, анимации и особую защиту.
-Адаптер удерживает его в активном состоянии; Mixin исключает союзников из его
-списков целей для массовых атак. Цена призыва рассчитывается по его максимальному HP,
-включая настройки здоровья из модпака; рыцарь занимает одно место, как любой напарник.
-Баланс предварительный: его родная неуязвимость делает напарника очень сильным.
-
-## Ice and Fire в тестовом клиенте
-
-Флаг `-PwithIceAndFire` подключает [Ice and Fire 2.1.13 beta 5](https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons/files/5633453)
-и обязательную библиотеку [Citadel 2.6.3](https://www.curseforge.com/minecraft/mc-mods/citadel/files/7476570)
-для Forge 1.20.1. Gradle скачивает и подготавливает их для среды разработки;
-вручную копировать эти JAR в `run-client/mods` не нужно.
-
-Запуск с нашим модом, Mowzie's Mobs, Ice and Fire и QA-командой:
-
-```powershell
-.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire
-```
-
-Чтобы играть только с Ice and Fire, уберите `-PwithMowzies`. Флаг `-PgameTests`
-нужен для `/soulcatcherqa`, в том числе `--all`; для обычной игры его можно убрать.
-Ice and Fire и Citadel остаются необязательными зависимостями тестового запуска.
-Для обычного лаунчера устанавливайте оба мода отдельно в его папку `mods`.
-Подключение модов не означает, что все их существа уже проверены с Soul Catcher Plus.
-
-## Twilight Forest в тестовом клиенте
-
-Флаг `-PwithTwilightForest` подключает [The Twilight Forest 4.3.2508 для Forge 1.20.1](https://www.curseforge.com/minecraft/mc-mods/the-twilight-forest/files/5468648).
-Gradle скачивает мод и подготавливает его для среды разработки; копировать JAR
-в `run-client/mods` вручную не нужно.
-
-Запуск со всеми подключёнными модами и QA-командой:
-
-```powershell
-.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest
-```
-
-Для запуска только с Twilight Forest уберите `-PwithMowzies` и `-PwithIceAndFire`.
-Флаг `-PgameTests` нужен для `/soulcatcherqa`, в том числе `--all`; для обычной
-игры его можно убрать. Twilight Forest остаётся необязательной зависимостью
-тестового запуска и не включается в JAR Soul Catcher Plus. Подключение само по
-себе не подтверждает совместимость всех существ мода.
-
-## Advent of Ascension в тестовом клиенте
-
-Флаг `-PwithAoA` подключает [Advent of Ascension 3.7.1 Beta для Minecraft 1.20.1](https://www.curseforge.com/minecraft/mc-mods/advent-of-ascension-nevermine/files/4988685)
-и общую библиотеку GeckoLib 4.8.3. При одновременном подключении Mowzie's Mobs
-GeckoLib используется одна. Мод скачивается и подготавливается Gradle для среды
-разработки; вручную копировать JAR в `run-client/mods` не нужно.
-
-Запуск текущей тестовой сборки со всеми модами и QA-командой:
-
-```powershell
-.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest -PwithAoA
-```
-
-Для запуска только с Advent of Ascension оставьте `-PwithAoA`, а `-PgameTests`
-используйте, если нужна команда `/soulcatcherqa --all`. Эти зависимости доступны
-только в тестовом запуске и не включаются в JAR Soul Catcher Plus. Установка мода
-не означает, что взаимодействие всех его существ с душами уже проверено.
-
-## Проверки
-
-```powershell
-.\scripts\gradle.ps1 test
-.\scripts\gradle.ps1 runGameTestServer -PgameTests
-.\scripts\gradle.ps1 runGameTestServer -PgameTests -PwithMowzies
-```
-
-JUnit проверяет сохранение коллекции, очистку опасного состояния и изоляцию снимков.
-GameTests используют отдельный мир в `run/world`; они проверяют захват, права владельца,
-ограничения ресурсов, отзыв, защиту союзников, стрельбу скелета и поражение напарника.
-Два теста рыцаря выполняют содержательные проверки только с `-PwithMowzies`:
-активацию/фильтр массовых атак и реальную атаку по другому мобу.
-Тестовые классы и структура подключаются только с `-PgameTests`.
-После игровых тестов выпускайте чистую сборку: `.\scripts\gradle.ps1 clean build`.
+`-PgameTests` retains the familiar flag for the manual QA command, compiled from
+`src/qa/java` only. `/soulcatcherqa --all` adds one base appearance of each allowed
+Mob type; it does not enumerate all variants. Ordinary JARs exclude QA sources.
+The newer branch's GameTests and JUnit sources have not been ported or run.
+Mowzie's Mobs/Ice and Fire playtest flags are not configured on this branch.
 
 ## API и границы прототипа
 
@@ -408,7 +290,7 @@ GameTests используют отдельный мир в `run/world`; они 
 Призрачность основного тела реализована для стандартных LivingEntityRenderer/MobRenderer;
 нестандартные слои, шейдеры и альтернативные рендереры требуют отдельных визуальных проверок.
 
-Пока нет прокачки, дерева улучшений косы и переносов на другие версии/загрузчики.
+Пока нет прокачки, дерева улучшений косы.
 Стоимость пойманной души хранится по HP на момент захвата. Интерфейс и баланс — начальные.
 
 ## Источники инструментов

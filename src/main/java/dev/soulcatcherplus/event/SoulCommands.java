@@ -4,8 +4,8 @@ package dev.soulcatcherplus.event;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.soulcatcherplus.SoulCatcherPlus;
 import dev.soulcatcherplus.companion.SoulCages;
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
+import net.minecraft.command.Commands;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,11 +21,11 @@ public final class SoulCommands {
                         var player = context.getSource().getPlayerOrException();
                         SoulCages.Active cage = SoulCages.active(player);
                         if (!cage.present()) {
-                            context.getSource().sendFailure(Component.translatable("message.soulcatcherplus.cage_needed"));
+                            context.getSource().sendFailure(new net.minecraft.util.text.TranslationTextComponent("message.soulcatcherplus.cage_needed"));
                             return 0;
                         }
                         int stored = SoulCages.set(player, IntegerArgumentType.getInteger(context, "amount"));
-                        context.getSource().sendSuccess(() -> Component.translatable("command.soulcatcherplus.energy",
+                        context.getSource().sendSuccess(new net.minecraft.util.text.TranslationTextComponent("command.soulcatcherplus.energy",
                             SoulCages.location(cage.slot()), stored, cage.capacity()), false);
                         return 1;
                     }))));

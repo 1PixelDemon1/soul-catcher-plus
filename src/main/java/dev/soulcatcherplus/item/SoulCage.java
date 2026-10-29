@@ -2,11 +2,11 @@
 package dev.soulcatcherplus.item;
 
 import java.util.List;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.world.World;
 
 /** Soul energy belongs to this non-stackable item, including when traded or upgraded. */
 public final class SoulCage extends Item {
@@ -32,10 +32,10 @@ public final class SoulCage extends Item {
         stack.getOrCreateTag().putInt(ENERGY, stored);
         return stored;
     }
-    @Override public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity));
+    @Override public void appendHoverText(ItemStack stack, World level, List<ITextComponent> tooltip, ITooltipFlag flag) {
+        tooltip.add(new net.minecraft.util.text.TranslationTextComponent("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity));
     }
-    @Override public boolean isBarVisible(ItemStack stack) { return energy(stack) > 0; }
-    @Override public int getBarWidth(ItemStack stack) { return Math.round(13f * energy(stack) / capacity); }
-    @Override public int getBarColor(ItemStack stack) { return 0x26D9ED; }
+    @Override public boolean showDurabilityBar(ItemStack stack) { return energy(stack) > 0; }
+    @Override public double getDurabilityForDisplay(ItemStack stack) { return 1.0 - (double)energy(stack) / capacity; }
+    @Override public int getRGBDurabilityForDisplay(ItemStack stack) { return 0x26D9ED; }
 }

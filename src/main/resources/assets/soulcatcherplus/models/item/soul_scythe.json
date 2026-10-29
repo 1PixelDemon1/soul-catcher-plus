@@ -1,5 +1,5 @@
 {
-  "loader": "forge:separate_transforms",
+  "loader": "forge:separate-perspective",
   "gui_light": "front",
   "textures": {
     "particle": "soulcatcherplus:item/soul_scythe"

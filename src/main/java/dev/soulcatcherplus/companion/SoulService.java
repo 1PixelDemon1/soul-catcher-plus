@@ -7,33 +7,37 @@ import dev.soulcatcherplus.network.SoulNetwork;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
 import java.util.UUID;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.*;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class SoulService {
-    public static PlayerSouls data(ServerPlayer player) { return SoulLedger.get(player.server).player(player.getUUID()); }
-    public static void changed(ServerPlayer player) { SoulLedger.get(player.server).setDirty(); }
-    public static void message(ServerPlayer player, String key, Object... args) {
-        player.displayClientMessage(Component.translatable("message.soulcatcherplus." + key, args), true);
+    public static PlayerSouls data(ServerPlayerEntity player) { return SoulLedger.get(player.server).player(player.getUUID()); }
+    public static void changed(ServerPlayerEntity player) { SoulLedger.get(player.server).setDirty(); }
+    public static void message(ServerPlayerEntity player, String key, Object... args) {
+        player.displayClientMessage(new net.minecraft.util.text.TranslationTextComponent("message.soulcatcherplus." + key, args), true);
     }
-    public static boolean holdsScythe(ServerPlayer player) {
+    public static boolean holdsScythe(ServerPlayerEntity player) {
         return SoulScythe.heldBy(player) != null;
     }
-    public static SummonRules.Context summonContext(ServerPlayer player) {
+    public static SummonRules.Context summonContext(ServerPlayerEntity player) {
         SoulScythe scythe = SoulScythe.heldBy(player);
         SoulCages.Active cage = SoulCages.active(player);
         return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(),
             cage.energy(), cage.capacity(), player.server.overworld().getGameTime());
     }
-    public static void summon(ServerPlayer player, UUID id) {
+    public static void summon(ServerPlayerEntity player, UUID id) {
         SoulEntry entry = data(player).entries.get(id);
         if (entry == null) return;
         SummonRules.Context context = summonContext(player);
@@ -52,14 +56,15 @@ public final class SoulService {
             }
             return;
         }
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(entry.entityType));
+        EntityType<?> type = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(entry.entityType));
         if (type == null) { message(player, "missing_mod"); return; }
-        Entity created = type.create(player.serverLevel());
-        if (!(created instanceof Mob mob)) { message(player, "unsupported"); return; }
+        Entity created = type.create(player.getLevel());
+        if (!(created instanceof MobEntity mob)) { message(player, "unsupported"); return; }
         ItemStack paidCage = ItemStack.EMPTY;
         boolean completed = false;
         try {
             mob.load(SoulSnapshots.sanitize(entry.snapshot()));
+            SoulSpawnContext.markFresh(mob);
             mob.setUUID(UUID.randomUUID());
             mob.setHealth(mob.getMaxHealth()); mob.deathTime = 0;
             mob.setPersistenceRequired(); mob.setCanPickUpLoot(false);
@@ -78,10 +83,10 @@ public final class SoulService {
                 return;
             }
             paidCage = cage.stack();
-            // Canonical identity must be visible to EntityJoinLevelEvent.
+            // Canonical identity must be visible to EntityJoinWorldEvent.
             entry.activeEntity = mob.getUUID();
-            entry.dimension = player.level().dimension().location().toString();
-            if (!player.serverLevel().addFreshEntity(mob)) {
+            entry.dimension = player.level.dimension().location().toString();
+            if (!player.getLevel().addFreshEntity(mob)) {
                 entry.activeEntity = null; entry.dimension = "";
                 SoulMinions.dismiss(player.server, mob.getUUID());
                 return;
@@ -91,35 +96,35 @@ public final class SoulService {
             completed = true;
         } catch (RuntimeException error) {
             entry.activeEntity = null; entry.dimension = "";
-            if (created.isAddedToWorld()) created.discard();
+            if (created.isAddedToWorld()) created.remove();
             SoulMinions.dismiss(player.server, created.getUUID());
-            com.mojang.logging.LogUtils.getLogger().error("Unable to summon {}", entry.entityType, error);
+            org.apache.logging.log4j.LogManager.getLogger().error("Unable to summon {}", entry.entityType, error);
             message(player, "unsupported");
         } finally {
             if (!completed && !paidCage.isEmpty()) {
                 // Roll back to the exact charged item, even if a callback moved it to another slot.
                 SoulCage.setEnergy(paidCage, SoulCage.energy(paidCage) + entry.cost);
-                player.getInventory().setChanged();
+                player.inventory.setChanged();
             }
         }
     }
-    private static boolean place(Mob mob, ServerPlayer player) {
-        Vec3 ahead = player.position().add(player.getLookAngle().multiply(3, 0, 3));
+    private static boolean place(MobEntity mob, ServerPlayerEntity player) {
+        Vector3d ahead = player.position().add(player.getLookAngle().multiply(3, 0, 3));
         for (int y = 0; y <= 2; y++) for (int i = 0; i < 16; i++) {
             double angle = i * Math.PI / 8;
             double x = ahead.x + Math.cos(angle) * 2, z = ahead.z + Math.sin(angle) * 2;
-            mob.moveTo(x, player.getY() + y, z, player.getYRot(), 0);
+            mob.moveTo(x, player.getY() + y, z, player.yRot, 0);
             BlockPos pos = mob.blockPosition();
-            if (player.level().hasChunkAt(pos) && player.level().getWorldBorder().isWithinBounds(mob.getBoundingBox())
-                && player.level().noCollision(mob) && !player.level().containsAnyLiquid(mob.getBoundingBox())
-                && !player.level().getBlockState(pos.below()).getCollisionShape(player.level(), pos.below()).isEmpty()) return true;
+            if (player.level.hasChunkAt(pos) && player.level.getWorldBorder().isWithinBounds(mob.getBoundingBox())
+                && player.level.noCollision(mob) && !player.level.containsAnyLiquid(mob.getBoundingBox())
+                && !player.level.getBlockState(pos.below()).getCollisionShape(player.level, pos.below()).isEmpty()) return true;
         }
         return false;
     }
     public static void recall(MinecraftServer server, SoulEntry entry) {
         recall(server, entry, null);
     }
-    private static void recall(MinecraftServer server, SoulEntry entry, ServerPlayer ownerHint) {
+    private static void recall(MinecraftServer server, SoulEntry entry, ServerPlayerEntity ownerHint) {
         if (entry.activeEntity == null) return;
         SoulLedger ledger = SoulLedger.get(server);
         UUID active = entry.activeEntity;
@@ -127,9 +132,9 @@ public final class SoulService {
         // Invalidate before adapter callbacks, so repeated/reentrant recalls cannot refund twice.
         ledger.setDirty();
         // Unloaded entities are invalidated now and discarded when their chunk loads.
-        for (ServerLevel level : server.getAllLevels()) {
+        for (ServerWorld level : server.getAllLevels()) {
             Entity entity = level.getEntity(active);
-            if (!(entity instanceof Mob mob) || !CompanionBrain.isSoul(mob)
+            if (!(entity instanceof MobEntity mob) || !CompanionBrain.isSoul(mob)
                     || !mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)
                     || !entry.id.equals(mob.getPersistentData().getUUID(CompanionBrain.ENTRY))) continue;
             UUID ownerId = CompanionBrain.owner(mob);
@@ -137,51 +142,51 @@ public final class SoulService {
             if (collection.entries.get(entry.id) != entry) continue;
             // Capture current HP before an integration's cleanup can change the mob.
             int refund = mob.isAlive() ? SoulBalance.recallEnergy(mob.getHealth()) : 0;
-            ServerPlayer owner = ownerHint != null && ownerHint.getUUID().equals(ownerId)
+            ServerPlayerEntity owner = ownerHint != null && ownerHint.getUUID().equals(ownerId)
                 ? ownerHint : server.getPlayerList().getPlayer(ownerId);
             try {
                 if (owner != null) SoulAdapters.get(mob).onRecall(mob, owner);
             } catch (RuntimeException error) {
-                com.mojang.logging.LogUtils.getLogger().warn("Failed soul recall cleanup: {}", entry.entityType, error);
+                org.apache.logging.log4j.LogManager.getLogger().warn("Failed soul recall cleanup: {}", entry.entityType, error);
             }
             SoulNetwork.dissolve(mob);
-            mob.discard();
+            mob.remove();
             if (owner != null) SoulCages.credit(owner, refund);
             break;
         }
         SoulMinions.dismiss(server, active);
     }
-    public static void recallAll(ServerPlayer player) {
+    public static void recallAll(ServerPlayerEntity player) {
         data(player).entries.values().forEach(e -> recall(player.server, e, player));
         changed(player);
     }
-    public static void command(ServerPlayer player, CompanionBrain.Mode mode) {
+    public static void command(ServerPlayerEntity player, CompanionBrain.Mode mode) {
         PlayerSouls collection = data(player);
         collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
             .forEach(e -> applyCommand(player, e, mode));
         changed(player);
     }
     /** Address the whole owned group without changing the collection's saved command scope. */
-    public static void commandAll(ServerPlayer player, CompanionBrain.Mode mode) {
+    public static void commandAll(ServerPlayerEntity player, CompanionBrain.Mode mode) {
         data(player).entries.values().forEach(entry -> applyCommand(player, entry, mode));
         changed(player);
     }
     /** Address one owned entry without changing the collection's selected species or group scope. */
-    public static void commandOne(ServerPlayer player, UUID id, CompanionBrain.Mode mode) {
+    public static void commandOne(ServerPlayerEntity player, UUID id, CompanionBrain.Mode mode) {
         SoulEntry entry = data(player).entries.get(id);
         if (entry != null && applyCommand(player, entry, mode)) changed(player);
     }
     /** Resolve canonical ownership without loading a chunk for a menu request. */
-    public static Mob activeMob(ServerPlayer player, SoulEntry entry) {
-        Entity entity = entry.activeEntity == null ? null : player.serverLevel().getEntity(entry.activeEntity);
-        if (!(entity instanceof Mob mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob)
+    public static MobEntity activeMob(ServerPlayerEntity player, SoulEntry entry) {
+        Entity entity = entry.activeEntity == null ? null : player.getLevel().getEntity(entry.activeEntity);
+        if (!(entity instanceof MobEntity mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob)
                 || !player.getUUID().equals(CompanionBrain.owner(mob))
                 || !mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)
                 || !entry.id.equals(mob.getPersistentData().getUUID(CompanionBrain.ENTRY))) return null;
         return mob;
     }
-    private static boolean applyCommand(ServerPlayer player, SoulEntry entry, CompanionBrain.Mode mode) {
-        Mob mob = activeMob(player, entry);
+    private static boolean applyCommand(ServerPlayerEntity player, SoulEntry entry, CompanionBrain.Mode mode) {
+        MobEntity mob = activeMob(player, entry);
         if (mob == null) return false;
         mob.setTarget(null);
         mob.getPersistentData().putString(CompanionBrain.MODE, mode.name());
@@ -189,17 +194,17 @@ public final class SoulService {
         mob.getNavigation().stop();
         return true;
     }
-    public static void attack(ServerPlayer player, LivingEntity target) {
+    public static void attack(ServerPlayerEntity player, LivingEntity target) {
         PlayerSouls collection = data(player);
         collection.entries.values().stream().filter(e -> receivesCommand(collection, e))
             .filter(e -> e.activeEntity != null).forEach(e -> {
-                Entity entity = player.serverLevel().getEntity(e.activeEntity);
-                if (entity instanceof Mob mob && CompanionBrain.canAttack(mob, target)) {
+                Entity entity = player.getLevel().getEntity(e.activeEntity);
+                if (entity instanceof MobEntity mob && CompanionBrain.canAttack(mob, target)) {
                     mob.getPersistentData().putString(CompanionBrain.MODE, "FOLLOW"); mob.setTarget(target);
                 }
             });
     }
-    public static void open(ServerPlayer player) { SoulNetwork.open(player); }
+    public static void open(ServerPlayerEntity player) { SoulNetwork.open(player); }
     private static boolean receivesCommand(PlayerSouls collection, SoulEntry entry) {
         SoulEntry selected = collection.entries.get(collection.selected);
         return collection.commandGroup || (selected != null && selected.entityType.equals(entry.entityType));

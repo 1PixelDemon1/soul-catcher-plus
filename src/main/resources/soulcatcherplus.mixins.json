@@ -2,8 +2,18 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.soulcatcherplus.mixin",
-  "compatibilityLevel": "JAVA_17",
-  "mixins": ["MowzieAreaTargetsMixin", "CompanionBossBarMixin", "SoulSpawnContextMixin"],
-  "client": ["client.SoulEntityRenderMixin"],
-  "injectors": {"defaultRequire": 1}
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MowzieAreaTargetsMixin",
+    "CompanionBossBarMixin",
+    "SoulSpawnContextMixin",
+    "SoulEntityLifecycleMixin",
+    "LegacyGoalSelectorMixin"
+  ],
+  "client": [
+    "client.SoulEntityRenderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

@@ -4,32 +4,36 @@ package dev.soulcatcherplus.item;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.*;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
-import net.minecraft.world.level.Level;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
+import net.minecraft.world.World;
 
 public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().fireResistant() : new Item.Properties());
+            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT).fireResistant() : new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
     /** Main-hand scythes take precedence; another weapon does not revoke existing summons. */
-    public static SoulScythe heldBy(Player player) {
+    public static SoulScythe heldBy(PlayerEntity player) {
         if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;
         return player.getOffhandItem().getItem() instanceof SoulScythe scythe ? scythe : null;
     }
-    @Override public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-        if (!(target instanceof Mob mob)) return InteractionResult.PASS;
-        if (player instanceof ServerPlayer server) {
+    @Override public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity target, Hand hand) {
+        if (!(target instanceof MobEntity mob)) return ActionResultType.PASS;
+        if (player instanceof ServerPlayerEntity server) {
             SoulMinions.tryInherit(mob);
             PlayerSouls collection = SoulService.data(server);
             if (CompanionBrain.isSoul(mob)) {
@@ -44,16 +48,16 @@ public final class SoulScythe extends SwordItem {
                 SoulService.message(server, "attack", mob.getName());
             } else {
                 if (!SoulCages.active(server).present()) {
-                    SoulService.message(server, "cage_needed"); return InteractionResult.FAIL;
+                    SoulService.message(server, "cage_needed"); return ActionResultType.FAIL;
                 }
                 if (!SoulProfiles.get(mob).enabled() || !SoulAdapters.get(mob).canCapture(mob, server)) {
-                    SoulService.message(server, "unsupported"); return InteractionResult.FAIL;
+                    SoulService.message(server, "unsupported"); return ActionResultType.FAIL;
                 }
-                CompoundTag data = mob.getPersistentData();
+                CompoundNBT data = mob.getPersistentData();
                 long now = server.server.overworld().getGameTime();
                 if (data.hasUUID("scp_mark_owner") && data.getLong("scp_mark_until") > now
                         && !data.getUUID("scp_mark_owner").equals(server.getUUID())) {
-                    SoulService.message(server, "marked_other"); return InteractionResult.FAIL;
+                    SoulService.message(server, "marked_other"); return ActionResultType.FAIL;
                 }
                 data.putUUID("scp_mark_owner", server.getUUID());
                 data.putLong("scp_mark_until", now + 20 * 180);
@@ -61,9 +65,9 @@ public final class SoulScythe extends SwordItem {
             }
             player.getCooldowns().addCooldown(this, 5);
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide);
+        return ActionResultType.sidedSuccess(player.level.isClientSide);
     }
-    @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));
+    @Override public void appendHoverText(ItemStack stack, World level, java.util.List<ITextComponent> tooltip, ITooltipFlag flag) {
+        tooltip.add(new net.minecraft.util.text.TranslationTextComponent("item.soulcatcherplus.scythe_limit", summonLimit()));
     }
 }

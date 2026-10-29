@@ -4,7 +4,7 @@ package dev.soulcatcherplus.client;
 import dev.soulcatcherplus.companion.CompanionBrain;
 import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.entity.Entity;
 
 public final class ClientPackets {
     public static void open(SoulNetwork.State state) {

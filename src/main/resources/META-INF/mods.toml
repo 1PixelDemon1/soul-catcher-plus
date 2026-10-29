@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[47,)"
+loaderVersion="[36,)"
 license="MIT"
 [[mods]]
 modId="soulcatcherplus"
@@ -9,13 +9,13 @@ description='''Mark enemies with a scythe, collect their souls, and summon spect
 [[dependencies.soulcatcherplus]]
 modId="forge"
 mandatory=true
-versionRange="[47.4.28,48)"
+versionRange="[36.2.42,37)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.soulcatcherplus]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.20.1]"
+versionRange="[1.16.5]"
 ordering="NONE"
 side="BOTH"
 [[dependencies.soulcatcherplus]]

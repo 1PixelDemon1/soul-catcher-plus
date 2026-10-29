@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import dev.soulcatcherplus.client.SoulGui;
 
 /** Code-drawn ink, aged brass and soul-light surfaces; no vanilla button atlas. */
 final class SoulTheme {
@@ -13,7 +13,7 @@ final class SoulTheme {
         "..#####..", "..#####..", ".###.###.", ".##...##."
     };
 
-    static void panel(GuiGraphics g, int x, int y, int w, int h) {
+    static void panel(SoulGui g, int x, int y, int w, int h) {
         g.fillGradient(x, y, x + w, y + h, PANEL, INK);
         g.renderOutline(x, y, w, h, BORDER);
         g.fill(x + 1, y + 1, x + w - 1, y + 2, 0xFF20373E);
@@ -24,13 +24,13 @@ final class SoulTheme {
             g.fill(cx, y, cx + 1, y + 7, GOLD);
         }
     }
-    static void diamond(GuiGraphics g, int x, int y, int radius, int color) {
+    static void diamond(SoulGui g, int x, int y, int radius, int color) {
         for (int offset = -radius; offset <= radius; offset++) {
             int half = radius - Math.abs(offset);
             g.fill(x - half, y + offset, x + half + 1, y + offset + 1, color);
         }
     }
-    static void star(GuiGraphics g, int x, int y, int color, boolean filled) {
+    static void star(SoulGui g, int x, int y, int color, boolean filled) {
         int left = x - STAR[0].length() / 2, top = y - STAR.length / 2;
         for (int row = 0; row < STAR.length; row++) for (int column = 0; column < STAR[row].length(); column++) {
             if (!starPixel(column, row)) continue;
@@ -42,7 +42,7 @@ final class SoulTheme {
     private static boolean starPixel(int x, int y) {
         return y >= 0 && y < STAR.length && x >= 0 && x < STAR[y].length() && STAR[y].charAt(x) == '#';
     }
-    static void line(GuiGraphics g, float x1, float y1, float x2, float y2, int color) {
+    static void line(SoulGui g, float x1, float y1, float x2, float y2, int color) {
         int steps = Math.max(1, (int) Math.ceil(Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1))));
         for (int i = 0; i <= steps; i++) {
             int x = Math.round(x1 + (x2 - x1) * i / steps);
@@ -50,7 +50,7 @@ final class SoulTheme {
             g.fill(x, y, x + 1, y + 1, color);
         }
     }
-    static void ellipse(GuiGraphics g, int x, int y, int rx, int ry, int color) {
+    static void ellipse(SoulGui g, int x, int y, int rx, int ry, int color) {
         for (int i = 0; i < 64; i++) {
             double a = i * Math.PI / 32, b = (i + 1) * Math.PI / 32;
             line(g, x + (float) Math.cos(a) * rx, y + (float) Math.sin(a) * ry,

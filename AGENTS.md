@@ -2,7 +2,13 @@
 
 ## Target
 
-Soul Catcher Plus currently targets Minecraft 1.20.1, Forge 47.4.28 and Java 17.
+This port branch targets Minecraft 1.16.5, Forge 36.2.42 and a Java 8 runtime.
+Gradle and javac run on Java 17; Jabel 1.0.0 compiles modern syntax to Java 8
+with `--release 8`. Jabel is compile-only and must never be bundled into the mod.
+Stay on `codex/forge-1.16.5` for this port. `develop` and `main` remain on 1.20.1;
+the 1.19.2 and NeoForge 1.20.4 ports remain separate.
+Verify old APIs against the actual 1.16.5 mapped JAR and Forge sources. The class
+names are legacy MCP names with official member mappings; modern examples differ.
 Follow the installed `minecraft-modding` skill when changing mod code.
 
 ## Git branches
@@ -85,9 +91,9 @@ Do not invent version bumps or publish tags/remotes without a release to publish
 
 The user handles manual gameplay testing. After each mod refinement, compile and
 launch the current development client for them, and confirm startup from the log.
-For the 1.20.1 development branch, use:
+For this 1.16.5 port branch, use:
 
-`.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest -PwithAoA`
+`.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAoA`
 
 `-PgameTests` makes the QA command available; launching the client is not a request
 to run GameTests. Leave the game open for the user. Do not force-kill a running
@@ -98,9 +104,15 @@ gameplay verification; do not present earlier checks as validation of new work.
 Run checks appropriate to the change. Documentation-only and Git-organization
 changes do not require another Minecraft build.
 
-- Build and data tests: `.\scripts\gradle.ps1 build`
-- Base gameplay: `.\scripts\gradle.ps1 runGameTestServer -PgameTests`
-- Optional integration: `.\scripts\gradle.ps1 runGameTestServer -PgameTests -PwithMowzies`
-- After game tests, package without test sources: `.\scripts\gradle.ps1 clean build`
+- Package without QA sources or automated tests: `.\scripts\gradle.ps1 build -x test`
+- Prepare the private playtest archive: `.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest`
+
+Minecraft 1.16.5 has no supported GameTest task here. `-PgameTests` is retained as
+a compatibility flag for the manual QA command from `src/qa/java` only. The old
+`src/gametest`/`src/test` sources belong to the newer branch and are not validated
+for this port. Do not enable or run them without a separate port/testing request.
+Build output uses `build/1.16.5`; worlds use `run-client/1.16.5` and `run/1.16.5`.
+Archive original SRG dependencies from `playtestMods`, never the remapped dev JARs.
+Do not delete artifacts or open worlds belonging to the other version branches.
 
 Keep build output, downloaded tools, Gradle caches, logs, and local worlds ignored.

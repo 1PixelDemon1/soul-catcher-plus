@@ -1,6 +1,6 @@
 # Soul Catcher Plus API — 0.1 (experimental)
 
-Target: Minecraft 1.20.1, Forge 47.4.28, Java 17. API stability is not yet guaranteed.
+Target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (port branch). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
 
 ## Entity adapters
@@ -10,7 +10,7 @@ Register exactly one adapter per entity ID during `FMLCommonSetupEvent.enqueueWo
 ```java
 SoulAdapters.register(new ResourceLocation("yourmod", "your_mob"), new SoulAdapter() {
     @Override
-    public void prepareSummon(Mob mob, ServerPlayer owner) {
+    public void prepareSummon(MobEntity mob, ServerPlayerEntity owner) {
         mob.clearRestriction();
         // Reset your arena/encounter state here; keep native combat behavior.
     }
@@ -78,7 +78,7 @@ encounter event** even when it is referenced by an instance field:
 
 ```java
 @Override
-public Collection<ServerBossEvent> bossBars(Mob mob) {
+public Collection<ServerBossEvent> bossBars(MobEntity mob) {
     return List.of(myEntityOwnedEvent(mob));
     // Return List.of() when this mob only references a shared encounter bar.
 }
@@ -176,7 +176,7 @@ selecting the card. This ordering applies to the collection screen only.
 ## Key-bound collection and command wheel
 
 Client-only `ClientControls` registers remappable defaults O (collection) and held R
-(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus require a soul scythe
+(wheel) through Forge's `FMLClientSetupEvent` and `ClientRegistry`. Both menus require a soul scythe
 of any tier in the main hand or offhand to open. Key presses without one are consumed
 without opening a screen or sending an open request. The client rechecks this rule
 when a collection reply arrives, and the server rejects opens without a held scythe.
@@ -219,7 +219,7 @@ added there as well. Direct target attacks remain scythe interactions.
 
 `CompanionBrain.Mode.AGGRESSIVE` uses normal owner following and return teleportation
 when idle. Every five ticks, it may acquire the nearest visible, attackable hostile
-Mob within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
+MobEntity within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
 the companion abandons combat and returns; a target beyond that owner radius is
 also dropped. Existing WAIT, GUARD and reactive FOLLOW rules are unchanged.
 
@@ -234,27 +234,27 @@ root companion's chosen target rather than running their own target search.
 
 ## Summoned minions
 
-`SoulMinions` discovers Mob descendants through `SoulAdapter.summoner(mob)`. Its
-default follows `TraceableEntity.getOwner()` and `OwnableEntity` ownership. Because
-the default `OwnableEntity.getOwner()` resolves players only, a null result also
-tries the owner UUID among loaded entities in the same server level. Discovery
+`SoulMinions` discovers MobEntity descendants through `SoulAdapter.summoner(mob)`. Its
+default uses native Vex, projectile, evoker-fangs, area-effect-cloud and TNT owners,
+plus tameable-animal and horse owner UUIDs. UUID lookup stays within loaded entities
+in the same server world; custom creator relationships use the adapter API. Discovery
 requires a chain reaching a marked companion; player-owned pets and unrelated
 nearby mobs are not adopted. Traversal stops on cycles, dimension boundaries or
 after 32 creators. The standard path uses no reflection, proximity guessing or
 chunk loading; optional integrations may expose explicit native owner links.
 
 For ownerless synchronous summons, the creator's adapter may opt in with
-`inheritsTickSpawn(Mob summoner, EntityType<?> childType)`. It defaults to false:
+`inheritsTickSpawn(MobEntity summoner, EntityType<?> childType)`. It defaults to false:
 execution nesting alone does not prove ownership (damage/death callbacks can
 create another mob's children). Approve only known child types. The callback runs
 during the child's base constructor and receives its type, never a partially
-initialized Mob to inspect or modify.
+initialized MobEntity to inspect or modify.
 
 `SoulSpawnContext` brackets the server's native `tick` and `rideTick` calls in
 try/finally, preserving nested sources and masking outer sources during ordinary
 entity ticks. The construction event records weak child/creator references only
 for adapter-approved types created by a companion with a canonical reservation.
-The join event consumes that record, including on rejected joins and disk loads.
+The load hook clears construction provenance; the join event consumes any remaining record, including rejected joins.
 Only a fresh join may use the construction fallback, and an explicitly resolved
 creator takes precedence even if it belongs to somebody else. An entity constructed
 outside the scope and inserted later is not adopted merely due to insertion timing.
@@ -286,9 +286,10 @@ loaded root, then calls `restoreSummoner(minion, root)`. The default restores Ve
 owner/idle origin; override it to repair native owner references before AI can
 search for a different master or self-destruct. Keep it cheap and idempotent,
 write only changed state and do not load chunks. When the root is valid but
-unloaded, the child's LivingTickEvent is canceled: native AI, movement and lifetime
-timers pause until the root is available. The external server tick counter still
-advances. The root link survives disk reload even though vanilla Vex does not
+unloaded, the child's LivingUpdateEvent is canceled, pausing the base living tick
+and its AI/movement. Subclass code outside `super.tick()` is not paused: vanilla
+Vex lifespan still decreases there. The external server tick counter also advances.
+The root link survives disk reload even though vanilla Vex does not
 save its own owner reference. Target inheritance, boss-bar rediscovery and the
 existing `tickMinion` callback retain their five-tick cadence.
 An old, unmarked Vex loaded from a save that already lost its native owner cannot
@@ -305,7 +306,7 @@ For a custom child type, extend its adapter's creator resolver:
 
 ```java
 @Override
-public Entity summoner(Mob mob) {
+public Entity summoner(MobEntity mob) {
     return ((TheirMinion) mob).getCaster(); // Integration owns this dependency.
 }
 ```
@@ -326,14 +327,14 @@ For a known synchronous child type, opt in on the **creator's** adapter:
 
 ```java
 @Override
-public boolean inheritsTickSpawn(Mob summoner, EntityType<?> childType) {
+public boolean inheritsTickSpawn(MobEntity summoner, EntityType<?> childType) {
     return childType == THEIR_SUMMONED_TYPE.get();
 }
 ```
 
-The optional Twilight Forest 4.3.2508 bridge enables this for Snow Queen's
+The optional Twilight Forest 4.0.870 bridge enables this for Snow Queen's
 `ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
-`lich_minion` exposes a public `master` field. These members are discovered once
+`lich_minion` exposes a package-private `master` field (cached reflective access). These members are discovered once
 at common setup, without a compile-time Twilight dependency. The adapters restore
 the saved root into those native links before AI runs after reload. Older unmarked
 ownerless crystals have no reliable provenance and are not adopted retroactively.
@@ -476,7 +477,7 @@ Displaced items return to inventory or drop
 if it is full. The command does not silently delete an existing cage.
 
 Bulk population takes a sorted snapshot of registered entity types and creates
-samples on the server thread in small tick batches. Only returned `Mob` instances
+samples on the server thread in small tick batches. Only returned `MobEntity` instances
 passing profile/adapter capture checks are added. No world insertion, ticking or
 `finalizeSpawn` is requested. Constructor-default forms are used, with a bow for
 skeleton QA samples; this does not enumerate every variant or spawn-dependent state.
@@ -505,7 +506,7 @@ keep their separately supplied fade. Nested dispatcher calls unwrap our parent
 source before applying the child's own texture/provider, preventing repeated tint.
 No GeckoLib or Mowzie dependency is required.
 The default mapping makes standard solid/cutout body materials translucent. A
-renderer must use the supplied `MultiBufferSource` for this hook to affect it.
+renderer must use the supplied `IRenderTypeBuffer` for this hook to affect it.
 Custom shaders, independently acquired buffers and extra textures/layers may still
 need an integration through `SoulVisualProvider` and visual testing. The hook does
 not guarantee transparency for every third-party rendering pipeline.

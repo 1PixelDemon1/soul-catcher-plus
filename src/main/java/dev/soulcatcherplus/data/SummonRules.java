@@ -9,7 +9,9 @@ import java.util.Set;
 /** One server policy supplies both summon decisions and the collection's availability. */
 public final class SummonRules {
     public enum Status { READY, ACTIVE, OTHER_FORM_ACTIVE, RECOVERING, NO_SCYTHE, LIMIT_REACHED, LOW_ENERGY, NO_CAGE, CAGE_TOO_SMALL }
+    @com.github.bsideup.jabel.Desugar
     public record Availability(Status status, long recoverySeconds) {}
+    @com.github.bsideup.jabel.Desugar
     public record Context(int activeCount, int limit, int energy, int cageCapacity, long gameTime,
             Map<String, Long> readyAt, Set<String> activeTypes) {}
 
@@ -21,7 +23,7 @@ public final class SummonRules {
             if (entry.activeEntity != null) activeTypes.add(entry.entityType);
         });
         return new Context(collection.activeCount(), limit, energy, cageCapacity, gameTime,
-            Map.copyOf(recovery), Set.copyOf(activeTypes));
+            com.google.common.collect.ImmutableMap.copyOf(recovery), com.google.common.collect.ImmutableSet.copyOf(activeTypes));
     }
     public static Availability inspect(Context context, SoulEntry entry) {
         long recovery = Math.max(0, (context.readyAt().getOrDefault(entry.entityType, 0L) - context.gameTime() + 19) / 20);
