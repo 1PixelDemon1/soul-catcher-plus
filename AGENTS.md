@@ -35,8 +35,9 @@ and nearby code before considering the work complete.
 - Default to read-only review. Do not rewrite code, change public APIs, add
   abstractions/dependencies, or broaden the task without coordination from the
   primary agent. The primary agent owns implementation decisions and Git writes.
-- Follow the user's standing validation preference: no builds, compilation,
-  tests, game launches, or UI automation unless the user resumes such checks.
+- Keep the reviewer read-only: the primary agent compiles and launches the
+  development client for the user's manual checks after each mod refinement.
+  Do not run automated tests, GameTests or UI automation unless requested.
   A source review is not proof that a feature builds or works in-game.
 - Report actionable findings with priority and a short recommendation, or state
   that no actionable issues were found. Do not manufacture findings.
@@ -82,11 +83,17 @@ Do not invent version bumps or publish tags/remotes without a release to publish
 
 ## Validation
 
-The user currently handles testing during early development. Until they ask to
-resume agent-driven validation, do not run builds, compilation, automated tests,
-Minecraft clients/servers, or UI automation merely to verify changes. Source and
-API inspection is allowed. Explicitly state when a change has not been built or
-tested; do not present the earlier prototype checks as validation of new work.
+The user handles manual gameplay testing. After each mod refinement, compile and
+launch the current development client for them, and confirm startup from the log.
+For the 1.20.1 development branch, use:
+
+`.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest`
+
+`-PgameTests` makes the QA command available; launching the client is not a request
+to run GameTests. Leave the game open for the user. Do not force-kill a running
+client or discard unsaved worlds. Automated tests, GameTest servers and UI
+automation remain opt-in. Distinguish successful compilation/startup from actual
+gameplay verification; do not present earlier checks as validation of new work.
 
 Run checks appropriate to the change. Documentation-only and Git-organization
 changes do not require another Minecraft build.

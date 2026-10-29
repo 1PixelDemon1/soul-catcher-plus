@@ -337,8 +337,8 @@ The optional Twilight Forest 4.3.2508 bridge enables this for Snow Queen's
 at common setup, without a compile-time Twilight dependency. The adapters restore
 the saved root into those native links before AI runs after reload. Older unmarked
 ownerless crystals have no reliable provenance and are not adopted retroactively.
-The integration was inspected against the installed artifact; it has not been
-built or exercised in Minecraft for this change. Performance analysis is in
+The integration was inspected against the installed artifact. It compiles and the
+development client has started; actual gameplay verification is pending. Performance analysis is in
 [MINION_PERFORMANCE.md](MINION_PERFORMANCE.md).
 
 ## Departure effects
