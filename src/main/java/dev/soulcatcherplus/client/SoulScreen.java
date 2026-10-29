@@ -16,7 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 /** Species archive, detached 3D model, captured-form selector and companion orders. */
 public final class SoulScreen extends Screen {
     private static final int W = 620, H = 350;
-    private static final int LIST_TOP = 112, LIST_BOTTOM = 292, CARD_STEP = 37, CARD_HEIGHT = 34;
+    private static final int LIST_TOP = 112, LIST_BOTTOM = 294, CARD_STEP = 37, CARD_HEIGHT = 34;
     private static final int LIST_LEFT = 26, LIST_RIGHT = 156, SCROLL_LEFT = 160, SCROLL_RIGHT = 166;
     private static final int PX = 190, PY = 88, PW = 232, PH = 146;
     private SoulNetwork.State state;
