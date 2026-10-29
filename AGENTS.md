@@ -2,7 +2,10 @@
 
 ## Target
 
-Soul Catcher Plus currently targets Minecraft 1.20.1, Forge 47.4.28 and Java 17.
+This port branch targets Minecraft 1.20.4, NeoForge 20.4.253 and Java 17.
+Java 21 is additionally required by the NeoForm build tooling, not by the game.
+Stay on `codex/neoforge-1.20.4` for this port; `develop` and `main` remain on
+Minecraft 1.20.1 / Forge 47.4.28. The existing 1.19.2 port remains separate.
 Follow the installed `minecraft-modding` skill when changing mod code.
 
 ## Git branches
@@ -85,9 +88,9 @@ Do not invent version bumps or publish tags/remotes without a release to publish
 
 The user handles manual gameplay testing. After each mod refinement, compile and
 launch the current development client for them, and confirm startup from the log.
-For the 1.20.1 development branch, use:
+For this 1.20.4 port branch, use:
 
-`.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest -PwithAoA`
+`.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAoA`
 
 `-PgameTests` makes the QA command available; launching the client is not a request
 to run GameTests. Leave the game open for the user. Do not force-kill a running
@@ -100,7 +103,10 @@ changes do not require another Minecraft build.
 
 - Build and data tests: `.\scripts\gradle.ps1 build`
 - Base gameplay: `.\scripts\gradle.ps1 runGameTestServer -PgameTests`
-- Optional integration: `.\scripts\gradle.ps1 runGameTestServer -PgameTests -PwithMowzies`
-- After game tests, package without test sources: `.\scripts\gradle.ps1 clean build`
+- Package without test sources: `.\scripts\gradle.ps1 build -x test`
+- Prepare the private playtest bundle: `.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest`
+
+Build outputs use `build/1.20.4` and client worlds use `run-client/1.20.4`.
+Do not delete artifacts or open worlds belonging to the other version branches.
 
 Keep build output, downloaded tools, Gradle caches, logs, and local worlds ignored.

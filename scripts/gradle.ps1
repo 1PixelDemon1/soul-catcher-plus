@@ -1,8 +1,10 @@
 param([Parameter(ValueFromRemainingArguments = $true)][string[]]$GradleArgs)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$localJdk = Get-ChildItem -LiteralPath (Join-Path $projectRoot '.tools') -Directory -Filter 'jdk-*' -ErrorAction SilentlyContinue | Select-Object -First 1
+$localJdk = Get-ChildItem -LiteralPath (Join-Path $projectRoot '.tools') -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($localJdk) { $env:JAVA_HOME = $localJdk.FullName }
+$buildJdk = Get-ChildItem -LiteralPath (Join-Path $projectRoot '.tools') -Directory -Filter 'jdk-21*' -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($buildJdk) { $env:SOULCATCHER_BUILD_JAVA = $buildJdk.FullName }
 if (-not $env:JAVA_HOME) { throw 'Java 17 is required. Set JAVA_HOME or run python scripts/bootstrap.py.' }
 $env:GRADLE_USER_HOME = Join-Path $projectRoot '.gradle-user-home'
 & (Join-Path $projectRoot 'gradlew.bat') @GradleArgs

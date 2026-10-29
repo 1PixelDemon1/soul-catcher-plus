@@ -9,14 +9,14 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 public final class SoulProfiles extends SimpleJsonResourceReloadListener {
     public record Profile(boolean enabled, int cost, int energy) {}
     private static Map<ResourceLocation, Boolean> enabledTypes = Map.of();
     public SoulProfiles() { super(new Gson(), "soul_profiles"); }
     public static Profile get(Mob mob) {
-        ResourceLocation type = ForgeRegistries.ENTITY_TYPES.getKey(mob.getType());
+        ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
         return new Profile(enabledTypes.getOrDefault(type, true),
             SoulBalance.summonCost(mob.getMaxHealth()), SoulBalance.victoryEnergy(mob.getMaxHealth()));
     }

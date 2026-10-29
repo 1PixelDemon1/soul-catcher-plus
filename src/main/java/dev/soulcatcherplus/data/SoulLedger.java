@@ -12,7 +12,8 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class SoulLedger extends SavedData {
     private final Map<UUID, PlayerSouls> players = new HashMap<>();
     public static SoulLedger get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(SoulLedger::load, SoulLedger::new, "soulcatcherplus");
+        return server.overworld().getDataStorage().computeIfAbsent(
+            new SavedData.Factory<>(SoulLedger::new, SoulLedger::load), "soulcatcherplus");
     }
     public PlayerSouls player(UUID player) { return players.computeIfAbsent(player, id -> new PlayerSouls()); }
     public static SoulLedger load(CompoundTag tag) {

@@ -1,6 +1,6 @@
 # Soul Catcher Plus API — 0.1 (experimental)
 
-Target: Minecraft 1.20.1, Forge 47.4.28, Java 17. API stability is not yet guaranteed.
+Target: Minecraft 1.20.4, NeoForge 20.4.253, Java 17 (port branch). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
 
 ## Entity adapters
@@ -121,7 +121,7 @@ public CompoundTag previewData(CompoundTag snapshot) {
 ```
 
 Do not send the complete saved entity. The server only answers owned-entry preview
-requests from a living, non-spectator owner, strips identity and Forge persistent
+requests from a living, non-spectator owner, strips identity, persistent data and attachments
 data/capabilities, and limits serialized visual data to 16 KiB. Larger/invalid visual
 data falls back to default entity appearance. Complex nested custom state should
 be reduced to the fields that the renderer actually needs.
@@ -176,7 +176,7 @@ selecting the card. This ordering applies to the collection screen only.
 ## Key-bound collection and command wheel
 
 Client-only `ClientControls` registers remappable defaults O (collection) and held R
-(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus require a soul scythe
+(wheel) through NeoForge's `RegisterKeyMappingsEvent`. Both menus require a soul scythe
 of any tier in the main hand or offhand to open. Key presses without one are consumed
 without opening a screen or sending an open request. The client rechecks this rule
 when a collection reply arrives, and the server rejects opens without a held scythe.
@@ -331,8 +331,8 @@ public boolean inheritsTickSpawn(Mob summoner, EntityType<?> childType) {
 }
 ```
 
-The optional Twilight Forest 4.3.2508 bridge enables this for Snow Queen's
-`ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
+The optional Twilight Forest 4.4.2276 bridge enables this for Snow Queen's
+`ice_crystal` only. Lich shadow clones expose `getMaster`/`setMasterUUID`, while
 `lich_minion` exposes a public `master` field. These members are discovered once
 at common setup, without a compile-time Twilight dependency. The adapters restore
 the saved root into those native links before AI runs after reload. Older unmarked
@@ -359,8 +359,8 @@ introduced for the visual effect.
 
 ## Events
 
-`SoulEvent.Capture` and `SoulEvent.Summon` are cancelable Forge events posted on
-`MinecraftForge.EVENT_BUS`. Both expose `player` and `mob`. Summon fires before
+`SoulEvent.Capture` and `SoulEvent.Summon` are cancellable NeoForge events posted on
+`NeoForge.EVENT_BUS`. Both expose `player` and `mob`. Summon fires before
 the entity is inserted and before energy is consumed. Capture fires before a remnant
 is created; ordinary kill energy is a separate reward.
 

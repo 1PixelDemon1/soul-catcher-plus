@@ -16,8 +16,7 @@ public abstract class CompanionBossBarMixin implements SoulBossBars.Control {
 
     @Override public void soulcatcherplus$markSuppressed() { soulcatcherplus$suppressed = true; }
 
-    // Official development name and verified Forge 1.20.1 SRG name. No refmap is needed.
-    @Inject(method = {"setVisible(Z)V", "m_8321_(Z)V"},
+    @Inject(method = "setVisible(Z)V",
         at = @At("HEAD"), cancellable = true, remap = false, require = 1)
     private void soulcatcherplus$preventShowing(boolean visible, CallbackInfo callback) {
         if (soulcatcherplus$suppressed && visible) callback.cancel();

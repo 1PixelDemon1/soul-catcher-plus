@@ -20,12 +20,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.*;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 /** Compiled only with -PgameTests. Populates a local QA player's collection. */
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
@@ -50,8 +50,8 @@ public final class SoulPreviewCommand {
         }
     }
     private static final class FillJob {
-        final List<EntityType<?>> types = ForgeRegistries.ENTITY_TYPES.getValues().stream()
-            .sorted(Comparator.comparing(type -> ForgeRegistries.ENTITY_TYPES.getKey(type).toString())).toList();
+        final List<EntityType<?>> types = BuiltInRegistries.ENTITY_TYPE.stream()
+            .sorted(Comparator.comparing(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())).toList();
         final Counts counts = new Counts();
         int next;
         boolean advance(ServerPlayer player) {
@@ -95,9 +95,9 @@ public final class SoulPreviewCommand {
                 counts.record(sample(player, type, mob -> {}));
             for (DyeColor color : List.of(DyeColor.CYAN, DyeColor.PURPLE))
                 counts.record(sample(player, EntityType.SHEEP, mob -> { if (mob instanceof Sheep sheep) sheep.setColor(color); }));
-            if (net.minecraftforge.fml.ModList.get().isLoaded("mowziesmobs"))
-                counts.record(sample(player, ForgeRegistries.ENTITY_TYPES.getValue(
-                    new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut")), mob -> {}));
+            if (net.neoforged.fml.ModList.get().isLoaded("mowziesmobs"))
+                counts.record(sample(player, BuiltInRegistries.ENTITY_TYPE.getOptional(
+                    new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut")).orElse(null), mob -> {}));
             finish(player, counts, 0);
         }
         return 1;
@@ -149,7 +149,7 @@ public final class SoulPreviewCommand {
             configure.accept(mob);
             var adapter = SoulAdapters.get(mob);
             if (!SoulProfiles.get(mob).enabled() || !adapter.canCapture(mob, player)) return Result.SKIPPED;
-            var entry = new SoulEntry(UUID.randomUUID(), ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()).toString(),
+            var entry = new SoulEntry(UUID.randomUUID(), BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()).toString(),
                 mob.getName().getString(), SoulSnapshots.sanitize(adapter.capture(mob)), mob.getMaxHealth());
             var data = SoulService.data(player);
             if (data.entries.values().stream().anyMatch(existing -> SoulVariants.same(existing, entry))) return Result.KNOWN;
@@ -159,13 +159,13 @@ public final class SoulPreviewCommand {
             SoulService.changed(player);
             return Result.ADDED;
         } catch (RuntimeException | LinkageError error) {
-            LOGGER.warn("Unable to create QA soul sample for {}", ForgeRegistries.ENTITY_TYPES.getKey(type), error);
+            LOGGER.warn("Unable to create QA soul sample for {}", BuiltInRegistries.ENTITY_TYPE.getKey(type), error);
             return Result.FAILED;
         } finally {
             if (sample != null) {
                 try { sample.discard(); }
                 catch (RuntimeException | LinkageError error) {
-                    LOGGER.warn("Unable to discard QA sample for {}", ForgeRegistries.ENTITY_TYPES.getKey(type), error);
+                    LOGGER.warn("Unable to discard QA sample for {}", BuiltInRegistries.ENTITY_TYPE.getKey(type), error);
                 }
             }
         }

@@ -13,7 +13,6 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";

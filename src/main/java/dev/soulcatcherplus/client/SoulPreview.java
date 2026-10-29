@@ -12,7 +12,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -31,13 +31,13 @@ final class SoulPreview {
         if (entry.equals(requested) && tick - requestTick < 40) return;
         requested = entry;
         requestTick = tick;
-        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.PreviewRequest(entry));
+        SoulNetwork.sendToServer(new SoulNetwork.PreviewRequest(entry));
     }
     void receive(SoulNetwork.Preview packet) {
         var client = Minecraft.getInstance();
         if (client.level == null) return;
         try {
-            var type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(packet.entityType()));
+            var type = BuiltInRegistries.ENTITY_TYPE.getOptional(new ResourceLocation(packet.entityType())).orElse(null);
             if (type == null || !(type.create(client.level) instanceof Mob mob)) {
                 failed.add(packet.entry()); return;
             }

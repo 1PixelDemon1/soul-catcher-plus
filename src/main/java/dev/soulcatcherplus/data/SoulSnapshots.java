@@ -14,9 +14,11 @@ public final class SoulSnapshots {
                 "Brain", "DeathTime", "HurtTime", "HurtByTimestamp", "Health", "Fire",
                 "FallDistance", "PortalCooldown", "SleepingX", "SleepingY", "SleepingZ"})
             tag.remove(key);
-        CompoundTag forge = tag.getCompound("ForgeData");
-        forge.getAllKeys().stream().filter(k -> k.startsWith("scp_")).toList().forEach(forge::remove);
-        if (!forge.isEmpty()) tag.put("ForgeData", forge);
+        for (String key : new String[]{"ForgeData", "NeoForgeData"}) {
+            CompoundTag persistent = tag.getCompound(key);
+            persistent.getAllKeys().stream().filter(k -> k.startsWith("scp_")).toList().forEach(persistent::remove);
+            if (!persistent.isEmpty()) tag.put(key, persistent);
+        }
         tag.putBoolean("PersistenceRequired", true);
         tag.putBoolean("CanPickUpLoot", false);
         tag.putBoolean("NoAI", false);
@@ -30,6 +32,7 @@ public final class SoulSnapshots {
         }
         // Temporary potion effects must not survive as permanent collection bonuses.
         tag.remove("ActiveEffects");
+        tag.remove("active_effects");
         return tag;
     }
     private SoulSnapshots() {}

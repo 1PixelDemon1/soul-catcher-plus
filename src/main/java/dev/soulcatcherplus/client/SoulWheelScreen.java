@@ -67,7 +67,7 @@ public final class SoulWheelScreen extends Screen {
         return state == null ? null : state.companions().stream().filter(c -> c.entry().equals(selected)).findFirst().orElse(null);
     }
     private void send(SoulNetwork.WheelAction action) {
-        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.WheelRequest(action, selected, allSelected));
+        SoulNetwork.sendToServer(new SoulNetwork.WheelRequest(action, selected, allSelected));
     }
     @Override public void tick() {
         if (!ClientControls.canUseMenus(minecraft) || minecraft.level != openedLevel) {
@@ -122,7 +122,7 @@ public final class SoulWheelScreen extends Screen {
         }
         onClose();
     }
-    @Override public boolean mouseScrolled(double x, double y, double delta) {
+    @Override public boolean mouseScrolled(double x, double y, double horizontal, double delta) {
         if (delta == 0) return false;
         int next = Mth.clamp(page + (delta < 0 ? 1 : -1), 0, lastPage());
         if (next != page) {

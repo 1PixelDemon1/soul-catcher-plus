@@ -11,7 +11,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 /** Species archive, detached 3D model, captured-form selector and companion orders. */
 public final class SoulScreen extends Screen {
@@ -79,7 +79,7 @@ public final class SoulScreen extends Screen {
         return groups.stream().filter(g -> g.forms().stream().anyMatch(r -> r.id().equals(selected))).findFirst().orElse(null);
     }
     private String name(SoulGroup group) {
-        var type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(group.entityType()));
+        var type = BuiltInRegistries.ENTITY_TYPE.getOptional(new ResourceLocation(group.entityType())).orElse(null);
         return type == null ? group.forms().get(0).name() : type.getDescription().getString();
     }
     private void filterGroups() {
@@ -110,7 +110,7 @@ public final class SoulScreen extends Screen {
     }
     private void send(SoulNetwork.Action action) { send(action, selected); }
     private void send(SoulNetwork.Action action, UUID entry) {
-        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.Request(action, entry));
+        SoulNetwork.sendToServer(new SoulNetwork.Request(action, entry));
     }
     private void select(SoulNetwork.Row row) {
         selected = row.id();
@@ -260,7 +260,6 @@ public final class SoulScreen extends Screen {
 
     @Override public void tick() {
         ticks++;
-        searchBox.tick();
         preview.tick();
         preview.request(selected, ticks);
         if (ticks % 20 == 0) send(SoulNetwork.Action.REFRESH);
@@ -391,14 +390,14 @@ public final class SoulScreen extends Screen {
         if (turning && button == 0) { turning = false; return true; }
         return super.mouseReleased(localX(mouseX), localY(mouseY), button);
     }
-    @Override public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double delta) {
         double x = localX(mouseX), y = localY(mouseY);
         if (overPreview(x, y)) { preview.zoom(delta); return true; }
         if (x >= 18 && x < 174 && y >= 60 && y < 300) {
             page = net.minecraft.util.Mth.clamp(page + (delta < 0 ? 1 : -1), 0, lastPage());
             rebuildCards(); return true;
         }
-        return super.mouseScrolled(x, y, delta);
+        return super.mouseScrolled(x, y, horizontal, delta);
     }
     @Override public void removed() { preview.clear(); }
     // Minecraft applies this pause to an unpublished integrated server, not multiplayer/LAN.

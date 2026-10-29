@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[47,)"
+loaderVersion="[2,)"
 license="MIT"
 [[mods]]
 modId="soulcatcherplus"
@@ -7,20 +7,22 @@ version="${mod_version}"
 displayName="Soul Catcher Plus"
 description='''Mark enemies with a scythe, collect their souls, and summon spectral companions.'''
 [[dependencies.soulcatcherplus]]
-modId="forge"
-mandatory=true
-versionRange="[47.4.28,48)"
+modId="neoforge"
+type="required"
+versionRange="[20.4.253,20.5)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.soulcatcherplus]]
 modId="minecraft"
-mandatory=true
-versionRange="[1.20.1]"
+type="required"
+versionRange="[1.20.4]"
 ordering="NONE"
 side="BOTH"
 [[dependencies.soulcatcherplus]]
 modId="mowziesmobs"
-mandatory=false
+type="optional"
 versionRange="[1.6,)"
 ordering="AFTER"
 side="BOTH"
+[[mixins]]
+config="soulcatcherplus.mixins.json"

@@ -15,8 +15,8 @@ import net.minecraft.server.level.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.NeoForge;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 public final class SoulService {
     public static PlayerSouls data(ServerPlayer player) { return SoulLedger.get(player.server).player(player.getUUID()); }
@@ -52,7 +52,7 @@ public final class SoulService {
             }
             return;
         }
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(entry.entityType));
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(new ResourceLocation(entry.entityType)).orElse(null);
         if (type == null) { message(player, "missing_mod"); return; }
         Entity created = type.create(player.serverLevel());
         if (!(created instanceof Mob mob)) { message(player, "unsupported"); return; }
@@ -70,7 +70,7 @@ public final class SoulService {
             SoulAdapters.get(mob).configureCompanion(mob);
             SoulBossBars.suppress(mob);
             if (!place(mob, player)) { message(player, "no_space"); return; }
-            if (MinecraftForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob))) return;
+            if (NeoForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob)).isCanceled()) return;
             // Charge only after integrations approve, before join callbacks can use the companion.
             SoulCages.Active cage = SoulCages.active(player);
             if (!SoulCages.spend(player, entry.cost)) {

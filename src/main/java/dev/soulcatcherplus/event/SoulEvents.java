@@ -12,20 +12,20 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.*;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.living.*;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.*;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.entity.EntityEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.living.*;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.*;
+import net.neoforged.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
 public final class SoulEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+    public static void interact(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
         if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return;
         net.minecraft.world.InteractionResult result;
         if (event.getTarget() instanceof LivingEntity living) {
@@ -61,7 +61,7 @@ public final class SoulEvents {
         if (!tag.hasUUID("scp_mark_owner") || !tag.getUUID("scp_mark_owner").equals(player.getUUID())
                 || tag.getLong("scp_mark_until") < now || !profile.enabled()) return;
         SoulAdapter adapter = SoulAdapters.get(mob);
-        if (!adapter.canCapture(mob, player) || MinecraftForge.EVENT_BUS.post(new SoulEvent.Capture(player, mob))) return;
+        if (!adapter.canCapture(mob, player) || NeoForge.EVENT_BUS.post(new SoulEvent.Capture(player, mob)).isCanceled()) return;
         try {
             SoulEntry soul = new SoulEntry(UUID.randomUUID(), mob.getType().builtInRegistryHolder().key().location().toString(),
                 mob.getName().getString(), SoulSnapshots.sanitize(adapter.capture(mob)), mob.getMaxHealth());

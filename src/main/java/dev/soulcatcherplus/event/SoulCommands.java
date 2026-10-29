@@ -6,9 +6,9 @@ import dev.soulcatcherplus.SoulCatcherPlus;
 import dev.soulcatcherplus.companion.SoulCages;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 /** Development/admin resource grant; ordinary gameplay earns energy from victories. */
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)

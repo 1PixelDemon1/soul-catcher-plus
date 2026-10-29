@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 /** Explicit adapters take priority over the standard goal-based implementation. */
 public final class SoulAdapters {
@@ -17,7 +17,7 @@ public final class SoulAdapters {
             throw new IllegalArgumentException("Duplicate soul adapter: " + entityType);
     }
     public static SoulAdapter get(Mob mob) {
-        return get(ForgeRegistries.ENTITY_TYPES.getKey(mob.getType()));
+        return get(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()));
     }
     public static SoulAdapter get(ResourceLocation entityType) { return ADAPTERS.getOrDefault(entityType, STANDARD); }
     private SoulAdapters() {}

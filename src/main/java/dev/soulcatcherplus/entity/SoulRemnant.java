@@ -17,7 +17,6 @@ import net.minecraft.world.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkHooks;
 
 public final class SoulRemnant extends Entity {
     private static final EntityDataAccessor<String> APPEARANCE =
@@ -98,5 +97,5 @@ public final class SoulRemnant extends Entity {
         if (soul != null) tag.put("Soul", soul.save());
         tag.putLong("Expires", expires);
     }
-    @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
+    @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(this); }
 }

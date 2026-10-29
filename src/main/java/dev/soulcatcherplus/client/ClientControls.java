@@ -7,12 +7,12 @@ import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.network.SoulNetwork;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
 /** In-game shortcuts; Screens own release events after Minecraft clears KeyMapping state. */
@@ -45,7 +45,7 @@ public final class ClientControls {
         }
         if (wheelBlockedUntilRelease && !wheelHeld()) wheelBlockedUntilRelease = false;
         if (client.screen != null) return;
-        if (collection) SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.Request(SoulNetwork.Action.OPEN, null));
+        if (collection) SoulNetwork.sendToServer(new SoulNetwork.Request(SoulNetwork.Action.OPEN, null));
         else if (wheel && !wheelBlockedUntilRelease && wheelHeld()) client.setScreen(new SoulWheelScreen());
     }
     @SubscribeEvent public static void key(InputEvent.Key event) {

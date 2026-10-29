@@ -17,18 +17,18 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.gametest.*;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.gametest.*;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 @GameTestHolder(SoulCatcherPlus.ID)
 @PrefixGameTestTemplate(false)
 public final class SoulGameTests {
     private static ServerPlayer player(GameTestHelper helper) {
-        ServerPlayer player = new net.minecraftforge.common.util.FakePlayer(helper.getLevel(),
+        ServerPlayer player = new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),
             new com.mojang.authlib.GameProfile(UUID.randomUUID(), "SoulTest"));
-        java.util.Map<UUID, ServerPlayer> online = net.minecraftforge.fml.util.ObfuscationReflectionHelper.getPrivateValue(
-            net.minecraft.server.players.PlayerList.class, player.server.getPlayerList(), "f_11197_");
+        java.util.Map<UUID, ServerPlayer> online = net.neoforged.fml.util.ObfuscationReflectionHelper.getPrivateValue(
+            net.minecraft.server.players.PlayerList.class, player.server.getPlayerList(), "playersByUUID");
         online.put(player.getUUID(), player);
         player.setGameMode(GameType.SURVIVAL);
         BlockPos pos = helper.absolutePos(new BlockPos(8, 1, 8));
@@ -167,7 +167,7 @@ public final class SoulGameTests {
     public static void wroughtnautKeepsNativeAttack(GameTestHelper helper) {
         if (!ModList.get().isLoaded("mowziesmobs")) { helper.succeed(); return; }
         ServerPlayer player = player(helper);
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut")).orElse(null);
         Mob original = (Mob) type.create(helper.getLevel());
         SoulEntry entry = entry(player, original);
         SoulService.summon(player, entry.id);
@@ -185,7 +185,7 @@ public final class SoulGameTests {
     public static void wroughtnautAdapterAndAreaFilter(GameTestHelper helper) throws Exception {
         if (!ModList.get().isLoaded("mowziesmobs")) { helper.succeed(); return; }
         ServerPlayer player = player(helper);
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"));
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(new ResourceLocation("mowziesmobs", "ferrous_wroughtnaut")).orElse(null);
         Mob original = (Mob) type.create(helper.getLevel());
         SoulEntry entry = entry(player, original);
         SoulService.summon(player, entry.id);

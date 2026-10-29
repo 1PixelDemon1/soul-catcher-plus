@@ -3,18 +3,18 @@ package dev.soulcatcherplus.api;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.bus.api.Event;
 
-/** Posted on MinecraftForge.EVENT_BUS before state or resource consumption. */
+/** Posted on NeoForge.EVENT_BUS before state or resource consumption. */
 public abstract class SoulEvent extends Event {
     public final ServerPlayer player;
     public final Mob mob;
     protected SoulEvent(ServerPlayer player, Mob mob) { this.player = player; this.mob = mob; }
-    @Cancelable public static final class Capture extends SoulEvent {
+    public static final class Capture extends SoulEvent implements ICancellableEvent {
         public Capture(ServerPlayer player, Mob mob) { super(player, mob); }
     }
-    @Cancelable public static final class Summon extends SoulEvent {
+    public static final class Summon extends SoulEvent implements ICancellableEvent {
         public Summon(ServerPlayer player, Mob mob) { super(player, mob); }
     }
 }
