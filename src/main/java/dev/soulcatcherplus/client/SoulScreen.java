@@ -7,6 +7,7 @@ import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -15,6 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 /** Species archive, detached 3D model, captured-form selector and companion orders. */
 public final class SoulScreen extends Screen {
     private static final int W = 620, H = 350, PAGE_SIZE = 4;
+    private static final int LIST_TOP = 112, CARD_STEP = 37, CARD_HEIGHT = 34;
     private static final int PX = 190, PY = 88, PW = 232, PH = 146;
     private SoulNetwork.State state;
     private final SoulPreview preview = new SoulPreview();
@@ -22,12 +24,16 @@ public final class SoulScreen extends Screen {
     private final List<CardControls> cards = new ArrayList<>();
     private final Map<String, UUID> rememberedForms = new HashMap<>();
     private List<SoulGroup> groups = List.of();
+    private List<SoulGroup> filteredGroups = List.of();
+    private String query = "", normalizedQuery = "";
+    private EditBox searchBox;
     private UUID selected;
     private int page, ticks;
     private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
     private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll;
+    private SoulButton previousPage, nextPage;
 
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
         SoulNetwork.Row active() { return forms.stream().filter(SoulNetwork.Row::active).findFirst().orElse(null); }
@@ -54,15 +60,16 @@ public final class SoulScreen extends Screen {
             preview.receive(packet);
     }
     private void regroup() {
-        List<String> before = groups.stream().map(SoulGroup::entityType).toList();
+        List<String> before = filteredGroups.stream().map(SoulGroup::entityType).toList();
         Map<String, List<SoulNetwork.Row>> map = new LinkedHashMap<>();
         state.rows().forEach(r -> map.computeIfAbsent(r.entityType(), t -> new ArrayList<>()).add(r));
         groups = map.entrySet().stream().map(e -> new SoulGroup(e.getKey(), List.copyOf(e.getValue())))
             .sorted(Comparator.comparing(SoulGroup::favorite).reversed()).toList();
+        filterGroups();
         if (state.rows().stream().noneMatch(r -> r.id().equals(selected))) selected = state.rows().isEmpty() ? null : state.rows().get(0).id();
         page = Math.min(page, lastPage());
         // New species or favorite ordering change the layout; ordinary refreshes do not.
-        if (minecraft != null && !before.equals(groups.stream().map(SoulGroup::entityType).toList())) rebuildWidgets();
+        if (searchBox != null && !before.equals(filteredGroups.stream().map(SoulGroup::entityType).toList())) rebuildCards();
     }
     private static Component text(String key, Object... args) {
         return Component.translatable("screen.soulcatcherplus." + key, args);
@@ -75,7 +82,23 @@ public final class SoulScreen extends Screen {
         var type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(group.entityType()));
         return type == null ? group.forms().get(0).name() : type.getDescription().getString();
     }
-    private int lastPage() { return Math.max(0, (groups.size() - 1) / PAGE_SIZE); }
+    private void filterGroups() {
+        filteredGroups = normalizedQuery.isEmpty() ? groups : groups.stream().filter(group ->
+            name(group).toLowerCase(Locale.ROOT).contains(normalizedQuery)
+                || group.entityType().toLowerCase(Locale.ROOT).contains(normalizedQuery)
+                || group.forms().stream().anyMatch(form -> form.name().toLowerCase(Locale.ROOT).contains(normalizedQuery)))
+            .toList();
+    }
+    private void searchChanged(String value) {
+        query = value;
+        String normalized = value.strip().toLowerCase(Locale.ROOT);
+        if (normalized.equals(normalizedQuery)) return;
+        normalizedQuery = normalized;
+        page = 0;
+        filterGroups();
+        rebuildCards();
+    }
+    private int lastPage() { return Math.max(0, (filteredGroups.size() - 1) / PAGE_SIZE); }
     private static long worldTime() {
         var level = Minecraft.getInstance().level;
         return level == null ? 0 : level.getGameTime();
@@ -95,7 +118,7 @@ public final class SoulScreen extends Screen {
         preview.resetView();
         preview.request(selected, ticks);
         send(SoulNetwork.Action.SELECT);
-        rebuildWidgets();
+        updateControls();
     }
     private void select(SoulGroup group) {
         SoulGroup current = groups.stream().filter(g -> g.entityType().equals(group.entityType())).findFirst().orElse(group);
@@ -122,22 +145,17 @@ public final class SoulScreen extends Screen {
         originX = (width - W * scale) / 2;
         originY = (height - H * scale) / 2;
         button(592, 19, 16, 20, Component.literal("×"), SoulButton.Style.SUBTLE, this::onClose).hint(text("close"));
-        for (int i = page * PAGE_SIZE; i < Math.min(groups.size(), (page + 1) * PAGE_SIZE); i++) {
-            SoulGroup group = groups.get(i);
-            int y = 88 + (i % PAGE_SIZE) * 43;
-            SoulButton body = button(26, y, 118, 39, Component.literal(name(group)), SoulButton.Style.CARD,
-                () -> select(group)).subtitle(text("forms_short", group.forms().size())).selected(group.equals(group()))
-                .lit(group.active() != null).hint(text("choose_soul"));
-            Component favoriteHint = text(group.favorite() ? "remove_favorite" : "add_favorite");
-            SoulButton favorite = button(146, y, 20, 39, favoriteHint, SoulButton.Style.FAVORITE,
-                () -> send(SoulNetwork.Action.TOGGLE_FAVORITE, group.forms().get(0).id()))
-                .selected(group.favorite()).hint(favoriteHint);
-            cards.add(new CardControls(group.entityType(), body, favorite));
-        }
-        button(26, 273, 25, 18, Component.literal("‹"), SoulButton.Style.SUBTLE,
-            () -> { page--; rebuildWidgets(); }).hint(text("previous")).active = page > 0;
-        button(141, 273, 25, 18, Component.literal("›"), SoulButton.Style.SUBTLE,
-            () -> { page++; rebuildWidgets(); }).hint(text("next")).active = page < lastPage();
+        searchBox = addRenderableWidget(new EditBox(font, 30, 92, 132, 12, text("search")));
+        searchBox.setBordered(false);
+        searchBox.setTextColor(SoulTheme.LIGHT);
+        searchBox.setMaxLength(80);
+        searchBox.setHint(text("search_hint"));
+        searchBox.setValue(query);
+        searchBox.setResponder(this::searchChanged);
+        previousPage = button(26, 273, 25, 18, Component.literal("‹"), SoulButton.Style.SUBTLE,
+            () -> { page--; rebuildCards(); }).hint(text("previous"));
+        nextPage = button(141, 273, 25, 18, Component.literal("›"), SoulButton.Style.SUBTLE,
+            () -> { page++; rebuildCards(); }).hint(text("next"));
         previousForm = button(198, 245, 24, 22, Component.literal("‹"), SoulButton.Style.SUBTLE,
             () -> changeForm(-1)).hint(text("previous_form"));
         nextForm = button(390, 245, 24, 22, Component.literal("›"), SoulButton.Style.SUBTLE,
@@ -161,8 +179,35 @@ public final class SoulScreen extends Screen {
             () -> send(SoulNetwork.Action.TOGGLE_MODE)).hint(text(state.commandMode() ? "command_hint" : "harvest_hint"));
         recallAll = button(438, 311, 164, 24, text("recall_all"), SoulButton.Style.DANGER,
             () -> send(SoulNetwork.Action.RECALL_ALL)).hint(text("recall_all_hint"));
+        rebuildCards();
         updateControls();
         preview.request(selected, ticks);
+    }
+    /** Rebuild only the filtered cards, retaining the text field, cursor and keyboard focus. */
+    private void rebuildCards() {
+        for (CardControls card : cards) {
+            if (getFocused() == card.body() || getFocused() == card.favorite()) setFocused(null);
+            removeWidget(card.body());
+            removeWidget(card.favorite());
+            controls.remove(card.body());
+            controls.remove(card.favorite());
+        }
+        cards.clear();
+        page = net.minecraft.util.Mth.clamp(page, 0, lastPage());
+        for (int i = page * PAGE_SIZE; i < Math.min(filteredGroups.size(), (page + 1) * PAGE_SIZE); i++) {
+            SoulGroup group = filteredGroups.get(i);
+            int y = LIST_TOP + (i % PAGE_SIZE) * CARD_STEP;
+            SoulButton body = button(26, y, 118, CARD_HEIGHT, Component.literal(name(group)), SoulButton.Style.CARD,
+                () -> select(group)).subtitle(text("forms_short", group.forms().size())).selected(group.equals(group()))
+                .lit(group.active() != null).hint(text("choose_soul"));
+            Component favoriteHint = text(group.favorite() ? "remove_favorite" : "add_favorite");
+            SoulButton favorite = button(146, y, 20, CARD_HEIGHT, favoriteHint, SoulButton.Style.FAVORITE,
+                () -> send(SoulNetwork.Action.TOGGLE_FAVORITE, group.forms().get(0).id()))
+                .selected(group.favorite()).hint(favoriteHint);
+            cards.add(new CardControls(group.entityType(), body, favorite));
+        }
+        previousPage.active = page > 0;
+        nextPage.active = page < lastPage();
     }
     private Component summonHint() {
         var row = row();
@@ -215,6 +260,7 @@ public final class SoulScreen extends Screen {
 
     @Override public void tick() {
         ticks++;
+        searchBox.tick();
         preview.tick();
         preview.request(selected, ticks);
         if (ticks % 20 == 0) send(SoulNetwork.Action.REFRESH);
@@ -238,14 +284,16 @@ public final class SoulScreen extends Screen {
         SoulTheme.panel(g, 182, 60, 248, 240);
         SoulTheme.panel(g, 438, 60, 164, 240);
         g.drawString(font, text("archive"), 28, 71, SoulTheme.GOLD, false);
-        String total = Integer.toString(groups.size());
+        String total = normalizedQuery.isEmpty() ? Integer.toString(groups.size()) : filteredGroups.size() + " / " + groups.size();
         g.drawString(font, total, 164 - font.width(total), 71, SoulTheme.MUTED, false);
-        g.drawCenteredString(font, Component.literal((groups.isEmpty() ? 0 : page + 1) + " / " + (lastPage() + 1)), 96, 278, SoulTheme.MUTED);
+        g.fill(26, 88, 166, 106, SoulTheme.INK);
+        g.renderOutline(26, 88, 140, 18, searchBox.isFocused() ? SoulTheme.TEAL : SoulTheme.BORDER);
+        g.drawCenteredString(font, Component.literal((filteredGroups.isEmpty() ? 0 : page + 1) + " / " + (lastPage() + 1)), 96, 278, SoulTheme.MUTED);
         g.drawString(font, text("orders"), 448, 71, SoulTheme.GOLD, false);
         updateControls();
         renderSoul(g, partialTick);
         renderDetails(g);
-        if (groups.isEmpty()) g.drawWordWrap(font, text("empty"), 30, 118, 132, SoulTheme.MUTED);
+        if (filteredGroups.isEmpty()) g.drawWordWrap(font, text(groups.isEmpty() ? "empty" : "no_search_results"), 30, 139, 132, SoulTheme.MUTED);
         super.render(g, (int)localX(mouseX), (int)localY(mouseY), partialTick);
         Component hint = text("preview_controls");
         for (SoulButton button : controls) if (button.isHoveredOrFocused() && !button.hint().getString().isEmpty()) hint = button.hint();
@@ -332,7 +380,7 @@ public final class SoulScreen extends Screen {
     private boolean overPreview(double x, double y) { return x >= PX && x < PX + PW && y >= PY && y < PY + PH; }
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         double x = localX(mouseX), y = localY(mouseY);
-        if (button == 0 && overPreview(x, y)) { turning = true; return true; }
+        if (button == 0 && overPreview(x, y)) { setFocused(null); turning = true; return true; }
         return super.mouseClicked(x, y, button);
     }
     @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
@@ -348,7 +396,7 @@ public final class SoulScreen extends Screen {
         if (overPreview(x, y)) { preview.zoom(delta); return true; }
         if (x >= 18 && x < 174 && y >= 60 && y < 300) {
             page = net.minecraft.util.Mth.clamp(page + (delta < 0 ? 1 : -1), 0, lastPage());
-            rebuildWidgets(); return true;
+            rebuildCards(); return true;
         }
         return super.mouseScrolled(x, y, delta);
     }
