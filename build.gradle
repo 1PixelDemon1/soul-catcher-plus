@@ -50,13 +50,21 @@ dependencies {
     }
     if (project.hasProperty('withAoA')) {
         runtimeOnly fg.deobf('curse.maven:advent-of-ascension-nevermine-311054:4431558')
-        runtimeOnly fg.deobf('maven.modrinth:8BmcQJ2H:UQGoJDhn')
         playtestMods 'curse.maven:advent-of-ascension-nevermine-311054:4431558'
+    }
+    if (project.hasProperty('withAoA') || project.hasProperty('withAquamirae')) {
+        runtimeOnly fg.deobf('maven.modrinth:8BmcQJ2H:UQGoJDhn')
         playtestMods 'maven.modrinth:8BmcQJ2H:UQGoJDhn'
+    }
+    if (project.hasProperty('withAquamirae')) {
+        runtimeOnly fg.deobf('curse.maven:aquamirae-536254:4420334')
+        runtimeOnly fg.deobf('curse.maven:obscure-api-638417:4420298')
+        playtestMods 'curse.maven:aquamirae-536254:4420334'
+        playtestMods 'curse.maven:obscure-api-638417:4420298'
     }
 }
 if (project.hasProperty('withMowzies') || project.hasProperty('withIceAndFire')) {
-    throw new GradleException('The 1.16.5 playtest configuration provides AoA and Twilight Forest only.')
+    throw new GradleException('The 1.16.5 playtest configuration provides AoA, Twilight Forest and Aquamirae only.')
 }
 tasks.named('processResources', ProcessResources).configure {
     inputs.property 'mod_version', mod_version
@@ -78,9 +86,9 @@ tasks.named('jar', Jar).configure {
 
 tasks.register('playtestZip', Zip) {
     group = 'build'
-    description = 'Packages the standalone mod with the pinned AoA and Twilight Forest JARs.'
+    description = 'Packages the standalone mod with AoA, Twilight Forest, Aquamirae and their libraries.'
     dependsOn 'reobfJar'
-    archiveFileName = "soulcatcherplus-${minecraft_version}-aoa-twilight-playtest.zip"
+    archiveFileName = "soulcatcherplus-${minecraft_version}-aoa-twilight-aquamirae-playtest.zip"
     destinationDirectory = layout.buildDirectory.dir('playtest')
     from(tasks.named('jar')) { into 'mods' }
     from(configurations.playtestMods) {
@@ -88,11 +96,13 @@ tasks.register('playtestZip', Zip) {
         rename '8BmcQJ2H-UQGoJDhn.jar', 'geckolib-forge-1.16.5-3.0.106.jar'
         rename 'advent-of-ascension-nevermine-311054-4431558.jar', 'AoA3-1.16.5-3.6.11.jar'
         rename 'the-twilight-forest-227639-3575220.jar', 'twilightforest-1.16.5-4.0.870-universal.jar'
+        rename 'aquamirae-536254-4420334.jar', 'aquamirae-5.4.API11.jar'
+        rename 'obscure-api-638417-4420298.jar', 'obscure_api-11.jar'
     }
     from('docs/PLAYTEST_1.16.5.md') { rename { 'README.md' } }
     doFirst {
-        if (project.hasProperty('gameTests') || !project.hasProperty('withAoA') || !project.hasProperty('withTwilightForest')) {
-            throw new GradleException('Use playtestZip -PwithAoA -PwithTwilightForest without -PgameTests.')
+        if (project.hasProperty('gameTests') || !project.hasProperty('withAoA') || !project.hasProperty('withTwilightForest') || !project.hasProperty('withAquamirae')) {
+            throw new GradleException('Use playtestZip -PwithAoA -PwithTwilightForest -PwithAquamirae without -PgameTests.')
         }
     }
 }

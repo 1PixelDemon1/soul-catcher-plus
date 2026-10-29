@@ -78,7 +78,7 @@ HP на момент захвата, а не оставшееся здоровь
 | Железная | 150 | `soulcatcherplus:iron_soul_cage` |
 | Алмазная | 400 | `soulcatcherplus:diamond_soul_cage` |
 | Незеритовая | 1000 | `soulcatcherplus:netherite_soul_cage` |
-| Высшая | 100 000 (временно, для проверки 1.16.5) | `soulcatcherplus:supreme_soul_cage` |
+| Высшая | 2000 | `soulcatcherplus:supreme_soul_cage` |
 
 Клетки не складываются в стопки. Подсказка предмета и голубая полоска показывают
 заполнение; меню O и R показывают ресурс активной клетки и её слот либо «Вторая рука».
@@ -255,11 +255,12 @@ HP на момент захвата, а не оставшееся здоровь
 ```powershell
 python scripts/bootstrap.py
 .\scripts\gradle.ps1 build -x test
-.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest
-.\scripts\gradle.ps1 runClient -PgameTests -PwithAoA -PwithTwilightForest
+.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest -PwithAquamirae
+.\scripts\gradle.ps1 runClient -PgameTests -PwithAoA -PwithTwilightForest -PwithAquamirae
 ```
 
 See [the installation guide](docs/PLAYTEST_1.16.5.md) for the pinned mods and limitations.
+The archive includes Aquamirae 5.4.0 and Obscure API 11 alongside AoA, GeckoLib and Twilight Forest.
 The archive contains original installable dependency JARs. Development launches use
 remapped copies supplied by Gradle; do not copy those remapped JARs to a launcher.
 
@@ -269,7 +270,7 @@ Bootstrap installs both local JDKs and preserves project configuration. Other
 systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
 Standalone JAR: `build/1.16.5/libs/soulcatcherplus-0.2.0+1.16.5.jar`.
-Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-aoa-twilight-playtest.zip`.
+Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-aoa-twilight-aquamirae-playtest.zip`.
 Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 
 `-PgameTests` retains the familiar flag for the manual QA command, compiled from

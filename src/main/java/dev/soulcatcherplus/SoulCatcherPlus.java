@@ -32,8 +32,7 @@ public final class SoulCatcherPlus {
     public static final RegistryObject<Item> IRON_CAGE = ITEMS.register("iron_soul_cage", () -> new SoulCage(150, new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT)));
     public static final RegistryObject<Item> DIAMOND_CAGE = ITEMS.register("diamond_soul_cage", () -> new SoulCage(400, new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT)));
     public static final RegistryObject<Item> NETHERITE_CAGE = ITEMS.register("netherite_soul_cage", () -> new SoulCage(1000, new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT).fireResistant()));
-    // Temporary capacity increase for the 1.16.5 playtest.
-    public static final RegistryObject<Item> SUPREME_CAGE = ITEMS.register("supreme_soul_cage", () -> new SoulCage(100_000, new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT)));
+    public static final RegistryObject<Item> SUPREME_CAGE = ITEMS.register("supreme_soul_cage", () -> new SoulCage(2000, new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT)));
     /** Compatibility alias for the original iron scythe. */
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<EntityType<SoulRemnant>> REMNANT = ENTITIES.register("soul_remnant",

@@ -407,9 +407,8 @@ to the iron tier. New registry IDs are `diamond_soul_scythe` and `netherite_soul
 
 ## Soul cage storage
 
-`SoulCage` is a non-stackable item with capacities 150 / 400 / 1000 / 100000 for
+`SoulCage` is a non-stackable item with capacities 150 / 400 / 1000 / 2000 for
 `iron_soul_cage`, `diamond_soul_cage`, `netherite_soul_cage` and `supreme_soul_cage`.
-The supreme cage increase is temporary for the 1.16.5 playtest.
 `SoulCage.energy(stack)`, `capacity(stack)` and `setEnergy(stack, amount)` access
 the bounded `SoulEnergy` integer in the item tag. Reads never create NBT. Vanilla
 smithing transformation copies the diamond cage's tag into the netherite result,
