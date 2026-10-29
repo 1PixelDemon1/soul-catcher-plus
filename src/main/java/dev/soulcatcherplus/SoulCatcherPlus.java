@@ -3,6 +3,7 @@ package dev.soulcatcherplus;
 
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.compat.WroughtnautAdapter;
+import dev.soulcatcherplus.compat.TwilightForestCompat;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
@@ -58,6 +59,7 @@ public final class SoulCatcherPlus {
                     SoulAdapters.register(new net.minecraft.resources.ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"),
                         new WroughtnautAdapter());
                 }
+                if (ModList.get().isLoaded("twilightforest")) TwilightForestCompat.register();
             }));
     }
 }

@@ -47,8 +47,21 @@ public interface SoulAdapter {
     default Entity summoner(Mob mob) {
         return dev.soulcatcherplus.companion.SoulMinions.defaultSummoner(mob);
     }
+    /**
+     * Opt in known ownerless summons constructed during this companion's server tick.
+     * Called during the child's base constructor: only its type is available.
+     * Execution nesting alone is not proof of ownership; allow only known child types.
+     */
+    default boolean inheritsTickSpawn(Mob summoner, net.minecraft.world.entity.EntityType<?> childType) { return false; }
     /** Preserve native movement/attack goals while replacing independent victim selection. */
     default void configureMinion(Mob mob) { mob.targetSelector.removeAllGoals(goal -> true); }
+    /** Before each native minion tick with a loaded root. Keep this cheap and idempotent; never load chunks. */
+    default void restoreSummoner(Mob minion, Mob root) {
+        if (minion instanceof net.minecraft.world.entity.monster.Vex vex) {
+            if (vex.getOwner() != root) vex.setOwner(root);
+            vex.setBoundOrigin(root.blockPosition());
+        }
+    }
     /** Called every five server ticks with the loaded root companion, after target inheritance. */
     default void tickMinion(Mob minion, Mob root) {}
     default void onRecall(Mob mob, ServerPlayer owner) {}

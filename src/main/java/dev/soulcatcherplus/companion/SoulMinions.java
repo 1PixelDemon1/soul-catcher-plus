@@ -2,6 +2,7 @@
 package dev.soulcatcherplus.companion;
 
 import dev.soulcatcherplus.api.SoulAdapters;
+import dev.soulcatcherplus.data.SoulEntry;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +17,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TraceableEntity;
-import net.minecraft.world.entity.monster.Vex;
 
 /** Descendants share a root reservation, never a separate collection entry or refund. */
 public final class SoulMinions {
@@ -49,6 +49,14 @@ public final class SoulMinions {
     public static boolean tryInherit(Mob mob) {
         if (mob.level().isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
         return attach(mob, summoner(mob));
+    }
+    /** Fresh construction provenance is a fallback only; an explicitly foreign creator is authoritative. */
+    public static boolean inheritOnJoin(Mob mob, boolean loadedFromDisk) {
+        Entity constructedBy = SoulSpawnContext.consume(mob);
+        if (mob.level().isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
+        Entity creator = summoner(mob);
+        if (creator != null) return attach(mob, creator);
+        return !loadedFromDisk && attach(mob, constructedBy);
     }
     /** Server-only integration hook for summons that do not expose their creator. */
     public static boolean attach(Mob child, Entity creator) {
@@ -89,26 +97,29 @@ public final class SoulMinions {
         SoulBossBars.suppress(minion);
         CONFIGURED.add(minion);
     }
-    /** The caller has validated the persisted root reservation; an unloaded root is allowed. */
-    static void tick(Mob minion) {
-        configure(minion);
-        SoulBossBars.suppress(minion);
+    /** Before native AI. An unloaded root pauses the child instead of letting it find a different master. */
+    public static boolean tick(Mob minion) {
+        SoulEntry entry = CompanionBrain.activeEntry(minion);
+        if (entry == null || !minion.isAlive()) { minion.discard(); return false; }
         Entity entity = ((ServerLevel)minion.level()).getEntity(minion.getPersistentData().getUUID(ROOT));
-        if (!(entity instanceof Mob root)) {
+        if (entity == null) {
             if (minion.getTarget() != null) minion.setTarget(null);
-            return;
+            return false;
         }
-        if (!root.isAlive() || isMinion(root) || CompanionBrain.activeEntry(root) != CompanionBrain.activeEntry(minion)) {
-            dismissOne(minion); return;
+        if (!(entity instanceof Mob root) || !root.isAlive() || isMinion(root) || CompanionBrain.activeEntry(root) != entry) {
+            dismissOne(minion); return false;
         }
-        if (minion instanceof Vex vex) {
-            if (vex.getOwner() != root) vex.setOwner(root);
-            vex.setBoundOrigin(root.blockPosition());
+        configure(minion);
+        var adapter = SoulAdapters.get(minion);
+        adapter.restoreSummoner(minion, root);
+        if (minion.tickCount % 5 == 0) {
+            SoulBossBars.suppress(minion);
+            LivingEntity target = CompanionBrain.mode(root) == CompanionBrain.Mode.WAIT ? null : root.getTarget();
+            if (target != null && !CompanionBrain.canAttack(minion, target)) target = null;
+            if (minion.getTarget() != target) minion.setTarget(target);
+            adapter.tickMinion(minion, root);
         }
-        LivingEntity target = CompanionBrain.mode(root) == CompanionBrain.Mode.WAIT ? null : root.getTarget();
-        if (target != null && !CompanionBrain.canAttack(minion, target)) target = null;
-        if (minion.getTarget() != target) minion.setTarget(target);
-        SoulAdapters.get(minion).tickMinion(minion, root);
+        return true;
     }
     /** Remove loaded descendants now; unloaded ones fail their saved reservation check on reload. */
     public static void dismiss(MinecraftServer server, UUID root) {

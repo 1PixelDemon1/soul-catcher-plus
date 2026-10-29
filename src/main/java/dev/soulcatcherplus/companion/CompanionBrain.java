@@ -54,14 +54,9 @@ public final class CompanionBrain {
         goals.addGoal(2, new FollowOwnerGoal(mob));
     }
     public static void tick(Mob mob) {
-        if (mob.level().isClientSide || mob.tickCount % 5 != 0) return;
+        if (mob.level().isClientSide || SoulMinions.isMinion(mob) || mob.tickCount % 5 != 0) return;
         SoulEntry entry = activeEntry(mob);
         if (entry == null) { mob.discard(); return; }
-        if (SoulMinions.isMinion(mob)) {
-            if (!mob.isAlive()) mob.discard();
-            else SoulMinions.tick(mob);
-            return;
-        }
         SoulBossBars.suppress(mob);
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
         if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }

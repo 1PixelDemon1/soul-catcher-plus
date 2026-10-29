@@ -240,7 +240,25 @@ the default `OwnableEntity.getOwner()` resolves players only, a null result also
 tries the owner UUID among loaded entities in the same server level. Discovery
 requires a chain reaching a marked companion; player-owned pets and unrelated
 nearby mobs are not adopted. Traversal stops on cycles, dimension boundaries or
-after 32 creators. No reflection, proximity guessing or chunk loading is used.
+after 32 creators. The standard path uses no reflection, proximity guessing or
+chunk loading; optional integrations may expose explicit native owner links.
+
+For ownerless synchronous summons, the creator's adapter may opt in with
+`inheritsTickSpawn(Mob summoner, EntityType<?> childType)`. It defaults to false:
+execution nesting alone does not prove ownership (damage/death callbacks can
+create another mob's children). Approve only known child types. The callback runs
+during the child's base constructor and receives its type, never a partially
+initialized Mob to inspect or modify.
+
+`SoulSpawnContext` brackets the server's native `tick` and `rideTick` calls in
+try/finally, preserving nested sources and masking outer sources during ordinary
+entity ticks. The construction event records weak child/creator references only
+for adapter-approved types created by a companion with a canonical reservation.
+The join event consumes that record, including on rejected joins and disk loads.
+Only a fresh join may use the construction fallback, and an explicitly resolved
+creator takes precedence even if it belongs to somebody else. An entity constructed
+outside the scope and inserted later is not adopted merely due to insertion timing.
+No world-radius search, extra packet type or saved creation record is involved.
 
 The child stores player `scp_owner`, collection `scp_entry` and a separate
 `scp_minion_root` UUID in entity persistent data. `CompanionBrain.activeEntry(mob)`
@@ -263,10 +281,16 @@ does not add fields to the collection, wheel or Ghost packets.
 and attack goals remain. Every five ticks a loaded root's permitted target is
 inherited; WAIT clears combat. Independent native Brain/custom attacks can need
 an adapter, while the shared target and damage guards still reject allies.
-Vex native owner and idle origin are restored to the loaded root without changing
-its limited lifespan. A valid but unloaded root leaves the child idle instead of
-being mistaken for death. The root link survives disk reload even though vanilla
-Vex does not save its own owner reference.
+Before every native living tick, the core validates the child's reservation and
+loaded root, then calls `restoreSummoner(minion, root)`. The default restores Vex
+owner/idle origin; override it to repair native owner references before AI can
+search for a different master or self-destruct. Keep it cheap and idempotent,
+write only changed state and do not load chunks. When the root is valid but
+unloaded, the child's LivingTickEvent is canceled: native AI, movement and lifetime
+timers pause until the root is available. The external server tick counter still
+advances. The root link survives disk reload even though vanilla Vex does not
+save its own owner reference. Target inheritance, boss-bar rediscovery and the
+existing `tickMinion` callback retain their five-tick cadence.
 An old, unmarked Vex loaded from a save that already lost its native owner cannot
 be safely adopted retroactively; check the feature with newly created minions.
 
@@ -291,11 +315,31 @@ before insertion or after the creator becomes known. Existing companions/minions
 are not reassigned. Unknown/cyclic/cross-level creators return false unchanged;
 a recognized but invalidated root marks and discards its stale child and returns
 false. Do not load chunks or mutate AI in `summoner`. Override `configureMinion`
-for nonstandard target selection and `tickMinion(minion, root)` for native owner
-restoration or other integration work. The latter runs every five server ticks
-only while the root is loaded, after common target inheritance. Fully custom
-spawning with no exposed creator still needs an explicit integration; automatic
-compatibility with every mod is not promised.
+for nonstandard target selection, `restoreSummoner(minion, root)` for native owner
+restoration before each AI tick, and `tickMinion(minion, root)` for other integration
+work after common target inheritance every five ticks. Ownerless spawning outside
+the creator's native tick, such as scheduled tasks or independent effect entities,
+still needs an explicit link/attach call. Automatic compatibility with every mod
+is not promised.
+
+For a known synchronous child type, opt in on the **creator's** adapter:
+
+```java
+@Override
+public boolean inheritsTickSpawn(Mob summoner, EntityType<?> childType) {
+    return childType == THEIR_SUMMONED_TYPE.get();
+}
+```
+
+The optional Twilight Forest 4.3.2508 bridge enables this for Snow Queen's
+`ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
+`lich_minion` exposes a public `master` field. These members are discovered once
+at common setup, without a compile-time Twilight dependency. The adapters restore
+the saved root into those native links before AI runs after reload. Older unmarked
+ownerless crystals have no reliable provenance and are not adopted retroactively.
+The integration was inspected against the installed artifact; it has not been
+built or exercised in Minecraft for this change. Performance analysis is in
+[MINION_PERFORMANCE.md](MINION_PERFORMANCE.md).
 
 ## Departure effects
 
