@@ -1,4 +1,6 @@
 {
+  "enchantment.soulcatcherplus.soul_capacity": "Вместимость душ",
+  "enchantment.soulcatcherplus.soul_harvester": "Жнец душ",
   "screen.soulcatcherplus.subtitle": "Связанные напарники",
   "screen.soulcatcherplus.energy": "Энергия душ",
   "screen.soulcatcherplus.cage_slot": "Клетка · слот %s",

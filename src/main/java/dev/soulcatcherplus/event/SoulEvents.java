@@ -6,6 +6,7 @@ import dev.soulcatcherplus.api.*;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.entity.SoulRemnant;
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
@@ -55,7 +56,7 @@ public final class SoulEvents {
         ServerPlayer player = creditedPlayer(event.getSource().getEntity());
         if (player == null) return;
         SoulProfiles.Profile profile = SoulProfiles.get(mob);
-        SoulCages.credit(player, profile.energy());
+        SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
         CompoundTag tag = mob.getPersistentData();
         long now = player.server.overworld().getGameTime();
         if (!tag.hasUUID("scp_mark_owner") || !tag.getUUID("scp_mark_owner").equals(player.getUUID())

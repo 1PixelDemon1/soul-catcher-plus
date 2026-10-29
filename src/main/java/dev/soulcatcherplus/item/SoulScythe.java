@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 
+/** Inherits vanilla sword enchantment eligibility and material enchantability. */
 public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {

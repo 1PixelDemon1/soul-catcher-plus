@@ -5,6 +5,7 @@ import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.compat.WroughtnautAdapter;
 import dev.soulcatcherplus.compat.TwilightForestCompat;
 import dev.soulcatcherplus.entity.SoulRemnant;
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
 import dev.soulcatcherplus.item.ScytheTier;
@@ -46,6 +47,7 @@ public final class SoulCatcherPlus {
         IEventBus bus = context.getModEventBus();
         ITEMS.register(bus);
         ENTITIES.register(bus);
+        SoulEnchantments.ENCHANTMENTS.register(bus);
         SoulNetwork.register();
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey() == CreativeModeTabs.COMBAT) {
