@@ -11,7 +11,10 @@
     "LegacyGoalSelectorMixin"
   ],
   "client": [
-    "client.SoulEntityRenderMixin"
+    "client.SoulEntityRenderMixin",
+    "client.SoulMusicContextMixin",
+    "client.CompanionMusicMixin",
+    "client.AquamiraeCompanionMusicMixin"
   ],
   "injectors": {
     "defaultRequire": 1

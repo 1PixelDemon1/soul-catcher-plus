@@ -250,6 +250,20 @@ HP на момент захвата, а не оставшееся здоровь
 временные модификаторы, отсутствующие в снимке, восстановить нельзя.
 Существующие косы со старым ID `soul_scythe` становятся железными.
 
+## Companion boss music
+
+Summoned companions cannot start boss music through the vanilla music manager
+while their native client tick runs, or interrupt the currently playing music.
+Music sounds with a directly identifiable entity owner are also filtered;
+if ownership arrives after playback starts, the tracked companion track is stopped.
+Ordinary hostile bosses retain their music, including when a companion is nearby.
+Attack sounds, dialogue, ambient sounds and records are not muted.
+
+Aquamirae 5.4.0 has an optional client hook before its shared Cornelia music timer
+changes, so a companion does not consume the normal boss's music cooldown.
+Music launched asynchronously, without an identifiable entity, or through a
+non-MUSIC category may need a separate integration. This is not a global soundtrack blacklist.
+
 ## Build and playtest (1.16.5)
 
 ```powershell

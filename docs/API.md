@@ -493,6 +493,34 @@ Jobs stop when the player leaves or the server stops. A full collection stops
 further creation and reports remaining unprocessed entity types rather than
 claiming that they were all capturable. Partial additions remain saved.
 
+## Client boss music (1.16.5)
+
+The client-only `SoulMusic` service tracks the native client tick source in a
+`ThreadLocal`, restored in `finally` for normal entities and passengers. Calls to
+the vanilla `MusicTicker.startPlaying` and `stopPlaying` are rejected only when
+that source has the synchronized companion owner marker. Other music continues.
+
+The Forge `PlaySoundEvent` filter applies only to `SoundCategory.MUSIC`. An explicit
+source resolver takes precedence, followed by a single direct `Entity` field on
+the sound instance, then the current entity tick source. Field discovery is cached
+per sound class; ambiguous or inaccessible fields are not guessed. During client
+setup, use `SoulMusic.registerSource(Function<ISound, Entity>)` for other sound
+layouts; return null for unsupported sounds. These hooks must stay on `Dist.CLIENT`.
+
+Only active, attributed music instances are retained, with weak entity references.
+The end-of-tick check stops music if a late ownership packet identifies its source
+as a companion. World changes clear the tracking map. There is no world entity
+scan, server polling, extra packet, or sound-ID blacklist. Soundtracks without a
+recoverable source, async playback, and non-MUSIC categories need an integration.
+
+An optional Aquamirae 5.4.0 hook cancels `AquamiraeAmbient.playCorneliaMusic` for a
+companion tick before its shared cooldown is updated. It also tracks the last
+successful Cornelia music request weakly and clears that request's cooldown if
+its source is identified as a companion later. Another successful boss request
+replaces the tracked source; simply hitting the cooldown does not. No Aquamirae classes are
+required when that mod is absent. This protects the regular Cornelia encounter's
+music timer as well as the vanilla music manager.
+
 ## Client rendering
 
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client
