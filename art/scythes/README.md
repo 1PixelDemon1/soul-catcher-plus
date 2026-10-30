@@ -1,37 +1,53 @@
 # Scythe artwork
 
-## Iron held-texture trial (1.16.5)
+## Current held family (1.16.5)
 
-The iron source `soul_scythe.png` now contains the approved **64x64** coarse-pixel
-concept: modest curved wooden shaft, slightly thicker slender blade, enlarged
-soul lantern and thorned butt fitting. The packaged iron held PNG uses the same
-pixels. Diamond/netherite sources and held textures, and all 16x16 inventory
-icons, retain their previous artwork. The preview sheets below predate this trial.
+![Current assembled held models](held-preview.png)
 
-The iron model's `base.display` overrides only its hand translations. Its selected
-grip is the wooden texel center `(55.5, 40.5)` in the 64x64 source. Third-person
-translation is `-16 * Ry(-90) * Rz(-27) * Scale(2,2,1) * grip`, with grip measured
-from the texture center and Y flipped. First-person translation preserves the
-old `(0.27,-0.10,0)` grip's anchor with the corresponding rotated/scaled delta.
-Existing rotations, length scaling and one-model-pixel thickness remain shared.
-The actual placement still needs the user's in-game check.
+The approved **64x64** iron `soul_scythe.png` is the exact master for the held
+family: modest curved wood, slender metal blade, cyan soul lantern and thorned
+butt fitting. The diamond and netherite PNGs are palette variants of this master,
+including both the blade and bottom fitting. Their alpha silhouette and wood,
+lantern and intermediate collars match the iron master. Inventory icons remain
+on their separate 16x16 artwork. Earlier preview sheets below predate this family.
 
-`held-geometry.json` extends the iron tail below that fixed grip by repeating
-wooden source rows 41..46 into eight additional texel-sized geometry rows. The lower fitting
-is shifted rigidly eight texels down and three to the right, retaining its shape.
-Texture UVs still reference the approved 64x64 sprite. Hand transforms and all
-geometry above row 41 remain unchanged. This adds roughly 40% to the tail below
-the grip without enlarging the blade or changing pixel size or thickness.
+`held-palettes.json` records the metal regions and five-tone material ramps.
+`prepare_scythe_materials.ps1` maps iron luminance through those ramps without
+resampling, moving or redrawing a pixel. The pommel recolor selects neutral metal
+below its configured row, preserving the brown wood there.
 
-Generated with the built-in `image_gen` tool, then reduced and alpha-thresholded
-to the exact approved preview. Final prompt: keep the moderate handle bend,
-left-facing slender iron blade, enlarged cyan soul lantern and thorned pommel;
-redraw as a coarse 64x64 Minecraft sprite with clean pixel clusters and reduced
-metal/wood detail, preserving transparency and the full silhouette.
+`held-geometry.json` extends all three tails by repeating wooden source rows
+41..46 into eight extra texel-sized geometry rows. The lower fitting shifts
+rigidly eight texels down and three right. UVs keep sampling the original 64x64
+sprites. All three generated closed meshes share the same geometry and thickness.
 
-Regenerate only this trial with `./scripts/prepare_scythe_art.ps1 -Materials soul_scythe`.
-The packager preserves source dimensions up to 128x128, so this source stays 64x64
-even during an all-material regeneration. It also regenerates the matching closed mesh.
+The shared `soul_scythe_held.json` uses a grip closer to the handle midpoint:
+source texel center `(56.5,43.5)` becomes geometry point `(56.5,45.5)` after the
+row extension. Third-person translation is `-16 * Ry(-90) * Rz(-27) * Scale(2,2,1)
+* grip`, measured from the texture center with Y flipped. First-person translation
+preserves the original `(0.27,-0.10,0)` grip anchor using the corresponding rotated
+and scaled delta. The iron wrapper no longer overrides these shared hand poses.
+Rotations, length scaling and one-model-pixel thickness remain unchanged; the new
+grip still needs the user's check in-game.
+
+The iron master was generated with the built-in `image_gen` tool and reduced to
+64x64. Final iron prompt: preserve the moderate handle bend, thin iron blade,
+enlarged cyan soul lantern and thorned pommel; use coarse Minecraft pixel clusters
+and reduced metal/wood detail on transparency. Material palette trials also used
+the built-in tool; the committed variants instead use the exact master and the
+versioned palette file to preserve the requested layout.
+
+Regenerate in this order on the Windows authoring host:
+
+```powershell
+./scripts/prepare_scythe_materials.ps1
+./scripts/prepare_scythe_art.ps1
+```
+
+The packager preserves source dimensions up to 128x128 and rebuilds closed meshes.
+These generated PNGs/JSONs are committed; a normal Gradle build does not need the
+Windows artwork scripts. The preview is assembled from the mesh and texture,
+not captured from Minecraft.
 
 ## Earlier artwork
 

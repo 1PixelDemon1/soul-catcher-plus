@@ -6,28 +6,6 @@
   },
   "base": {
     "parent": "soulcatcherplus:item/soul_scythe_held_mesh",
-    "display": {
-      "thirdperson_righthand": {
-        "rotation": [0, -90, -27],
-        "translation": [0, 9.12, -8.54],
-        "scale": [2, 2, 1]
-      },
-      "thirdperson_lefthand": {
-        "rotation": [0, 90, 27],
-        "translation": [0, 9.12, -8.54],
-        "scale": [2, 2, 1]
-      },
-      "firstperson_righthand": {
-        "rotation": [0, -90, -15],
-        "translation": [1.13, 4.66, 1.31],
-        "scale": [1.6, 1.6, 1]
-      },
-      "firstperson_lefthand": {
-        "rotation": [0, 90, 15],
-        "translation": [1.13, 4.66, 1.31],
-        "scale": [1.6, 1.6, 1]
-      }
-    },
     "textures": {
       "layer0": "soulcatcherplus:item/soul_scythe_held"
     }

@@ -1,0 +1,9 @@
+{
+  "tone_levels": [0, 64, 128, 192, 255],
+  "blade": {"max_row": 27, "main_max_column": 39, "root_max_column": 43, "root_max_row": 12},
+  "pommel_min_row": 47,
+  "materials": {
+    "diamond_soul_scythe": ["10161C", "204A55", "478B98", "8AC2C8", "D6E9E7"],
+    "netherite_soul_scythe": ["100F13", "302A32", "544A55", "80717E", "AD9DA7"]
+  }
+}

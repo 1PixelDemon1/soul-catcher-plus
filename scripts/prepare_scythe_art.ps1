@@ -37,7 +37,7 @@ function Write-HeldMesh([System.Drawing.Bitmap]$texture, [string]$material) {
     }
 
     # Repeat only the lower wooden rows. The grip stays fixed; the entire butt fitting moves rigidly.
-    $extension = $geometry.$material.tail_extension
+    $extension = $geometry.tail_extension
     if ($extension) {
         $expanded = [System.Collections.Generic.List[object]]::new()
         $span = $extension.end_row - $extension.start_row
