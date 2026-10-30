@@ -93,7 +93,7 @@ The user handles manual gameplay testing. After each mod refinement, compile and
 launch the current development client for them, and confirm startup from the log.
 For this 1.16.5 port branch, use:
 
-`.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAoA -PwithAquamirae`
+`.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAquamirae`
 
 `-PgameTests` makes the QA command available; launching the client is not a request
 to run GameTests. Leave the game open for the user. Do not force-kill a running
@@ -105,7 +105,7 @@ Run checks appropriate to the change. Documentation-only and Git-organization
 changes do not require another Minecraft build.
 
 - Package without QA sources or automated tests: `.\scripts\gradle.ps1 build -x test`
-- Prepare the private playtest archive: `.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest -PwithAquamirae`
+- Prepare the private playtest archive: `.\scripts\gradle.ps1 playtestZip -PwithTwilightForest -PwithAquamirae`
 
 Minecraft 1.16.5 has no supported GameTest task here. `-PgameTests` is retained as
 a compatibility flag for the manual QA command from `src/qa/java` only. The old

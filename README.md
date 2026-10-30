@@ -3,6 +3,11 @@
 Port: **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**.
 Branch: `codex/forge-1.16.5`, based on current 1.20.1 development features.
 [Installation and playtest bundle](docs/PLAYTEST_1.16.5.md).
+
+Includes the 1.20.1 develop improvements through `cdad390`: scrolling collection,
+Soul Capacity / Soul Harvester, the soul-skull logo and creative tab, and an AoA-free
+playtest pack. These are adapted to Forge 1.16.5 APIs and Java 8.
+Scythes and cages appear in the **Soul Catcher Plus** creative tab.
 This is a development port; the 1.20.1, 1.19.2 and 1.20.4 branches remain separate.
 
 ## Как играть
@@ -109,7 +114,39 @@ HP на момент захвата, а не оставшееся здоровь
 накапливать в клетках; облики, избранное, активные напарники и перезарядки
 сохраняются у персонажа.
 
+## Зачарования
+
+Косы принимают обычные зачарования меча через стол зачарований и наковальню.
+Их совместимость между собой остаётся стандартной: например, острота,
+небесная кара и бич членистоногих исключают друг друга.
+
+**Soul Capacity / Вместимость душ** применяется только к клеткам душ и имеет
+три уровня. Каждый добавляет треть **базовой** вместимости; дробь округляется вниз.
+Подсказка, полоска заполнения, меню и расход энергии учитывают увеличенный объём.
+
+| Клетка | Без зачарования | I | II | III |
+| --- | ---: | ---: | ---: | ---: |
+| Железная | 150 | 200 | 250 | 300 |
+| Алмазная | 400 | 533 | 666 | 800 |
+| Незеритовая | 1000 | 1333 | 1666 | 2000 |
+| Высшая | 2000 | 2666 | 3333 | 4000 |
+
+**Soul Harvester / Жнец душ** применяется только к косам: I даёт +50%, II — +100%
+к обычной награде душами за убийство. Коса должна быть в основной или второй руке
+в момент смерти врага; из двух кос учитывается больший уровень, бонусы не складываются.
+Бонус распространяется и на убийства напарниками, если награда начисляется владельцу.
+Дробная награда округляется вниз. Возврат энергии при отзыве и стоимость призыва
+не меняются. Размер лампы оставшейся души определяется обычной наградой без бонуса.
+
+Оба новых зачарования доступны через обычный стол зачарований и зачарованные книги;
+наковальня позволяет объединять уровни. Например, держа нужный предмет в основной руке:
+`/enchant @s soulcatcherplus:soul_capacity 3` или
+`/enchant @s soulcatcherplus:soul_harvester 2`.
+
 ## Коллекция напарников
+Список душ прокручивается колесом мыши и ползунком. При фокусе на списке
+доступны Page Up / Page Down и Home / End.
+
 В верхней части списка есть строка поиска. Она фильтрует души по названию существа,
 сохранённому имени или ID без учёта регистра. Избранные виды остаются первыми среди
 совпадений. Поиск не меняет выбранный облик и приказы, а текст и курсор сохраняются
@@ -269,12 +306,12 @@ non-MUSIC category may need a separate integration. This is not a global soundtr
 ```powershell
 python scripts/bootstrap.py
 .\scripts\gradle.ps1 build -x test
-.\scripts\gradle.ps1 playtestZip -PwithAoA -PwithTwilightForest -PwithAquamirae
-.\scripts\gradle.ps1 runClient -PgameTests -PwithAoA -PwithTwilightForest -PwithAquamirae
+.\scripts\gradle.ps1 playtestZip -PwithTwilightForest -PwithAquamirae
+.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAquamirae
 ```
 
 See [the installation guide](docs/PLAYTEST_1.16.5.md) for the pinned mods and limitations.
-The archive includes Aquamirae 5.4.0 and Obscure API 11 alongside AoA, GeckoLib and Twilight Forest.
+The archive includes Aquamirae 5.4.0 and Obscure API 11 alongside GeckoLib and Twilight Forest.
 The archive contains original installable dependency JARs. Development launches use
 remapped copies supplied by Gradle; do not copy those remapped JARs to a launcher.
 
@@ -284,7 +321,7 @@ Bootstrap installs both local JDKs and preserves project configuration. Other
 systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
 Standalone JAR: `build/1.16.5/libs/soulcatcherplus-0.2.0+1.16.5.jar`.
-Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-aoa-twilight-aquamirae-playtest.zip`.
+Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-twilight-aquamirae-playtest.zip`.
 Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 
 `-PgameTests` retains the familiar flag for the manual QA command, compiled from

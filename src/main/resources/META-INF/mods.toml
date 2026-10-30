@@ -5,6 +5,8 @@ license="MIT"
 modId="soulcatcherplus"
 version="${mod_version}"
 displayName="Soul Catcher Plus"
+logoFile="assets/soulcatcherplus/textures/entity/soul_remnant/skull.png"
+logoBlur=false
 description='''Mark enemies with a scythe, collect their souls, and summon spectral companions.'''
 [[dependencies.soulcatcherplus]]
 modId="forge"

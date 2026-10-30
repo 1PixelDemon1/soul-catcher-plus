@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.item;
 
+import dev.soulcatcherplus.SoulCatcherPlus;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
@@ -18,11 +19,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.world.World;
 
+/** Inherits vanilla sword enchantment eligibility and material enchantability. */
 public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT).fireResistant() : new Item.Properties().tab(net.minecraft.item.ItemGroup.TAB_COMBAT));
+            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
