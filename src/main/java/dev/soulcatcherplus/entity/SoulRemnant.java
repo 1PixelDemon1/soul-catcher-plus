@@ -32,7 +32,7 @@ public final class SoulRemnant extends Entity {
         Appearance(String id) { this.id = id; }
         public String id() { return id; }
         private static Appearance forHealth(double maxHealth) {
-            if (maxHealth >= 150) return SKULL;
+            if (SoulBalance.isBossSoul(maxHealth)) return SKULL;
             int energy = SoulBalance.victoryEnergy(maxHealth);
             return energy < 20 ? SMALL : energy <= 40 ? MEDIUM : LARGE;
         }

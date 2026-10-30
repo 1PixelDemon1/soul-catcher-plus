@@ -6,6 +6,8 @@ import net.minecraft.nbt.INBT;
 
 /** Shared integer economy: round costs upward and energy returns downward. */
 public final class SoulBalance {
+    /** Shared visual grade for skull remnants and highlighted collection cards. */
+    public static boolean isBossSoul(double maxHealth) { return health(maxHealth) >= 150; }
     public static double health(double maxHealth) {
         return Double.isFinite(maxHealth) && maxHealth > 0 ? maxHealth : 1;
     }

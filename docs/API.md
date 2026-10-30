@@ -130,8 +130,9 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development builds use protocol **9**, adding active cage capacity/slot
-to collection and wheel snapshots and new cage availability states; clients and
+Current development builds use protocol **10**, adding `Action.FORGET_FORM`.
+Protocol 9 added active cage capacity/slot to collection and wheel snapshots
+and new cage availability states; clients and
 servers must update together. Released 0.2.0 artifacts
 use protocol 6, and released 0.1.0 artifacts remain on protocol 4.
 
@@ -172,6 +173,26 @@ not change selection, group scope, active summons or energy. The screen performs
 a stable favorites-first sort of species cards, preserving capture order within
 each tier. A separate keyboard-accessible star button toggles the flag without
 selecting the card. This ordering applies to the collection screen only.
+
+### Removing captured forms and health grades
+
+The preview pane's **Remove form** button opens a confirmation screen for the
+selected entry UUID, including its form index. Confirming sends `FORGET_FORM`;
+cancelling or Escape returns to the collection without changing it. The confirmation
+uses native `ConfirmScreen` text wrapping and a 20-client-tick button delay.
+
+`SoulService.forgetForm(player, id)` requires a held scythe and resolves the UUID
+only in that player's ledger. It recalls that entry through the normal callback,
+dissolve, inherited-minion cleanup and loaded-companion refund path before removing
+it. Other forms and active companions are unaffected. `PlayerSouls.forget(id)`
+repairs a removed selection and drops a species' favorite flag only when its last
+form disappears. Existing saved-data fields are unchanged. A removed form can be
+captured again; an unloaded recalled companion is discarded when it next loads.
+
+`SoulBalance.isBossSoul(maxHealth)` shares the >=150 maximum-health rule between
+skull remnants and blue collection styling. A species card and preview header are
+blue if any of its captured forms qualifies. This is a health grade, independent
+of mod-specific boss detection; it uses existing `Row.maxHealth` snapshot data.
 
 ## Key-bound collection and command wheel
 
@@ -438,7 +459,7 @@ The admin `/soulcatcher energy <amount>` command sets that active cage, reports
 the actual bounded result and requires a hotbar or offhand cage.
 `SoulCages.location(slot)` supplies the translated location to both menu headers
 and the command reply, so offhand slot 40 is never presented as hotbar slot 41.
-The packet fields remain unchanged; the protocol stays at 9.
+Offhand cage priority does not add packet fields; it was introduced on protocol 9.
 
 All four item models inherit `item/soul_cage`, based on vanilla `item/handheld`.
 The sprite's plane follows the sword orientation along the hand. Third-person

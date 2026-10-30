@@ -24,7 +24,7 @@ import net.minecraftforge.fml.network.*;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "9";
+    private static final String VERSION = "10";
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayerEntity, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -64,7 +64,7 @@ public final class SoulNetwork {
                 b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM }
     @com.github.bsideup.jabel.Desugar
     public record Request(Action action, UUID entry) {
         static Request read(PacketBuffer b) {
@@ -206,7 +206,8 @@ public final class SoulNetwork {
             if (rate.action != 0 && now - rate.action < 0) return;
             rate.action = now + 100_000_000L;
             PlayerSouls data = SoulService.data(player);
-            if (packet.action != Action.TOGGLE_FAVORITE && data.entries.containsKey(packet.entry)) data.selected = packet.entry;
+            if (packet.action != Action.TOGGLE_FAVORITE && packet.action != Action.FORGET_FORM
+                    && data.entries.containsKey(packet.entry)) data.selected = packet.entry;
             switch (packet.action) {
                 case SELECT -> { if (data.entries.containsKey(packet.entry)) data.selected = packet.entry; }
                 case SUMMON -> { if (packet.entry != null) SoulService.summon(player, packet.entry); }
@@ -219,6 +220,7 @@ public final class SoulNetwork {
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
+                case FORGET_FORM -> SoulService.forgetForm(player, packet.entry);
                 case OPEN -> { open(player); return; }
                 case REFRESH -> { return; }
             }

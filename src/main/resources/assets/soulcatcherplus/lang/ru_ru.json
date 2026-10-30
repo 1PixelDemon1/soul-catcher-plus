@@ -122,5 +122,13 @@
   "command.soulcatcherplus.qa.running": "Твоё заполнение бестиария ещё выполняется.",
   "command.soulcatcherplus.qa.started": "Заполняем бестиарий из %s типов сущностей. Коллекция откроется по завершении.",
   "command.soulcatcherplus.qa.finished": "Души QA — добавлено: %s, уже известны: %s, пропущено: %s, ошибок: %s.",
-  "command.soulcatcherplus.qa.full": "Достигнут лимит коллекции (%s). Не обработано типов сущностей: %s."
+  "command.soulcatcherplus.qa.full": "Достигнут лимит коллекции (%s). Не обработано типов сущностей: %s.",
+  "screen.soulcatcherplus.forget": "Удалить облик",
+  "screen.soulcatcherplus.forget_hint": "Удалить только выбранный облик после подтверждения. Позже его можно захватить снова.",
+  "screen.soulcatcherplus.forget_title": "Удалить «%s»?",
+  "screen.soulcatcherplus.forget_warning": "Удалить облик %s из %s из бестиария? Если он призван, сначала будет отозван. Остальные облики сохранятся. Для повторного открытия потребуется новый захват.",
+  "screen.soulcatcherplus.forget_confirm": "Удалить",
+  "screen.soulcatcherplus.forget_cancel": "Отмена",
+  "message.soulcatcherplus.forgotten": "Выбранный облик удалён из бестиария.",
+  "message.soulcatcherplus.forget_scythe_needed": "Возьми косу душ, чтобы удалить облик."
 }

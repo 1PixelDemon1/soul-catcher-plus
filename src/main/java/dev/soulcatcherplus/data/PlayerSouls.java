@@ -27,6 +27,16 @@ public final class PlayerSouls {
     public int activeCount() {
         return (int) entries.values().stream().filter(e -> e.activeEntity != null).count();
     }
+    /** Called after SoulService has recalled this entry and its inherited minions. */
+    public boolean forget(UUID id) {
+        SoulEntry removed = entries.remove(id);
+        if (removed == null) return false;
+        if (entries.values().stream().noneMatch(entry -> entry.entityType.equals(removed.entityType)))
+            favoriteTypes.remove(removed.entityType);
+        if (selected != null && !entries.containsKey(selected))
+            selected = entries.isEmpty() ? null : entries.keySet().iterator().next();
+        return true;
+    }
     public CompoundNBT save() {
         CompoundNBT tag = new CompoundNBT();
         tag.putBoolean("CommandMode", commandMode);

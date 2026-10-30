@@ -122,5 +122,13 @@
   "command.soulcatcherplus.qa.running": "Your bestiary fill is still in progress.",
   "command.soulcatcherplus.qa.started": "Filling the bestiary from %s registered entity types. The collection opens when finished.",
   "command.soulcatcherplus.qa.finished": "QA souls — added: %s, already known: %s, skipped: %s, errors: %s.",
-  "command.soulcatcherplus.qa.full": "Collection limit reached (%s). Entity types not processed: %s."
+  "command.soulcatcherplus.qa.full": "Collection limit reached (%s). Entity types not processed: %s.",
+  "screen.soulcatcherplus.forget": "Remove form",
+  "screen.soulcatcherplus.forget_hint": "Remove only this captured form after confirmation. You can capture it again later.",
+  "screen.soulcatcherplus.forget_title": "Remove %s?",
+  "screen.soulcatcherplus.forget_warning": "Remove form %s of %s from your bestiary? If this form is summoned, it will be recalled first. Other forms stay. Capture it again to unlock it later.",
+  "screen.soulcatcherplus.forget_confirm": "Remove",
+  "screen.soulcatcherplus.forget_cancel": "Cancel",
+  "message.soulcatcherplus.forgotten": "The selected form was removed from your bestiary.",
+  "message.soulcatcherplus.forget_scythe_needed": "Hold a soul scythe to remove a form."
 }

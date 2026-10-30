@@ -160,6 +160,18 @@ public final class SoulService {
         data(player).entries.values().forEach(e -> recall(player.server, e, player));
         changed(player);
     }
+    /** The supplied ID is resolved only in this player's collection, never in another player's data. */
+    public static void forgetForm(ServerPlayerEntity player, UUID id) {
+        if (!holdsScythe(player)) { message(player, "forget_scythe_needed"); return; }
+        PlayerSouls collection = data(player);
+        SoulEntry target = collection.entries.get(id);
+        if (target == null) return;
+        // Keep the entry valid during native onRecall callbacks and the normal energy refund.
+        recall(player.server, target, player);
+        collection.forget(id);
+        changed(player);
+        message(player, "forgotten");
+    }
     public static void command(ServerPlayerEntity player, CompanionBrain.Mode mode) {
         PlayerSouls collection = data(player);
         collection.entries.values().stream().filter(e -> receivesCommand(collection, e))

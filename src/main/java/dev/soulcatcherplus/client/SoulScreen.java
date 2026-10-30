@@ -3,11 +3,13 @@ package dev.soulcatcherplus.client;
 
 import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.SummonRules;
+import dev.soulcatcherplus.data.SoulBalance;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -34,12 +36,13 @@ public final class SoulScreen extends Screen {
     private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
-    private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll;
+    private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll, forget;
 
     @com.github.bsideup.jabel.Desugar
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
         SoulNetwork.Row active() { return forms.stream().filter(SoulNetwork.Row::active).findFirst().orElse(null); }
         boolean favorite() { return forms.get(0).favorite(); }
+        boolean boss() { return forms.stream().anyMatch(form -> SoulBalance.isBossSoul(form.maxHealth())); }
     }
     @com.github.bsideup.jabel.Desugar
     private record CardControls(int index, String entityType, SoulButton body, SoulButton favorite) {}
@@ -167,6 +170,31 @@ public final class SoulScreen extends Screen {
         return addButton(button);
     }
 
+    private void confirmForget() {
+        SoulGroup species = group();
+        SoulNetwork.Row target = row();
+        if (species == null || target == null) return;
+        UUID id = target.id();
+        minecraft.setScreen(new ConfirmScreen(confirmed -> {
+            minecraft.setScreen(SoulScreen.this);
+            if (confirmed) send(SoulNetwork.Action.FORGET_FORM, id);
+        }, text("forget_title", fit(name(species), 200)),
+                text("forget_warning", species.forms().indexOf(target) + 1, species.forms().size()),
+                text("forget_confirm"), text("forget_cancel")) {
+            @Override protected void init() {
+                super.init();
+                int y = buttons.get(0).y;
+                buttons.clear();
+                children.clear();
+                addButton(new SoulButton(width / 2 - 155, y, 150, 22, yesButton, SoulButton.Style.DANGER,
+                    () -> callback.accept(true)));
+                addButton(new SoulButton(width / 2 + 5, y, 150, 22, noButton, SoulButton.Style.SUBTLE,
+                    () -> callback.accept(false)));
+                setDelay(20);
+            }
+        });
+    }
+
     @Override protected void init() {
         controls.clear();
         cards.clear();
@@ -185,6 +213,8 @@ public final class SoulScreen extends Screen {
             () -> changeForm(-1)).hint(text("previous_form"));
         nextForm = button(390, 245, 24, 22, new net.minecraft.util.text.StringTextComponent("›"), SoulButton.Style.SUBTLE,
             () -> changeForm(1)).hint(text("next_form"));
+        forget = button(234, 276, 144, 18, text("forget"), SoulButton.Style.DANGER, this::confirmForget)
+            .hint(text("forget_hint"));
         primary = button(448, 161, 144, 27, text("summon"), SoulButton.Style.PRIMARY, () -> {
             SoulNetwork.Row active = group() == null ? null : group().active();
             if (active == null) send(SoulNetwork.Action.SUMMON);
@@ -225,7 +255,7 @@ public final class SoulScreen extends Screen {
             int y = LIST_TOP + i * CARD_STEP - scrollOffset();
             SoulButton body = archiveButton(LIST_LEFT, y, 108, new net.minecraft.util.text.StringTextComponent(name(group)), SoulButton.Style.CARD,
                 () -> select(group)).subtitle(text("forms_short", group.forms().size())).selected(group.equals(group()))
-                .lit(group.active() != null).hint(text("choose_soul"));
+                .lit(group.active() != null).boss(group.boss()).hint(text("choose_soul"));
             ITextComponent favoriteHint = text(group.favorite() ? "remove_favorite" : "add_favorite");
             SoulButton favorite = archiveButton(136, y, 20, favoriteHint, SoulButton.Style.FAVORITE,
                 () -> send(SoulNetwork.Action.TOGGLE_FAVORITE, group.forms().get(0).id()))
@@ -284,6 +314,7 @@ public final class SoulScreen extends Screen {
         primary.hint(summonHint());
         primary.active = active != null || (row != null && row.status() == SummonRules.Status.READY);
         previousForm.active = nextForm.active = group != null && group.forms().size() > 1;
+        forget.active = group != null;
         boolean hasCommands = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
         follow.active = wait.active = guard.active = aggressive.active = hasCommands;
         follow.selected(!state.group() && active != null && active.command().equals("FOLLOW"));
@@ -302,7 +333,7 @@ public final class SoulScreen extends Screen {
         for (CardControls card : cards) {
             SoulGroup species = groups.stream().filter(g -> g.entityType().equals(card.entityType())).findFirst().orElse(null);
             if (species == null) continue;
-            card.body().selected(species.equals(group)).lit(species.active() != null)
+            card.body().selected(species.equals(group)).lit(species.active() != null).boss(species.boss())
                 .subtitle(text("forms_short", species.forms().size()));
             ITextComponent favoriteHint = text(species.favorite() ? "remove_favorite" : "add_favorite");
             card.favorite().selected(species.favorite()).hint(favoriteHint).setMessage(favoriteHint);
@@ -368,7 +399,8 @@ public final class SoulScreen extends Screen {
         var group = group();
         var row = row();
         String name = group == null ? text("unbound").getString() : name(group);
-        g.drawCenteredString(font, new net.minecraft.util.text.StringTextComponent(fit(name, 222)), 306, 72, SoulTheme.LIGHT);
+        g.drawCenteredString(font, new net.minecraft.util.text.StringTextComponent(fit(name, 222)), 306, 72,
+            group != null && group.boss() ? SoulTheme.BOSS_BLUE : SoulTheme.LIGHT);
         g.fillGradient(PX, PY, PX + PW, PY + PH, 0xFF122C36, 0xFF0A161F);
         for (int i = 0; i < 13; i++) {
             int x = 204 + (i * 37) % 200, y = 100 + (int)((i * 19 + ticks * 0.16) % 112);
@@ -394,7 +426,6 @@ public final class SoulScreen extends Screen {
         g.fill(198, 236, 414, 237, SoulTheme.BORDER);
         if (group != null) {
             g.drawCenteredString(font, text("form_index", group.forms().indexOf(row) + 1, group.forms().size()), 306, 252, SoulTheme.LIGHT);
-            g.drawCenteredString(font, text(group.forms().size() > 1 ? "captured_forms" : "capture_more_forms"), 306, 279, SoulTheme.MUTED);
         } else g.drawCenteredString(font, text("no_soul_selected"), 306, 252, SoulTheme.MUTED);
     }
     private void renderDetails(SoulGui g) {
