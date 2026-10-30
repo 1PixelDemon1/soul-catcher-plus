@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-package dev.soulcatcherplus.mixin.client;
+package dev.soulcatcherplus.addon.compat.mixin.client;
 
 import dev.soulcatcherplus.client.SoulMusic;
 import dev.soulcatcherplus.companion.CompanionBrain;

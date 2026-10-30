@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus;
 
-import dev.soulcatcherplus.api.SoulAdapters;
-import dev.soulcatcherplus.compat.WroughtnautAdapter;
-import dev.soulcatcherplus.compat.TwilightForestCompat;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.item.SoulScythe;
@@ -16,7 +13,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -54,13 +50,5 @@ public final class SoulCatcherPlus {
         ENTITIES.register(bus);
         SoulEnchantments.ENCHANTMENTS.register(bus);
         SoulNetwork.register();
-        bus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) ->
-            event.enqueueWork(() -> {
-                if (ModList.get().isLoaded("mowziesmobs")) {
-                    SoulAdapters.register(new net.minecraft.util.ResourceLocation("mowziesmobs", "ferrous_wroughtnaut"),
-                        new WroughtnautAdapter());
-                }
-                if (ModList.get().isLoaded("twilightforest")) TwilightForestCompat.register();
-            }));
     }
 }

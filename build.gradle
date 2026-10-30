@@ -11,6 +11,23 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
     withSourcesJar()
 }
+// One development addon today; keep its classes and resources out of the core JAR.
+sourceSets {
+    compat {
+        java.srcDirs = ['addons/compat/src/main/java']
+        resources.srcDirs = ['addons/compat/src/main/resources']
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    compatImplementation.extendsFrom implementation
+    compatCompileOnly.extendsFrom compileOnly
+    compatAnnotationProcessor.extendsFrom annotationProcessor
+    compatRuntimeOnly.extendsFrom runtimeOnly
+}
+sourceSets.compat.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.compat.runtimeClasspath += sourceSets.main.runtimeClasspath
 minecraft {
     mappings channel: 'official', version: minecraft_version
     copyIdeResources = true
@@ -22,7 +39,13 @@ minecraft {
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
             args '--mixin', 'soulcatcherplus.mixins.json'
-            mods { "${mod_id}" { source sourceSets.main } }
+            mods {
+                "${mod_id}" { source sourceSets.main }
+                if (!project.hasProperty('withoutCompatAddon')) {
+                    soulcatcherplus_compat { source sourceSets.compat }
+                }
+            }
+            if (!project.hasProperty('withoutCompatAddon')) args '--mixin', 'soulcatcherplus_compat.mixins.json'
         }
         client { workingDirectory project.file('run-client/1.16.5') }
         server { args '--nogui' }
@@ -66,6 +89,10 @@ tasks.named('processResources', ProcessResources).configure {
     inputs.property 'mod_version', mod_version
     filesMatching('META-INF/mods.toml') { expand mod_version: mod_version }
 }
+tasks.named('processCompatResources', ProcessResources).configure {
+    inputs.property 'mod_version', mod_version
+    filesMatching('META-INF/mods.toml') { expand mod_version: mod_version }
+}
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 8
@@ -79,14 +106,25 @@ tasks.named('jar', Jar).configure {
     manifest { attributes 'Implementation-Version': mod_version, 'MixinConfigs': 'soulcatcherplus.mixins.json' }
     finalizedBy 'reobfJar'
 }
+tasks.register('compatJar', Jar) {
+    group = 'build'
+    description = 'Builds the separate combined mod-integration addon.'
+    archiveBaseName = 'soulcatcherplus-compat'
+    from sourceSets.compat.output
+    manifest { attributes 'Implementation-Version': mod_version, 'MixinConfigs': 'soulcatcherplus_compat.mixins.json' }
+    finalizedBy 'reobfCompatJar'
+}
+reobf { compatJar {} }
+tasks.named('assemble').configure { dependsOn 'reobfCompatJar' }
 
 tasks.register('playtestZip', Zip) {
     group = 'build'
-    description = 'Packages the standalone mod with Twilight Forest, Aquamirae and their libraries.'
-    dependsOn 'reobfJar'
+    description = 'Packages the core, integration addon, Twilight Forest, Aquamirae and their libraries.'
+    dependsOn 'reobfJar', 'reobfCompatJar'
     archiveFileName = "soulcatcherplus-${minecraft_version}-twilight-aquamirae-playtest.zip"
     destinationDirectory = layout.buildDirectory.dir('playtest')
     from(tasks.named('jar')) { into 'mods' }
+    from(tasks.named('compatJar')) { into 'mods' }
     from(configurations.playtestMods) {
         into 'mods'
         rename '8BmcQJ2H-UQGoJDhn.jar', 'geckolib-forge-1.16.5-3.0.106.jar'

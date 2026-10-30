@@ -207,7 +207,7 @@ HP на момент захвата, а не оставшееся здоровь
 душ, дропа, опыта или возврата энергии за собственную гибель/удаление.
 За убийство ими обычных противников энергия начисляется владельцу.
 
-Для Twilight Forest 4.3.2508 подключены ледяные кристаллы Snow Queen,
+Через аддон интеграций для Twilight Forest 4.0.870 подключены ледяные кристаллы Snow Queen,
 зомби-прислужники и теневые копии Twilight Lich. У Лича используются его родные
 ссылки на хозяина, которые восстанавливаются после загрузки. Кристаллы не хранят
 такую ссылку: общий механизм запоминает их создание во время тика Снежной королевы.
@@ -314,10 +314,23 @@ if ownership arrives after playback starts, the tracked companion track is stopp
 Ordinary hostile bosses retain their music, including when a companion is nearby.
 Attack sounds, dialogue, ambient sounds and records are not muted.
 
-Aquamirae 5.4.0 has an optional client hook before its shared Cornelia music timer
+Aquamirae 5.4.0 has an optional client hook in the integration addon before its shared Cornelia music timer
 changes, so a companion does not consume the normal boss's music cooldown.
 Music launched asynchronously, without an identifiable entity, or through a
 non-MUSIC category may need a separate integration. This is not a global soundtrack blacklist.
+
+## Аддон интеграций
+
+Специальные доработки для Mowzie's Mobs, Twilight Forest и Aquamirae вынесены в
+**Soul Catcher Plus: Mod Integrations** — отдельный JAR `soulcatcherplus-compat`.
+Пока это один общий аддон для разработки; позднее интеграции можно разделить.
+Устанавливайте его вместе с основным модом на клиент и сервер. Нужные интеграции
+включаются при наличии соответствующего мода; сами моды существ остаются необязательными.
+
+Основной мод сохраняет общие механизмы и публичный API и может работать без аддона.
+При этом специальные поправки для перечисленных модов будут отсутствовать.
+Сохранённые души и их идентификаторы не меняются.
+[Состав, сборка и устройство аддона](addons/compat/README.md).
 
 ## Build and playtest (1.16.5)
 
@@ -329,7 +342,9 @@ python scripts/bootstrap.py
 ```
 
 See [the installation guide](docs/PLAYTEST_1.16.5.md) for the pinned mods and limitations.
-The archive includes Aquamirae 5.4.0 and Obscure API 11 alongside GeckoLib and Twilight Forest.
+The archive includes the core and integration addon, plus Aquamirae 5.4.0,
+Obscure API 11, GeckoLib and Twilight Forest. Development launches include the addon
+automatically; `-PwithoutCompatAddon` omits it for manual isolation checks.
 The archive contains original installable dependency JARs. Development launches use
 remapped copies supplied by Gradle; do not copy those remapped JARs to a launcher.
 
@@ -339,6 +354,7 @@ Bootstrap installs both local JDKs and preserves project configuration. Other
 systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
 Standalone JAR: `build/1.16.5/libs/soulcatcherplus-0.2.0+1.16.5.jar`.
+Integration addon: `build/1.16.5/libs/soulcatcherplus-compat-0.2.0+1.16.5.jar`.
 Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-twilight-aquamirae-playtest.zip`.
 Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 

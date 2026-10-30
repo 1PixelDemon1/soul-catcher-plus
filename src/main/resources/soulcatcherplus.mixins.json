@@ -4,7 +4,6 @@
   "package": "dev.soulcatcherplus.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MowzieAreaTargetsMixin",
     "CompanionBossBarMixin",
     "SoulSpawnContextMixin",
     "SoulEntityLifecycleMixin",
@@ -13,8 +12,7 @@
   "client": [
     "client.SoulEntityRenderMixin",
     "client.SoulMusicContextMixin",
-    "client.CompanionMusicMixin",
-    "client.AquamiraeCompanionMusicMixin"
+    "client.CompanionMusicMixin"
   ],
   "injectors": {
     "defaultRequire": 1
