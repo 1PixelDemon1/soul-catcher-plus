@@ -16,6 +16,13 @@ old `(0.27,-0.10,0)` grip's anchor with the corresponding rotated/scaled delta.
 Existing rotations, length scaling and one-model-pixel thickness remain shared.
 The actual placement still needs the user's in-game check.
 
+`held-geometry.json` extends the iron tail below that fixed grip by repeating
+wooden source rows 41..46 into eight additional texel-sized geometry rows. The lower fitting
+is shifted rigidly eight texels down and three to the right, retaining its shape.
+Texture UVs still reference the approved 64x64 sprite. Hand transforms and all
+geometry above row 41 remain unchanged. This adds roughly 40% to the tail below
+the grip without enlarging the blade or changing pixel size or thickness.
+
 Generated with the built-in `image_gen` tool, then reduced and alpha-thresholded
 to the exact approved preview. Final prompt: keep the moderate handle bend,
 left-facing slender iron blade, enlarged cyan soul lantern and thorned pommel;
