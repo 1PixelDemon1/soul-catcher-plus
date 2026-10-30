@@ -238,11 +238,21 @@ added there as well. Direct target attacks remain scythe interactions.
 
 ### Aggressive follow
 
-`CompanionBrain.Mode.AGGRESSIVE` uses normal owner following and return teleportation
-when idle. Every five ticks, it may acquire the nearest visible, attackable hostile
+`CompanionBrain.Mode.AGGRESSIVE` uses normal owner following. Every five ticks,
+it may acquire the nearest visible, attackable hostile
 MobEntity within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
 the companion abandons combat and returns; a target beyond that owner radius is
-also dropped. Existing WAIT, GUARD and reactive FOLLOW rules are unchanged.
+also dropped. WAIT and GUARD keep their stationary behavior.
+
+Both FOLLOW and AGGRESSIVE enforce the 24-block owner leash directly in the
+five-tick server brain update, independently of the goal selector or current
+attack target. Outside that radius, the brain clears the target, stops navigation
+and tries to teleport near the owner instead of acquiring another target in the
+same update. Native higher-priority attack goals cannot block this return.
+The existing search checks up to 12 loaded positions within four blocks of the
+owner in X/Z, at the owner's block Y, requiring solid support and space for the
+companion's bounding box. An unsuccessful search retries on the next brain
+update without loading chunks. FOLLOW retains reactive combat inside the leash.
 
 `SoulAdapters.get(candidate).isHostile(candidate, owner)` classifies automatic
 targets. Its default recognizes `Enemy`, `MobCategory.MONSTER` or a mob currently
