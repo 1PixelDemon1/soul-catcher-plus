@@ -33,19 +33,19 @@ final class SoulButton extends AbstractButton {
         var font = Minecraft.getInstance().font;
         boolean hover = isHovered() || isFocused();
         int accent = style == Style.FAVORITE ? SoulTheme.GOLD : style == Style.DANGER ? SoulTheme.RED
-            : boss ? SoulTheme.BOSS_BLUE : SoulTheme.TEAL;
+            : boss ? SoulTheme.BOSS_PURPLE : SoulTheme.TEAL;
         int border = active && (hover || selected || boss) ? accent : SoulTheme.BORDER;
         int top = style == Style.PRIMARY ? 0xFF214A4B : 0xFF172C35;
         if (selected) top = 0xFF203E43;
         if (hover && active) top = style == Style.DANGER ? 0xFF3F2D33 : 0xFF29484B;
-        if (boss) top = selected || (hover && active) ? 0xFF21435C : 0xFF152D43;
+        if (boss) top = selected || (hover && active) ? 0xFF3C2B50 : 0xFF281E38;
         g.fillGradient(x, y, x + width, y + height, top, active ? 0xFF101E28 : 0xFF0D1820);
         g.renderOutline(x, y, width, height, border);
         if (selected || style == Style.PRIMARY) g.fill(x, y + 1, x + 2, y + height - 1, accent);
         int color = active ? (hover || selected ? SoulTheme.LIGHT : 0xFFBBD0CC) : 0xFF657C7E;
         if (style == Style.CARD) {
             String title = fit(getMessage().getString(), width - 25);
-            g.drawString(font, title, x + 9, y + 7, boss && active ? SoulTheme.BOSS_BLUE : color, false);
+            g.drawString(font, title, x + 9, y + 7, boss && active ? SoulTheme.BOSS_PURPLE : color, false);
             g.drawString(font, fit(subtitle.getString(), width - 18), x + 9, y + 23, SoulTheme.MUTED, false);
             if (lit) SoulTheme.diamond(g, x + width - 10, y + 10, 2, accent);
         } else if (style == Style.FAVORITE) {

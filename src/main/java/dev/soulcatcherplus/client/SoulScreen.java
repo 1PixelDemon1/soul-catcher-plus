@@ -400,7 +400,7 @@ public final class SoulScreen extends Screen {
         var row = row();
         String name = group == null ? text("unbound").getString() : name(group);
         g.drawCenteredString(font, new net.minecraft.util.text.StringTextComponent(fit(name, 222)), 306, 72,
-            group != null && group.boss() ? SoulTheme.BOSS_BLUE : SoulTheme.LIGHT);
+            group != null && group.boss() ? SoulTheme.BOSS_PURPLE : SoulTheme.LIGHT);
         g.fillGradient(PX, PY, PX + PW, PY + PH, 0xFF122C36, 0xFF0A161F);
         for (int i = 0; i < 13; i++) {
             int x = 204 + (i * 37) % 200, y = 100 + (int)((i * 19 + ticks * 0.16) % 112);

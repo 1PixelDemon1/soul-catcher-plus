@@ -190,8 +190,8 @@ form disappears. Existing saved-data fields are unchanged. A removed form can be
 captured again; an unloaded recalled companion is discarded when it next loads.
 
 `SoulBalance.isBossSoul(maxHealth)` shares the >=150 maximum-health rule between
-skull remnants and blue collection styling. A species card and preview header are
-blue if any of its captured forms qualifies. This is a health grade, independent
+skull remnants and purple collection styling. A species card and preview header are
+purple if any of its captured forms qualifies. This is a health grade, independent
 of mod-specific boss detection; it uses existing `Row.maxHealth` snapshot data.
 
 ## Key-bound collection and command wheel

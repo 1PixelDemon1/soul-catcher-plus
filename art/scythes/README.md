@@ -8,8 +8,8 @@ The approved **64x64** iron `soul_scythe.png` is the exact master for the held
 family: modest curved wood, slender metal blade, cyan soul lantern and thorned
 butt fitting. The diamond and netherite PNGs are palette variants of this master,
 including both the blade and bottom fitting. Their alpha silhouette and wood,
-lantern and intermediate collars match the iron master. Inventory icons remain
-on their separate 16x16 artwork. Earlier preview sheets below predate this family.
+lantern and intermediate collars match the iron master. Inventory icons are
+16x16 adaptations of this family. Earlier preview sheets below predate this family.
 
 `held-palettes.json` records the metal regions and five-tone material ramps.
 `prepare_scythe_materials.ps1` maps iron luminance through those ramps without
@@ -49,6 +49,18 @@ These generated PNGs/JSONs are committed; a normal Gradle build does not need th
 Windows artwork scripts. The preview is assembled from the mesh and texture,
 not captured from Minecraft.
 
+## Current inventory icons
+
+![Magnified 16x16 inventory icons, with native-size copies below](inventory-preview.png)
+
+`inventory.json` is the editable 16x16 pixel map. The small sprites retain the
+clockwise crafting-recipe orientation while adopting the held family's curved
+wood, slender blade, larger cyan lantern and pointed metal butt fitting. Blade
+and butt fitting share each tier's muted material palette; wood and lantern
+colors stay shared. These are deliberately drawn at 16x16, rather than downsampled
+from the held textures, so the small shapes remain readable in the hotbar.
+Run `python scripts/generate_assets.py` to rebuild the three runtime icons.
+
 ## Earlier artwork
 
 ![Iron, diamond and netherite scythe previews](preview.png)
@@ -63,15 +75,13 @@ the right. Its cyan area is two pixels high (2x2), with a narrow top cap and
 a dark bottom rim. Shafts, fittings
 and lantern colors share the same palette in inventory icons.
 
-![Magnified 16x16 inventory icons](inventory-preview.png)
-
 ## Runtime assets
 
 - `src/main/resources/assets/soulcatcherplus/textures/item/<item>.png`: exact
   **16x16** inventory sprite. `inventory.json` is the editable 16-row pixel map and
   RGBA palette, with shared colors and three blade-face palettes. The outline was
   simplified to keep a continuous shaft and readable lantern at this resolution.
-- `<item>_held.png` in the same directory: **128x128**, sampled from the matching
+- `<item>_held.png` in the same directory: **64x64**, packaged from the matching
   full-size source PNG in this folder. Nearest sampling and binary alpha keep the
   texture sharp and reduce unnecessary atlas and generated-geometry size.
 - `models/item/<item>.json`: Forge `forge:separate_transforms` models choose the
