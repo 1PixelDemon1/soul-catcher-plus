@@ -7,10 +7,12 @@ strip of four **16x16** frames. The adjacent `.png.mcmeta` uses five ticks per
 frame, indices 0–3, no interpolation: one loop per second.
 
 The fixed vessel uses a compact palette instead of the earlier many near-identical
-shades. Chain, glass highlights and frame never move or change opacity. Three
-two-pixel soul wisps travel clockwise; distinct head shades make the motion
-traceable. They stay inside the opaque dark glass, so all four frames have the
-same alpha silhouette and the generated item's edge geometry remains stable.
+shades. A basket-like arched handle of alternating iron chain links connects to
+both shoulders of the cage. This handle, glass highlights and frame remain fixed.
+Three two-pixel soul wisps travel clockwise; distinct head shades make the motion
+traceable. The space between them is fully transparent, including the opening in
+the chain handle. Only the moving souls change the internal alpha footprint;
+Minecraft's generated item model collects their edges across the animation frames.
 Animation uses Minecraft's texture atlas, without an item renderer, entity scan,
 Java tick handler or network traffic. Capacity, energy and the hand transforms
 are unchanged. Empty cages keep the same decorative animation as filled cages.
@@ -19,7 +21,8 @@ are unchanged. Empty cages keep the same decorative animation as filled cages.
 Run `python scripts/prepare_cage_art.py` to export the runtime strips/metadata,
 the individual frames and the enlarged static/APNG previews. The exporter uses
 only the Python standard library; normal Gradle builds use committed resources.
-Old `concept-v1` images are retained as design history.
+Both enlarged previews preserve the transparent background and interior. The old
+`concept-v1` images are retained as design history.
 
 ## Artwork provenance
 

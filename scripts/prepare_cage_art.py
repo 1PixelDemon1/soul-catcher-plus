@@ -62,7 +62,7 @@ def export():
     width, height = (size * scale + gap) * len(material_frames) + gap, size * scale + 2 * gap
     preview_frames = []
     for pose in range(len(frames)):
-        rows = [[(50, 64, 76, 255)] * width for _ in range(height)]
+        rows = [[(0, 0, 0, 0)] * width for _ in range(height)]
         for tier, rendered in enumerate(material_frames):
             left = gap + tier * (size * scale + gap)
             for y, row in enumerate(rendered[pose]):
