@@ -41,8 +41,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     if (project.hasProperty('withMowzies')) {
         runtimeOnly fg.deobf('curse.maven:mowzies-mobs-250498:7815705')
-    }
-    if (project.hasProperty('withMowzies') || project.hasProperty('withAoA')) {
         runtimeOnly fg.deobf('curse.maven:geckolib-388172:7553267')
     }
     if (project.hasProperty('withIceAndFire')) {
@@ -51,9 +49,6 @@ dependencies {
     }
     if (project.hasProperty('withTwilightForest')) {
         runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:5468648')
-    }
-    if (project.hasProperty('withAoA')) {
-        runtimeOnly fg.deobf('curse.maven:advent-of-ascension-nevermine-311054:4988685')
     }
 }
 tasks.named('processResources', ProcessResources).configure {

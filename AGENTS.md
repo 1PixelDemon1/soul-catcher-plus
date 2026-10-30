@@ -87,7 +87,7 @@ The user handles manual gameplay testing. After each mod refinement, compile and
 launch the current development client for them, and confirm startup from the log.
 For the 1.20.1 development branch, use:
 
-`.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest -PwithAoA`
+`.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest`
 
 `-PgameTests` makes the QA command available; launching the client is not a request
 to run GameTests. Leave the game open for the user. Do not force-kill a running

@@ -398,24 +398,6 @@ Gradle скачивает мод и подготавливает его для �
 тестового запуска и не включается в JAR Soul Catcher Plus. Подключение само по
 себе не подтверждает совместимость всех существ мода.
 
-## Advent of Ascension в тестовом клиенте
-
-Флаг `-PwithAoA` подключает [Advent of Ascension 3.7.1 Beta для Minecraft 1.20.1](https://www.curseforge.com/minecraft/mc-mods/advent-of-ascension-nevermine/files/4988685)
-и общую библиотеку GeckoLib 4.8.3. При одновременном подключении Mowzie's Mobs
-GeckoLib используется одна. Мод скачивается и подготавливается Gradle для среды
-разработки; вручную копировать JAR в `run-client/mods` не нужно.
-
-Запуск текущей тестовой сборки со всеми модами и QA-командой:
-
-```powershell
-.\scripts\gradle.ps1 runClient -PgameTests -PwithMowzies -PwithIceAndFire -PwithTwilightForest -PwithAoA
-```
-
-Для запуска только с Advent of Ascension оставьте `-PwithAoA`, а `-PgameTests`
-используйте, если нужна команда `/soulcatcherqa --all`. Эти зависимости доступны
-только в тестовом запуске и не включаются в JAR Soul Catcher Plus. Установка мода
-не означает, что взаимодействие всех его существ с душами уже проверено.
-
 ## Проверки
 
 ```powershell
