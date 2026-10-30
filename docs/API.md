@@ -1,6 +1,6 @@
 # Soul Catcher Plus API — 0.1 (experimental)
 
-Target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (port branch). API stability is not yet guaranteed.
+Primary target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (`develop`). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
 
 ## Entity adapters

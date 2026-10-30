@@ -1,14 +1,16 @@
 # Soul Catcher Plus
 
-Port: **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**.
-Branch: `codex/forge-1.16.5`, based on current 1.20.1 development features.
+Primary target: **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**.
+Development branch: `develop`. The former 1.20.1 development line is preserved
+in `codex/forge-1.20.1`.
 [Installation and playtest bundle](docs/PLAYTEST_1.16.5.md).
 
 Includes the 1.20.1 develop improvements through `cdad390`: scrolling collection,
 Soul Capacity / Soul Harvester, the soul-skull logo and creative tab, and an AoA-free
 playtest pack. These are adapted to Forge 1.16.5 APIs and Java 8.
 Scythes and cages appear in the **Soul Catcher Plus** creative tab.
-This is a development port; the 1.20.1, 1.19.2 and 1.20.4 branches remain separate.
+Minecraft 1.16.5 is the primary development platform. The 1.20.1, 1.19.2 and
+1.20.4 branches remain available separately; `main` retains the last release.
 
 ## Как играть
 

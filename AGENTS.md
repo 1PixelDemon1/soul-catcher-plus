@@ -2,18 +2,20 @@
 
 ## Target
 
-This port branch targets Minecraft 1.16.5, Forge 36.2.42 and a Java 8 runtime.
+Primary development targets Minecraft 1.16.5, Forge 36.2.42 and a Java 8 runtime.
 Gradle and javac run on Java 17; Jabel 1.0.0 compiles modern syntax to Java 8
 with `--release 8`. Jabel is compile-only and must never be bundled into the mod.
-Stay on `codex/forge-1.16.5` for this port. `develop` and `main` remain on 1.20.1;
-the 1.19.2 and NeoForge 1.20.4 ports remain separate.
+Use `develop` for ongoing 1.16.5 work. `codex/forge-1.20.1` preserves the former
+1.20.1 development line; the 1.19.2 and NeoForge 1.20.4 ports remain separate.
+`main` retains the existing release history and changes only for a requested release.
 Verify old APIs against the actual 1.16.5 mapped JAR and Forge sources. The class
 names are legacy MCP names with official member mappings; modern examples differ.
 Follow the installed `minecraft-modding` skill when changing mod code.
 
 ## Git branches
 
-- `develop` is the default working branch for ongoing development.
+- `develop` is the default working branch for ongoing Minecraft 1.16.5 development.
+- `codex/forge-1.16.5` records the original port and the transition to the primary line.
 - Create optional `feature/<description>` or `fix/<description>` branches from `develop`.
 - `main` is the release line. Promote tested milestones from `develop` into `main`
   through a merge that preserves development history only when the user explicitly
@@ -91,7 +93,7 @@ Do not invent version bumps or publish tags/remotes without a release to publish
 
 The user handles manual gameplay testing. After each mod refinement, compile and
 launch the current development client for them, and confirm startup from the log.
-For this 1.16.5 port branch, use:
+For the primary 1.16.5 development branch, use:
 
 `.\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAquamirae`
 
