@@ -1,5 +1,33 @@
 # Scythe artwork
 
+## Iron held-texture trial (1.16.5)
+
+The iron source `soul_scythe.png` now contains the approved **64x64** coarse-pixel
+concept: modest curved wooden shaft, slightly thicker slender blade, enlarged
+soul lantern and thorned butt fitting. The packaged iron held PNG uses the same
+pixels. Diamond/netherite sources and held textures, and all 16x16 inventory
+icons, retain their previous artwork. The preview sheets below predate this trial.
+
+The iron model's `base.display` overrides only its hand translations. Its selected
+grip is the wooden texel center `(55.5, 40.5)` in the 64x64 source. Third-person
+translation is `-16 * Ry(-90) * Rz(-27) * Scale(2,2,1) * grip`, with grip measured
+from the texture center and Y flipped. First-person translation preserves the
+old `(0.27,-0.10,0)` grip's anchor with the corresponding rotated/scaled delta.
+Existing rotations, length scaling and one-model-pixel thickness remain shared.
+The actual placement still needs the user's in-game check.
+
+Generated with the built-in `image_gen` tool, then reduced and alpha-thresholded
+to the exact approved preview. Final prompt: keep the moderate handle bend,
+left-facing slender iron blade, enlarged cyan soul lantern and thorned pommel;
+redraw as a coarse 64x64 Minecraft sprite with clean pixel clusters and reduced
+metal/wood detail, preserving transparency and the full silhouette.
+
+Regenerate only this trial with `./scripts/prepare_scythe_art.ps1 -Materials soul_scythe`.
+The packager preserves source dimensions up to 128x128, so this source stays 64x64
+even during an all-material regeneration. It also regenerates the matching closed mesh.
+
+## Earlier artwork
+
 ![Iron, diamond and netherite scythe previews](preview.png)
 
 The three designs use the user's approved wooden shaft, left-facing crescent

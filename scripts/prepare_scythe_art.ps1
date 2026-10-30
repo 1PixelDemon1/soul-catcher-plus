@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: MIT
 # Package approved imagegen artwork; System.Drawing is available on the Windows authoring host.
+param(
+    [ValidateSet('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe')]
+    [string[]]$Materials = @('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe')
+)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $artRoot = Join-Path $projectRoot 'art/scythes'
 $textureRoot = Join-Path $projectRoot 'src/main/resources/assets/soulcatcherplus/textures/item'
 $modelRoot = Join-Path $projectRoot 'src/main/resources/assets/soulcatcherplus/models/item'
-$materials = @('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe')
-$textureSize = 128
 
 function Write-HeldMesh([System.Drawing.Bitmap]$texture, [string]$material) {
     # Merge identical opaque runs in consecutive rows into disjoint, fully opaque rectangles.
@@ -63,6 +65,8 @@ function Write-HeldMesh([System.Drawing.Bitmap]$texture, [string]$material) {
 
 foreach ($material in $materials) {
     $source = [System.Drawing.Bitmap]::new((Join-Path $artRoot "$material.png"))
+    # Preserve approved low-resolution sources; older large sources still package at 128x128.
+    $textureSize = [Math]::Min(128, $source.Width)
     $texture = [System.Drawing.Bitmap]::new($textureSize, $textureSize, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     try {
         if ($source.Width -ne $source.Height) { throw "Expected square scythe artwork: $material" }
