@@ -32,10 +32,14 @@ public final class SoulService {
     public static boolean holdsScythe(ServerPlayerEntity player) {
         return SoulScythe.heldBy(player) != null;
     }
-    public static SummonRules.Context summonContext(ServerPlayerEntity player) {
+    /** Shared equipment-only limit; querying it does not scan the player's soul collection. */
+    public static int summonLimit(ServerPlayerEntity player) {
         SoulScythe scythe = SoulScythe.heldBy(player);
+        return scythe == null ? 0 : scythe.summonLimit() + SoulEnchantments.additionalSlots(player);
+    }
+    public static SummonRules.Context summonContext(ServerPlayerEntity player) {
         SoulCages.Active cage = SoulCages.active(player);
-        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit() + SoulEnchantments.additionalSlots(player),
+        return SummonRules.context(data(player), summonLimit(player),
             cage.energy(), cage.capacity(), player.server.overworld().getGameTime());
     }
     public static void summon(ServerPlayerEntity player, UUID id) {

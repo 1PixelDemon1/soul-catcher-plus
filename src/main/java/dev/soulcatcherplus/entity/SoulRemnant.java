@@ -4,6 +4,7 @@ package dev.soulcatcherplus.entity;
 import dev.soulcatcherplus.companion.SoulService;
 import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.*;
+import dev.soulcatcherplus.advancement.SoulAdvancements;
 import java.util.UUID;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundNBT;
@@ -85,6 +86,7 @@ public final class SoulRemnant extends Entity {
                 SoulService.message(server, "duplicate");
             }
             SoulService.changed(server);
+            SoulAdvancements.captured(server, soul.maxHealth);
             remove();
         }
         return ActionResultType.sidedSuccess(level.isClientSide);

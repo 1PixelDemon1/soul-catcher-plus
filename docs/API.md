@@ -470,8 +470,8 @@ It is discoverable, tradeable, book-compatible and not treasure-only, like the
 other two soul enchantments; their existing rarity and costs are unchanged.
 
 `SoulEnchantments.additionalSlots(player)` sums the clamped Soul Slot level on
-the four worn `ArmorItem` stacks only. `SoulService.summonContext` adds it to the
-held scythe's base limit, or keeps the limit zero when no scythe is held. The
+the four worn `ArmorItem` stacks only. `SoulService.summonLimit(player)` adds it to
+the held scythe's base limit, or keeps the limit zero when no scythe is held. The
 existing shared availability path supplies both server validation and the menu's
 total limit. No packet fields, protocol version or saved-data format change.
 Removing enchanted armor retains current summons, like switching to a weaker
@@ -483,6 +483,43 @@ registered soul enchantments. No global loot modifier, custom chest table or
 additional drop chance is installed. Existing loot tables keep their original
 book counts and probabilities. Tables with an explicit enchantment list retain
 that restriction; not every chest necessarily offers enchanted books.
+
+## Advancements
+
+Five native 1.16.5 advancement resources live under
+`data/soulcatcherplus/advancements`. Titles/descriptions are localized in RU/EN.
+
+| ID (namespace `soulcatcherplus`) | Completion |
+| --- | --- |
+| `root` | Vanilla `minecraft:tick`, completed after entering a world |
+| `first_soul` | Server-confirmed remnant collection |
+| `supreme_equipment` | Two ANDed `minecraft:inventory_changed` criteria for supreme cage and scythe |
+| `boss_soul` | Remnant collection with `SoulBalance.isBossSoul(maxHealth)` |
+| `soul_master` | Equipment grants at least 8 companion slots |
+
+The last two have `challenge` frames; supreme equipment has a `goal` frame.
+The root owns the tab's stone background and medium-soul icon, shows a toast,
+and does not announce entry to chat. Other milestones use standard toasts/chat
+announcements. There are no custom XP/item rewards or packets.
+
+`SoulAdvancements.captured` is called in `SoulRemnant.interact` only after owner,
+distance, cage and collection-limit validation. Both new appearances and accepted
+duplicate captures qualify. Merely marking/killing, uncollected remnants and QA
+ledger population do not award the two capture milestones. Existing ledger entries
+are not scanned for retroactive completion; collecting a soul again qualifies.
+
+`SoulAdvancements` checks the slot challenge on server login and native equipment
+changes (including held hotbar selection), with an early completed-progress guard.
+It uses the same equipment-only `SoulService.summonLimit` helper as summoning;
+this avoids scanning the collection or reading cage energy on equipment changes.
+The current target is 8: supreme scythe (4) plus Soul Slot on four armor pieces.
+No summoned creatures are required. Missing advancement definitions are ignored,
+so a datapack can remove them without breaking collection/equipment handling.
+
+Native `PlayerAdvancements` owns progress, persistence and synchronization. Parent
+links arrange the tree, not extra gameplay prerequisites; the two equipment item
+criteria retain progress if the items are obtained at different times. No existing
+collection/ownership NBT or network protocol changes.
 
 ## Soul cage storage
 
