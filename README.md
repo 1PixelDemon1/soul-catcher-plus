@@ -1,17 +1,32 @@
 # Soul Catcher Plus
 
-Primary target: **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**.
-Development branch: `develop`. The former 1.20.1 development line is preserved
-in `codex/forge-1.20.1`.
-[Installation and playtest bundle](docs/PLAYTEST_1.16.5.md).
+**1.0.0** provides separate core and integration-addon builds for two Forge versions:
 
-Includes the 1.20.1 develop improvements through `cdad390`: scrolling collection,
-Soul Capacity / Soul Harvester, the dedicated creative tab, and an AoA-free
-playtest pack. These are adapted to Forge 1.16.5 APIs and Java 8.
+| Minecraft | Forge baseline | Game runtime | Core JAR | Optional integration addon |
+|---|---|---|---|---|
+| 1.16.5 | 36.2.42 | Java 8 | `soulcatcherplus-1.0.0+1.16.5.jar` | `soulcatcherplus-compat-1.0.0+1.16.5.jar` |
+| 1.20.1 | 47.4.28 | Java 17 | `soulcatcherplus-1.0.0+1.20.1.jar` | `soulcatcherplus-compat-1.0.0+1.20.1.jar` |
+
+Install the chosen core on both client and server. The integration addon is optional
+and requires the exact matching core version and Minecraft suffix. Install it on
+both sides when using its Mowzie's Mobs, Twilight Forest, or Aquamirae corrections.
+Creature mods and their libraries are installed separately; the core requires none.
+These are separate JARs for separate Minecraft profiles, not one cross-version JAR.
+Fabric, NeoForge, and the 1.19.2/1.20.4 development ports are outside this release.
+
+Both builds use network protocol **11**. Update clients, servers, and any installed
+addon together. Old player-ledger energy is not converted to cage energy; compatible
+same-Minecraft collection data is retained. No cross-Minecraft world migration is supplied.
+See [1.0.0 release notes](docs/releases/1.0.0.md) for integration baselines,
+migration, packaging checks, and validation limits. The final release was packaged
+and inspected; no release game launch or automated gameplay tests were run.
+
+Primary development remains **1.16.5** on `develop`; `codex/forge-1.20.1` maintains
+the 1.20.1 source line. `main` is the requested-release history.
+[Private 1.16.5 development playtest guide](docs/PLAYTEST_1.16.5.md).
+
 Scythes and cages appear in the **Soul Catcher Plus** creative tab.
 Both the mod logo and the creative tab icon use the medium soul lantern.
-Minecraft 1.16.5 is the primary development platform. The 1.20.1, 1.19.2 and
-1.20.4 branches remain available separately; `main` retains the last release.
 
 ## Как играть
 
@@ -56,7 +71,7 @@ HP обновляется с сервера примерно четыре раз
 монстра в пределах 16 блоков от себя и хозяина. Он прекращает погоню, если сам
 или цель удаляется от хозяина дальше 24 блоков. Владелец, его напарники, питомцы
 и союзники исключаются общими проверками. По умолчанию монстры определяются
-через `Enemy`, категорию `MONSTER` или текущую атаку на хозяина; модовые правила
+через `IMob` (1.16.5) / `Enemy` (1.20.1), категорию `MONSTER` или текущую атаку на хозяина; модовые правила
 враждебности можно уточнить через адаптер. Прислужники наследуют цель напарника.
 
 В режимах **Следовать** и **Агрессия** удаление от игрока больше чем на **24 блока**
@@ -127,8 +142,9 @@ HP на момент захвата, а не оставшееся здоровь
 
 Материал — железный слиток или алмаз, всего пять. Высшая клетка использует пять
 костей вместо материала и звезду ада вместо песка душ; стекло и цепь остаются.
-Незеритовая получается на кузнечном столе из алмазной клетки, незеритового слитка
-и шаблона улучшения до незерита. Содержимое клетки при улучшении сохраняется.
+Незеритовая получается на кузнечном столе из алмазной клетки и незеритового слитка.
+В 1.20.1 также нужен шаблон улучшения до незерита; в 1.16.5 его нет.
+Содержимое клетки при улучшении сохраняется.
 В руках клетка висит вертикально: хват расположен на верхнем звене цепи, колба ниже
 кулака. Обе руки используют общие настройки моделей всех четырёх материалов.
 
@@ -263,8 +279,9 @@ HP на момент захвата, а не оставшееся здоровь
 Проверять досаждателей после обновления нужно на новом призыве: у старых,
 уже выгруженных до обновления, ванильная ссылка на создателя могла потеряться.
 Старые кристаллы без сохранённой связи также нельзя надёжно связать задним числом.
-Для проверки используйте новый призыв. Код скомпилирован, тестовый клиент запущен;
-проверка поведения в игре остаётся за пользователем.
+Для проверки используйте новый призыв. Обе версии релиза собраны; финальные
+игровые клиенты при подготовке 1.0.0 не запускались. Проверка поведения в игре
+остаётся за пользователем; прежние проверки относятся к прежним снимкам разработки.
 [Оценка влияния на производительность](docs/MINION_PERFORMANCE.md) основана на исходниках.
 
 Босс-бары призванных напарников скрываются на сервере, если их событие хранится
@@ -312,7 +329,8 @@ HP на момент захвата, а не оставшееся здоровь
 `М` — железный слиток или алмаз (две штуки одного материала);
 `Л` — фонарь душ; `П` — палка; `·` — пустая ячейка.
 Незеритовая коса получается на **кузнечном столе** из алмазной косы душ,
-одного незеритового слитка. В 1.16.5 шаблон улучшения не нужен.
+одного незеритового слитка. В 1.20.1 также нужен шаблон улучшения до незерита;
+в 1.16.5 шаблон улучшения не нужен.
 Прямого рецепта на верстаке нет.
 
 Высшая крафтится на верстаке по той же схеме: вместо двух материалов — две кости,
@@ -326,8 +344,8 @@ HP на момент захвата, а не оставшееся здоровь
 Полотно лезвия — серебристое, алмазно-бирюзовое, незеритовое или костяное.
 Вид от третьего лица настроен примерно под рост
 игрока; первое лицо имеет отдельное положение и масштаб для кадрирования.
-Пользователь подтвердил исправление хвата и просветов в игре; последнее уменьшение
-толщины до одного пикселя отдельно в игре пока не подтверждено.
+Исторические сообщения пользователя о хвате и просветах относятся к прежним
+снимкам разработки; финальные модели обеих версий 1.0.0 отдельно в игре не проверялись.
 [Превью и исходники оформления](art/scythes/README.md).
 
 Стоимость призыва — `ceil(максимальное HP × 2)`, энергия за победу —
@@ -369,14 +387,25 @@ non-MUSIC category may need a separate integration. This is not a global soundtr
 
 Специальные доработки для Mowzie's Mobs, Twilight Forest и Aquamirae вынесены в
 **Soul Catcher Plus: Mod Integrations** — отдельный JAR `soulcatcherplus-compat`.
-Пока это один общий аддон для разработки; позднее интеграции можно разделить.
+В релизе это один общий аддон; позднее интеграции можно разделить.
 Устанавливайте его вместе с основным модом на клиент и сервер. Нужные интеграции
 включаются при наличии соответствующего мода; сами моды существ остаются необязательными.
 
 Основной мод сохраняет общие механизмы и публичный API и может работать без аддона.
 При этом специальные поправки для перечисленных модов будут отсутствовать.
 Сохранённые души и их идентификаторы не меняются.
-[Состав, сборка и устройство аддона](addons/compat/README.md).
+Релизные зависимости и границы проверки:
+
+| Интеграция | 1.16.5 | 1.20.1 |
+|---|---|---|
+| Mowzie's Mobs | 1.5.27, точная версия в metadata аддона | Профиль сборки: 1.8.2 и GeckoLib 4.8.3; API проверен по байткоду |
+| Twilight Forest | 4.0.870 | 4.3.2508 |
+| Aquamirae | 5.4.0 / API 11; профиль использует Obscure API 11 и GeckoLib 3.0.106 | API/байткод 6.1.2 и 6.4.0 проверены; 7.x не входит в проверенную реализацию |
+
+Это ориентиры сборки и проверки API, а не подтверждение игрового поведения каждого
+существа. Собственные библиотеки модов устанавливаются отдельно и должны подходить
+к их версии. [Подробности релиза](docs/releases/1.0.0.md) и
+[устройство аддона](addons/compat/README.md).
 
 ## Build and playtest (1.16.5)
 
@@ -387,8 +416,9 @@ python scripts/bootstrap.py
 .\scripts\gradle.ps1 runClient -PgameTests -PwithTwilightForest -PwithAquamirae
 ```
 
-See [the installation guide](docs/PLAYTEST_1.16.5.md) for the pinned mods and limitations.
-The archive includes the core and integration addon, plus Aquamirae 5.4.0,
+See [the private development playtest guide](docs/PLAYTEST_1.16.5.md) for pinned mods and limitations.
+That development archive is separate from the four project release JARs and includes
+the core and integration addon, plus Aquamirae 5.4.0,
 Obscure API 11, GeckoLib and Twilight Forest. Development launches include the addon
 automatically; `-PwithoutCompatAddon` omits it for manual isolation checks.
 The archive contains original installable dependency JARs. Development launches use
@@ -399,8 +429,10 @@ Minecraft runs on the separate Java 8 JDK. The build plugin is compile-only.
 Bootstrap installs both local JDKs and preserves project configuration. Other
 systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
-Standalone JAR: `build/1.16.5/libs/soulcatcherplus-0.2.0+1.16.5.jar`.
-Integration addon: `build/1.16.5/libs/soulcatcherplus-compat-0.2.0+1.16.5.jar`.
+Standalone JAR: `build/1.16.5/libs/soulcatcherplus-1.0.0+1.16.5.jar`.
+Integration addon: `build/1.16.5/libs/soulcatcherplus-compat-1.0.0+1.16.5.jar`.
+Release staging: `build/releases/1.0.0/{1.16.5,1.20.1}`, with four runtime JARs,
+`artifact-audit.json`, and `SHA256SUMS.txt`.
 Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-twilight-aquamirae-playtest.zip`.
 Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 
@@ -413,7 +445,7 @@ supreme cage fills to its actual increased capacity.
 The newer branch's GameTests and JUnit sources have not been ported or run.
 Mowzie's Mobs/Ice and Fire playtest flags are not configured on this branch.
 
-## API и границы прототипа
+## API и границы совместимости
 
 Публичные адаптеры, события и клиентские расширения описаны в [docs/API.md](docs/API.md).
 Доступность захвата существ задаётся datapack-файлами в `data/<namespace>/soul_profiles/`.
@@ -426,11 +458,13 @@ Mowzie's Mobs/Ice and Fire playtest flags are not configured on this branch.
 нестандартные слои, шейдеры и альтернативные рендереры требуют отдельных визуальных проверок.
 
 Пока нет прокачки, дерева улучшений косы.
-Стоимость пойманной души хранится по HP на момент захвата. Интерфейс и баланс — начальные.
+Стоимость пойманной души хранится по HP на момент захвата. Баланс и публичные
+интерфейсы могут развиваться; совместимость внешних расширений с API до 1.0 не обещается.
 
 ## Источники инструментов
 
-- [Forge MDK](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html)
+- [Forge 1.16.5](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.5.html)
+- [Forge 1.20.1](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html)
 - [Mowzie's Mobs](https://www.curseforge.com/minecraft/mc-mods/mowzies-mobs)
 - [GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib)
 - [Навык minecraft-modding](https://github.com/Jahrome907/minecraft-agent-skills/tree/main/plugins/minecraft-codex-skills/skills/minecraft-modding)

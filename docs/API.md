@@ -151,7 +151,11 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development builds use protocol **10**, adding `Action.FORGET_FORM`.
+Release 1.0.0 uses protocol **11**. Collection snapshots are sent as ordered
+`StatePart` packets of at most 32 rows, identified by a snapshot UUID, offset and
+total. The client replaces collection state only after reassembling the complete
+snapshot; a partial snapshot is never displayed. Protocol 10 added
+`Action.FORGET_FORM`.
 Protocol 9 added active cage capacity/slot to collection and wheel snapshots
 and new cage availability states; clients and
 servers must update together. Released 0.2.0 artifacts
@@ -641,6 +645,13 @@ its source is identified as a companion later. Another successful boss request
 replaces the tracked source; simply hitting the cooldown does not. No Aquamirae classes are
 required when that mod is absent. This protects the regular Cornelia encounter's
 music timer as well as the vanilla music manager.
+
+The Forge 1.20.1 addon targets the inspected Aquamirae 6.1.2/6.4.0
+`AquamiraeClient` controller instead. Its cooldown listener is registered on the
+client event bus because native ticking lives in the nested `ForgeEvents` class.
+Aquamirae 7.x uses a different implementation and is not covered by that hook.
+The 1.20.1 music-source API uses `SoundInstance` in place of the legacy `ISound`;
+addons must compile against the matching Minecraft version.
 
 ## Client rendering
 

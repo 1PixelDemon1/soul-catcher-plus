@@ -1,5 +1,7 @@
 # Проверка и упаковка
 
+> Historical development record. For the 1.0.0 release checks and their limits, see [1.0.0 validation](releases/1.0.0-validation.md).
+
 ## Релиз 0.1.0 — 25 октября 2026
 
 Выполнена свежая упаковка `.\scripts\gradle.ps1 clean build -x test` на Java 17:

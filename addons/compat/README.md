@@ -1,12 +1,15 @@
 # Soul Catcher Plus: Mod Integrations
 
-Combined development addon for Minecraft **1.16.5 / Forge 36.2.42**.
+Combined integration addon. This source tree targets Minecraft **1.16.5 / Forge 36.2.42**.
+The 1.0.0 release also has a separate **1.20.1 / Forge 47.4.28 / Java 17**
+build on `codex/forge-1.20.1`; see [release notes](../../docs/releases/1.0.0.md).
+Use only the core/addon pair matching your Minecraft version.
 Mod ID: `soulcatcherplus_compat`. Java 8 runtime; built with the same Java 17/Jabel
 toolchain as the core. This is a separate installable JAR, not a nested dependency.
 
 The addon currently contains:
 
-- Mowzie's Mobs: Wroughtnaut activation/appearance adapter, area-attack ally
+- Mowzie's Mobs 1.5.27: Wroughtnaut activation/appearance adapter, area-attack ally
   filtering and its soul profile.
 - Twilight Forest 4.0.870: Snow Queen ice-crystal spawn attribution and native
   master links for Lich clones and Lich minions.
@@ -35,8 +38,8 @@ From the repository root:
 
 Outputs under `build/1.16.5/libs`:
 
-- `soulcatcherplus-0.2.0+1.16.5.jar` — core.
-- `soulcatcherplus-compat-0.2.0+1.16.5.jar` — this addon.
+- `soulcatcherplus-1.0.0+1.16.5.jar` — core.
+- `soulcatcherplus-compat-1.0.0+1.16.5.jar` — this addon.
 
 Install both on client and server, with the chosen creature mods and their
 dependencies. The addon requires the matching core version; update the pair
