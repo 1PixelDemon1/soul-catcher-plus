@@ -23,14 +23,9 @@ def png(width, height, rows):
             + chunk(b'IDAT', image_data(rows)) + chunk(b'IEND', b''))
 
 
-def export():
-    spec = json.loads((ART / 'sprites.json').read_text(encoding='utf-8'))
-    size, body, frames = spec['size'], spec['body'], spec['frames']
-    if size != 16 or len(body) != size or any(len(row) != size for row in body):
+def soul_poses(body, frames, size):
+    if len(body) != size or any(len(row) != size for row in body):
         raise ValueError('Cage frames must be exactly 16x16')
-    if len(frames) != 4 or any(len(frame) != 3 for frame in frames):
-        raise ValueError('Expected four poses of three souls')
-
     poses = []
     for frame in frames:
         pose = [list(row) for row in body]
@@ -43,9 +38,21 @@ def export():
                 occupied.add((x, y))
                 pose[y][x] = color
         poses.append(pose)
+    return poses
+
+
+def export():
+    spec = json.loads((ART / 'sprites.json').read_text(encoding='utf-8'))
+    size, frames = spec['size'], spec['frames']
+    if size != 16:
+        raise ValueError('Cage frames must be exactly 16x16')
+    if len(frames) != 4 or any(len(frame) != 3 for frame in frames):
+        raise ValueError('Expected four poses of three souls')
 
     material_frames = []
     for material, colors in spec['materials'].items():
+        body = spec.get('bodies', {}).get(material, spec['body'])
+        poses = soul_poses(body, frames, size)
         palette = {key: tuple(bytes.fromhex(value)) for key, value in {**spec['shared'], **colors}.items()}
         rendered = [[[palette[pixel] for pixel in row] for row in pose] for pose in poses]
         material_frames.append(rendered)

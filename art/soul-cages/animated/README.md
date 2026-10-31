@@ -18,7 +18,13 @@ Animation uses Minecraft's texture atlas, without an item renderer, entity scan,
 Java tick handler or network traffic. Capacity, energy and the hand transforms
 are unchanged. Empty cages keep the same decorative animation as filled cages.
 
+The supreme cage uses a separate bone reliquary silhouette: pale jointed side
+supports, a wider crown and splayed bone feet. A white-and-pale-gold Nether Star
+ornament sits on the crown. Its transparent chamber and soul orbit use the same
+coordinates as the other tiers, so the three souls remain unobstructed.
+
 `sprites.json` is the editable pixel map, material palette and four orbit poses.
+Optional `bodies` entries override only that material's stationary vessel.
 Run `python scripts/prepare_cage_art.py` to export the runtime strips/metadata,
 the individual frames and the enlarged static/APNG previews. The exporter uses
 only the Python standard library; normal Gradle builds use committed resources.
