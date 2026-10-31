@@ -24,7 +24,9 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "9";
+    private static final String VERSION = "11";
+    // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
+    public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -44,13 +46,14 @@ public final class SoulNetwork {
             boolean mode = b.readBoolean(), group = b.readBoolean();
             UUID selected = b.readBoolean() ? b.readUUID() : null;
             int size = b.readVarInt();
-            if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid soul collection size");
+            if (size < 0 || size > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Invalid soul state part size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
                 b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
-            return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, List.copyOf(rows));
+            return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, com.google.common.collect.ImmutableList.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
+            if (rows.size() > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Soul state part too large");
             b.writeBoolean(openScreen);
             b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot);
             b.writeVarInt(activeCount); b.writeVarInt(summonLimit);
@@ -62,7 +65,21 @@ public final class SoulNetwork {
                 b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE }
+    public record StatePart(UUID snapshot, int offset, int total, State state) {
+        static StatePart read(FriendlyByteBuf b) {
+            UUID snapshot = b.readUUID();
+            int offset = b.readVarInt(), total = b.readVarInt();
+            State state = State.read(b);
+            if (total < 0 || total > PlayerSouls.MAX_ENTRIES || offset < 0 || offset > total
+                    || offset + state.rows().size() > total || (total > 0 && state.rows().isEmpty()))
+                throw new IllegalArgumentException("Invalid soul snapshot bounds");
+            return new StatePart(snapshot, offset, total, state);
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeUUID(snapshot); b.writeVarInt(offset); b.writeVarInt(total); state.write(b);
+        }
+    }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM }
     public record Request(Action action, UUID entry) {
         static Request read(FriendlyByteBuf b) {
             return new Request(b.readEnum(Action.class), b.readBoolean() ? b.readUUID() : null);
@@ -89,7 +106,7 @@ public final class SoulNetwork {
             List<Companion> companions = new ArrayList<>();
             for (int i = 0; i < size; i++) companions.add(new Companion(b.readUUID(), b.readUtf(256),
                 b.readFloat(), b.readFloat(), b.readUtf(16), b.readBoolean()));
-            return new WheelState(energy, cageCapacity, cageSlot, List.copyOf(companions));
+            return new WheelState(energy, cageCapacity, cageSlot, com.google.common.collect.ImmutableList.copyOf(companions));
         }
         void write(FriendlyByteBuf b) {
             b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot); b.writeVarInt(companions.size());
@@ -130,7 +147,7 @@ public final class SoulNetwork {
         }
     }
     public static void register() {
-        CHANNEL.registerMessage(0, State.class, State::write, State::read, SoulNetwork::state,
+        CHANNEL.registerMessage(0, StatePart.class, StatePart::write, StatePart::read, SoulNetwork::state,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(1, Request.class, Request::write, Request::read, SoulNetwork::request,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
@@ -160,10 +177,15 @@ public final class SoulNetwork {
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
                 availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
-        }).toList();
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-            new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
-                data.commandMode, data.commandGroup, data.selected, rows));
+        }).collect(com.google.common.collect.ImmutableList.toImmutableList());
+        UUID snapshot = UUID.randomUUID();
+        // Always send one part, including an empty collection. Clients apply only a complete snapshot.
+        for (int offset = 0; offset < Math.max(1, rows.size()); offset += STATE_ROWS_PER_PART) {
+            State part = new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
+                data.commandMode, data.commandGroup, data.selected,
+                com.google.common.collect.ImmutableList.copyOf(rows.subList(offset, Math.min(rows.size(), offset + STATE_ROWS_PER_PART))));
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new StatePart(snapshot, offset, rows.size(), part));
+        }
     }
     public static void ghost(ServerPlayer player, Entity entity) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
@@ -196,7 +218,8 @@ public final class SoulNetwork {
             if (rate.action != 0 && now - rate.action < 0) return;
             rate.action = now + 100_000_000L;
             PlayerSouls data = SoulService.data(player);
-            if (packet.action != Action.TOGGLE_FAVORITE && data.entries.containsKey(packet.entry)) data.selected = packet.entry;
+            if (packet.action != Action.TOGGLE_FAVORITE && packet.action != Action.FORGET_FORM
+                    && data.entries.containsKey(packet.entry)) data.selected = packet.entry;
             switch (packet.action) {
                 case SELECT -> { if (data.entries.containsKey(packet.entry)) data.selected = packet.entry; }
                 case SUMMON -> { if (packet.entry != null) SoulService.summon(player, packet.entry); }
@@ -209,6 +232,7 @@ public final class SoulNetwork {
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
+                case FORGET_FORM -> SoulService.forgetForm(player, packet.entry);
                 case OPEN -> { open(player); return; }
                 case REFRESH -> { return; }
             }
@@ -217,10 +241,10 @@ public final class SoulNetwork {
         });
         context.setPacketHandled(true);
     }
-    private static void state(State packet, Supplier<NetworkEvent.Context> supplier) {
+    private static void state(StatePart packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-            () -> () -> dev.soulcatcherplus.client.ClientPackets.open(packet)));
+            () -> () -> dev.soulcatcherplus.client.ClientPackets.statePart(packet)));
         context.setPacketHandled(true);
     }
     private static void sendWheelState(ServerPlayer player) {
@@ -231,7 +255,7 @@ public final class SoulNetwork {
             boolean loaded = mob != null && Float.isFinite(mob.getHealth()) && Float.isFinite(mob.getMaxHealth());
             return new Companion(entry.id, abbreviate(entry.name), loaded ? Math.max(0, mob.getHealth()) : 0,
                 loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? CompanionBrain.mode(mob).name() : "", loaded);
-        }).toList();
+        }).collect(com.google.common.collect.ImmutableList.toImmutableList());
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WheelState(cage.energy(), cage.capacity(), cage.slot(), companions));
     }
     private static void wheelRequest(WheelRequest packet, Supplier<NetworkEvent.Context> supplier) {
@@ -302,9 +326,9 @@ public final class SoulNetwork {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 NbtIo.write(visual, new DataOutputStream(bytes));
                 if (bytes.size() <= MAX_PREVIEW_BYTES) appearance = visual;
-                else com.mojang.logging.LogUtils.getLogger().warn("Soul preview data too large for {}", entry.entityType);
+                else org.apache.logging.log4j.LogManager.getLogger().warn("Soul preview data too large for {}", entry.entityType);
             } catch (RuntimeException | IOException error) {
-                com.mojang.logging.LogUtils.getLogger().warn("Unable to prepare soul preview for {}", entry.entityType, error);
+                org.apache.logging.log4j.LogManager.getLogger().warn("Unable to prepare soul preview for {}", entry.entityType, error);
             }
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Preview(entry.id, entry.entityType, appearance));
         });

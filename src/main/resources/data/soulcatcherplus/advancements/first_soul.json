@@ -1,0 +1,28 @@
+{
+  "parent": "soulcatcherplus:root",
+  "display": {
+    "icon": {
+      "item": "soulcatcherplus:soul_scythe"
+    },
+    "title": {
+      "translate": "advancements.soulcatcherplus.first_soul.title"
+    },
+    "description": {
+      "translate": "advancements.soulcatcherplus.first_soul.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "complete": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "complete"
+    ]
+  ]
+}

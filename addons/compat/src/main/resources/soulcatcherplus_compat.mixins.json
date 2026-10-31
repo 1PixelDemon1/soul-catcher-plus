@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.soulcatcherplus.addon.compat.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "MowzieAreaTargetsMixin"
+  ],
+  "client": [
+    "client.AquamiraeCompanionMusicMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

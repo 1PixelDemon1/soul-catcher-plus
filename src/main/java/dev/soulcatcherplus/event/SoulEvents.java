@@ -6,6 +6,7 @@ import dev.soulcatcherplus.api.*;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.entity.SoulRemnant;
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
@@ -14,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.*;
@@ -54,7 +56,7 @@ public final class SoulEvents {
         ServerPlayer player = creditedPlayer(event.getSource().getEntity());
         if (player == null) return;
         SoulProfiles.Profile profile = SoulProfiles.get(mob);
-        SoulCages.credit(player, profile.energy());
+        SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
         CompoundTag tag = mob.getPersistentData();
         long now = player.server.overworld().getGameTime();
         if (!tag.hasUUID("scp_mark_owner") || !tag.getUUID("scp_mark_owner").equals(player.getUUID())
@@ -77,15 +79,20 @@ public final class SoulEvents {
     @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || mob.level.isClientSide) return;
         if (mob.tickCount % 5 == 0) SoulMinions.tryInherit(mob);
-        if (CompanionBrain.isSoul(mob)) CompanionBrain.tick(mob);
+        if (SoulMinions.isMinion(mob)) {
+            if (!SoulMinions.tick(mob)) event.setCanceled(true);
+        } else if (CompanionBrain.isSoul(mob)) CompanionBrain.tick(mob);
         else if (mob.tickCount % 10 == 0 && mob.getPersistentData().hasUUID("scp_mark_owner")
                 && mob.getPersistentData().getLong("scp_mark_until") >= mob.getServer().overworld().getGameTime())
             ((net.minecraft.server.level.ServerLevel) mob.level).sendParticles(ParticleTypes.SOUL,
                 mob.getX(), mob.getY() + mob.getBbHeight() + 0.2, mob.getZ(), 1, 0.1, 0.05, 0.1, 0);
     }
+    @SubscribeEvent public static void constructing(EntityEvent.EntityConstructing event) {
+        SoulSpawnContext.constructed(event.getEntity());
+    }
     @SubscribeEvent public static void join(EntityJoinLevelEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || event.getLevel().isClientSide) return;
-        SoulMinions.tryInherit(mob);
+        SoulMinions.inheritOnJoin(mob, event.loadedFromDisk());
         if (!CompanionBrain.isSoul(mob)) return;
         if (CompanionBrain.activeEntry(mob) == null) { event.setCanceled(true); return; }
         if (SoulMinions.isMinion(mob)) SoulMinions.configure(mob);

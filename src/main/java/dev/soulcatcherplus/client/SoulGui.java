@@ -17,6 +17,15 @@ final class SoulGui extends GuiComponent {
     MultiBufferSource.BufferSource bufferSource() { return Minecraft.getInstance().renderBuffers().bufferSource(); }
     void flush() { bufferSource().endBatch(); }
 
+    void beginClip(int left, int top, int right, int bottom) {
+        flush();
+        var window = Minecraft.getInstance().getWindow();
+        double scale = window.getGuiScale();
+        com.mojang.blaze3d.systems.RenderSystem.enableScissor((int)(left * scale),
+            (int)(window.getHeight() - bottom * scale), (int)((right - left) * scale), (int)((bottom - top) * scale));
+    }
+    void endClip() { flush(); com.mojang.blaze3d.systems.RenderSystem.disableScissor(); }
+
     void fill(int x1, int y1, int x2, int y2, int color) {
         GuiComponent.fill(pose, x1, y1, x2, y2, color);
     }

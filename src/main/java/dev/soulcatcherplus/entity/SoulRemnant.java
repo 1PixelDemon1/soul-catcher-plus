@@ -4,6 +4,7 @@ package dev.soulcatcherplus.entity;
 import dev.soulcatcherplus.companion.SoulService;
 import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.*;
+import dev.soulcatcherplus.advancement.SoulAdvancements;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.*;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.*;
@@ -28,7 +30,7 @@ public final class SoulRemnant extends Entity {
         Appearance(String id) { this.id = id; }
         public String id() { return id; }
         private static Appearance forHealth(double maxHealth) {
-            if (maxHealth >= 150) return SKULL;
+            if (SoulBalance.isBossSoul(maxHealth)) return SKULL;
             int energy = SoulBalance.victoryEnergy(maxHealth);
             return energy < 20 ? SMALL : energy <= 40 ? MEDIUM : LARGE;
         }
@@ -81,6 +83,7 @@ public final class SoulRemnant extends Entity {
                 SoulService.message(server, "duplicate");
             }
             SoulService.changed(server);
+            SoulAdvancements.captured(server, soul.maxHealth);
             discard();
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

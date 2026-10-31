@@ -1,6 +1,7 @@
 .gradle/
 .gradle-user-home/
 .tools/
+.worktrees/
 build/
 run/
 run-client/

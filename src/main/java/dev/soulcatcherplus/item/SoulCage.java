@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.item;
 
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -15,12 +15,15 @@ public final class SoulCage extends Item {
     private final int capacity;
 
     public SoulCage(int capacity, Properties properties) {
-        super(properties.stacksTo(1).tab(CreativeModeTab.TAB_COMBAT));
+        super(properties.stacksTo(1));
         if (capacity < 1) throw new IllegalArgumentException("Soul cage capacity must be positive");
         this.capacity = capacity;
     }
     public static int capacity(ItemStack stack) {
-        return stack.getItem() instanceof SoulCage cage ? cage.capacity : 0;
+        if (!(stack.getItem() instanceof SoulCage cage)) return 0;
+        int level = SoulEnchantments.level(stack, SoulEnchantments.SOUL_CAPACITY.get());
+        // Each level adds one third of the base capacity, rounding down only once.
+        return (int)Math.min(Integer.MAX_VALUE, (long)cage.capacity * (3 + level) / 3);
     }
     public static int energy(ItemStack stack) {
         return stack.hasTag() ? Math.max(0, Math.min(capacity(stack), stack.getTag().getInt(ENERGY))) : 0;
@@ -34,9 +37,11 @@ public final class SoulCage extends Item {
         return stored;
     }
     @Override public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity));
+        tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity(stack)));
     }
+    @Override public boolean isEnchantable(ItemStack stack) { return stack.getCount() == 1; }
+    @Override public int getEnchantmentValue() { return 10; }
     @Override public boolean isBarVisible(ItemStack stack) { return energy(stack) > 0; }
-    @Override public int getBarWidth(ItemStack stack) { return Math.round(13f * energy(stack) / capacity); }
+    @Override public int getBarWidth(ItemStack stack) { return Math.round(13f * energy(stack) / capacity(stack)); }
     @Override public int getBarColor(ItemStack stack) { return 0x26D9ED; }
 }

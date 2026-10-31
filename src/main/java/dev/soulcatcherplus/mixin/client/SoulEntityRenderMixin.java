@@ -23,7 +23,7 @@ public abstract class SoulEntityRenderMixin {
         if (SoulVisuals.hideDepartingSoul(entity)) callback.cancel();
     }
 
-    // Official development and verified Forge 1.19.2 SRG names. Exactly one must match.
+    // Official development and verified Forge 1.20.1 SRG names. Exactly one must match.
     // Only the model-render call is wrapped; dispatcher fire, shadows and hitboxes keep their source.
     @Group(name = "soulcatcherplus$modelBuffers", min = 1, max = 1)
     @ModifyArg(method = {"render", "m_114384_"}, at = @At(value = "INVOKE",

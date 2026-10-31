@@ -1,0 +1,66 @@
+{
+  "size": 16,
+  "frametime": 5,
+  "body": [
+    "......jiji......",
+    ".....ji..ij.....",
+    "....ji....ij....",
+    "....ij....ji....",
+    ".....j....i.....",
+    ".....ohhmmo.....",
+    ".....ommmmo.....",
+    "....gbbbbbbg....",
+    "....pbbbbbbg....",
+    "....pbbbbbbg....",
+    "....gbbbbbbg....",
+    "....gbbbbbbg....",
+    ".....ommmmo.....",
+    "......ommo......",
+    ".....ohhmmo.....",
+    "................"
+  ],
+  "shared": {
+    ".": "00000000",
+    "i": "384753FF",
+    "j": "A7B7C3FF",
+    "g": "5B8393FF",
+    "p": "B6D9E0FF",
+    "b": "00000000",
+    "t": "107E9DFF",
+    "A": "B7F0F1FF",
+    "B": "5CCBDBFF",
+    "C": "26A3BDFF"
+  },
+  "materials": {
+    "iron": {"o": "26313BFF", "m": "7C8B94FF", "h": "C0CCD2FF"},
+    "diamond": {"o": "173D49FF", "m": "187E8BFF", "h": "66BBC3FF"},
+    "netherite": {"o": "25212CFF", "m": "4E4654FF", "h": "8C7E93FF"},
+    "supreme": {"o": "5E5861FF", "m": "B7AB94FF", "h": "ECE4D1FF", "n": "E8D28AFF", "s": "FAFFF1FF"}
+  },
+  "bodies": {
+    "supreme": [
+      "......jiji......",
+      ".....ji..ij.....",
+      "....ji....ij....",
+      "....ij....ji....",
+      ".....j.onoi.....",
+      "....ohonsnoo....",
+      ".....hmonoh.....",
+      "....hbbbbbbh....",
+      "...hhbbbbbbhh...",
+      "....mbbbbbbm....",
+      "...hhbbbbbbhh...",
+      "....hbbbbbbh....",
+      "....ohhmmhho....",
+      ".....hm..mh.....",
+      "....hhm..mhh....",
+      "................"
+    ]
+  },
+  "frames": [
+    [{"head": [9, 7], "body": [9, 8], "tail": [8, 7]}, {"head": [9, 11], "body": [9, 10], "tail": [10, 10]}, {"head": [5, 8], "body": [6, 8], "tail": [5, 9]}],
+    [{"head": [10, 10], "body": [9, 10], "tail": [10, 9]}, {"head": [5, 10], "body": [5, 11], "tail": [6, 11]}, {"head": [8, 7], "body": [8, 8], "tail": [7, 7]}],
+    [{"head": [6, 11], "body": [6, 10], "tail": [7, 11]}, {"head": [6, 7], "body": [6, 8], "tail": [5, 8]}, {"head": [10, 10], "body": [9, 10], "tail": [10, 9]}],
+    [{"head": [5, 8], "body": [6, 8], "tail": [5, 9]}, {"head": [10, 8], "body": [10, 7], "tail": [9, 7]}, {"head": [8, 11], "body": [8, 10], "tail": [9, 11]}]
+  ]
+}

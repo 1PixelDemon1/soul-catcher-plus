@@ -3,11 +3,12 @@ package dev.soulcatcherplus.item;
 
 import net.minecraft.world.item.Tiers;
 
-/** Player base attack speed is 4; modifiers produce 0.7/0.8/0.8 attacks per second. */
+/** Player base attack speed is 4; iron attacks at 0.7/s, higher tiers at 0.8/s. */
 public enum ScytheTier {
     IRON(Tiers.IRON, 5, -3.3f, 1),
     DIAMOND(Tiers.DIAMOND, 4, -3.2f, 2),
-    NETHERITE(Tiers.NETHERITE, 4, -3.2f, 3);
+    NETHERITE(Tiers.NETHERITE, 4, -3.2f, 3),
+    SUPREME(Tiers.NETHERITE, 5, -3.2f, 4);
 
     final Tiers material;
     final int damageModifier;

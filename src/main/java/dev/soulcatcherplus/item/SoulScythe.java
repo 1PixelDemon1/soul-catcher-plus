@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.item;
 
+import dev.soulcatcherplus.SoulCatcherPlus;
+
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
@@ -14,15 +16,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 
+/** Inherits vanilla sword enchantment eligibility and material enchantability. */
 public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(CreativeModeTab.TAB_COMBAT).fireResistant()
-                : new Item.Properties().tab(CreativeModeTab.TAB_COMBAT));
+            tier.material == Tiers.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
+    @Override public boolean isValidRepairItem(ItemStack stack, ItemStack ingredient) {
+        return scytheTier == ScytheTier.SUPREME ? ingredient.getItem() == Items.BONE : super.isValidRepairItem(stack, ingredient);
+    }
     /** Main-hand scythes take precedence; another weapon does not revoke existing summons. */
     public static SoulScythe heldBy(Player player) {
         if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;
