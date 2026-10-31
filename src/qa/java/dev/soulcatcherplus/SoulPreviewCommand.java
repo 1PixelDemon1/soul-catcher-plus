@@ -4,7 +4,6 @@ package dev.soulcatcherplus;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.SoulService;
-import dev.soulcatcherplus.companion.SoulCages;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.item.SoulCage;
 import java.util.*;
@@ -19,7 +18,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.item.DyeColor;
@@ -84,10 +82,6 @@ public final class SoulPreviewCommand {
             return 0;
         }
         replaceItem(player, player.inventory.selected, new ItemStack(SoulCatcherPlus.SUPREME_SCYTHE.get()));
-        for (var item : com.google.common.collect.ImmutableList.of(SoulCatcherPlus.IRON_SCYTHE, SoulCatcherPlus.DIAMOND_SCYTHE, SoulCatcherPlus.NETHERITE_SCYTHE)) {
-            ItemStack stack = new ItemStack(item.get());
-            if (!player.inventory.contains(stack)) player.inventory.placeItemBackInInventory(player.level, stack);
-        }
         prepareCage(player);
         SoulService.changed(player);
         if (all) {
@@ -116,7 +110,9 @@ public final class SoulPreviewCommand {
         if (slot < 0) slot = (player.inventory.selected + 1) % 9;
         if (player.inventory.getItem(slot).getItem() != SoulCatcherPlus.SUPREME_CAGE.get())
             replaceItem(player, slot, new ItemStack(SoulCatcherPlus.SUPREME_CAGE.get()));
-        SoulCages.set(player, 1000);
+        ItemStack cage = player.inventory.getItem(slot);
+        SoulCage.setEnergy(cage, SoulCage.capacity(cage));
+        player.inventory.setChanged();
     }
     private static void replaceItem(ServerPlayerEntity player, int slot, ItemStack replacement) {
         ItemStack previous = player.inventory.getItem(slot);

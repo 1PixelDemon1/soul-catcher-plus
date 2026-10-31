@@ -384,9 +384,9 @@ public final class SoulScreen extends Screen {
         renderCards(g, localX(mouseX), localY(mouseY), partialTick);
         if (searchBox.getValue().isEmpty() && !searchBox.isFocused())
             g.drawString(font, text("search_hint"), 32, 94, SoulTheme.MUTED, false);
-        ITextComponent hint = text("preview_controls");
+        ITextComponent hint = null;
         for (SoulButton button : controls) if ((button.isHovered() || button.isFocused()) && !button.hint().getString().isEmpty()) hint = button.hint();
-        g.drawWordWrap(font, hint, 185, 312, 239, SoulTheme.MUTED);
+        if (hint != null) g.drawWordWrap(font, hint, 185, 312, 239, SoulTheme.MUTED);
         g.pose().popPose();
     }
     private void metric(SoulGui g, int x, int width, ITextComponent label, String value, int accent) {

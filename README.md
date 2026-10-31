@@ -372,6 +372,9 @@ Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay se
 `-PgameTests` retains the familiar flag for the manual QA command, compiled from
 `src/qa/java` only. `/soulcatcherqa --all` adds one base appearance of each allowed
 Mob type; it does not enumerate all variants. Ordinary JARs exclude QA sources.
+Both forms of `/soulcatcherqa` give only the supreme scythe and a full supreme cage
+(normally 2000 energy). Existing inventory items are preserved; a reused enchanted
+supreme cage fills to its actual increased capacity.
 The newer branch's GameTests and JUnit sources have not been ported or run.
 Mowzie's Mobs/Ice and Fire playtest flags are not configured on this branch.
 

@@ -529,8 +529,11 @@ capture does not delete collected souls. Avoid multiple profile files targeting 
 
 The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
 `--all`. The bare command keeps its sample species and two sheep colors; both
-forms grant all four scythes, with the supreme scythe held, and put a supreme cage with 1000 energy
+forms grant only the supreme scythe, held in the main hand, and a full supreme cage
 in the offhand if a cage is already there, otherwise before other hotbar cages.
+The issued/reused cage is filled to `SoulCage.capacity(stack)`: 2000 normally,
+or its enchantment-adjusted limit if an existing enchanted supreme cage is reused.
+Other scythe tiers are no longer issued; existing inventory items are retained.
 Displaced items return to inventory or drop
 if it is full. The command does not silently delete an existing cage.
 
