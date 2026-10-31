@@ -1,7 +1,28 @@
 # Soul Catcher Plus API — 0.1 (experimental)
 
-Target: Minecraft 1.20.1, Forge 47.4.28, Java 17. API stability is not yet guaranteed.
+Primary target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (`develop`). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
+
+## Integration addon packaging
+
+Mod-specific implementations live in the separate **Soul Catcher Plus: Mod
+Integrations** addon (`soulcatcherplus_compat`), under `addons/compat`. It currently
+combines Mowzie's Mobs, Twilight Forest and Aquamirae corrections in one installable
+JAR. The core does not register those adapters, declare those optional mods, or
+load their mixins. Generic fallback behavior and extension APIs remain in the core.
+
+The `compat` source set compiles against core output. `compatJar` packages only
+addon output and its own `META-INF/mods.toml` and Mixin configuration;
+`reobfCompatJar` produces the installable 1.16.5 artifact. `build` assembles both
+JARs; `playtestZip` includes both. The addon requires the matching core version
+on client and server; it does not bundle core classes or third-party dependencies.
+Dev launches load both source sets unless `-PwithoutCompatAddon` is supplied.
+
+Adapters still use the public registration API below. Missing creature mods do
+not register adapters; absent optional Mixin targets are skipped with `@Pseudo`.
+Moving these implementations changes no registry IDs, packet protocol or saved
+ownership/collection fields. Future per-mod addons must coordinate registration:
+the registry rejects a second adapter for the same entity ID.
 
 ## Entity adapters
 
@@ -10,7 +31,7 @@ Register exactly one adapter per entity ID during `FMLCommonSetupEvent.enqueueWo
 ```java
 SoulAdapters.register(new ResourceLocation("yourmod", "your_mob"), new SoulAdapter() {
     @Override
-    public void prepareSummon(Mob mob, ServerPlayer owner) {
+    public void prepareSummon(MobEntity mob, ServerPlayerEntity owner) {
         mob.clearRestriction();
         // Reset your arena/encounter state here; keep native combat behavior.
     }
@@ -78,7 +99,7 @@ encounter event** even when it is referenced by an instance field:
 
 ```java
 @Override
-public Collection<ServerBossEvent> bossBars(Mob mob) {
+public Collection<ServerBossEvent> bossBars(MobEntity mob) {
     return List.of(myEntityOwnedEvent(mob));
     // Return List.of() when this mob only references a shared encounter bar.
 }
@@ -97,12 +118,6 @@ base packet/visibility implementation, require their own compatibility hook.
 Generic suppression is not a guarantee for every mod's overlay.
 
 ## Collection model previews
-
-The O archive uses a clipped, virtualized species list with pixel scrolling and a
-draggable scrollbar. Only visible cards are registered; search keeps its widget
-and keyboard focus while rebuilding cards. Search changes reset the scroll offset;
-ordinary server refreshes preserve it. PgUp/PgDown and Home/End scroll when the
-archive or one of its cards has keyboard focus. Wheel R pagination is unchanged.
 
 `previewData(snapshot)` returns a small NBT compound containing client-safe visual
 state. The default implementation includes common appearance keys and visible
@@ -136,8 +151,13 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
-Current development builds use protocol **9**, adding active cage capacity/slot
-to collection and wheel snapshots and new cage availability states; clients and
+Release 1.0.0 uses protocol **11**. Collection snapshots are sent as ordered
+`StatePart` packets of at most 32 rows, identified by a snapshot UUID, offset and
+total. The client replaces collection state only after reassembling the complete
+snapshot; a partial snapshot is never displayed. Protocol 10 added
+`Action.FORGET_FORM`.
+Protocol 9 added active cage capacity/slot to collection and wheel snapshots
+and new cage availability states; clients and
 servers must update together. Released 0.2.0 artifacts
 use protocol 6, and released 0.1.0 artifacts remain on protocol 4.
 
@@ -179,10 +199,30 @@ a stable favorites-first sort of species cards, preserving capture order within
 each tier. A separate keyboard-accessible star button toggles the flag without
 selecting the card. This ordering applies to the collection screen only.
 
+### Removing captured forms and health grades
+
+The preview pane's **Remove form** button opens a confirmation screen for the
+selected entry UUID, including its form index. Confirming sends `FORGET_FORM`;
+cancelling or Escape returns to the collection without changing it. The confirmation
+uses native `ConfirmScreen` text wrapping and a 20-client-tick button delay.
+
+`SoulService.forgetForm(player, id)` requires a held scythe and resolves the UUID
+only in that player's ledger. It recalls that entry through the normal callback,
+dissolve, inherited-minion cleanup and loaded-companion refund path before removing
+it. Other forms and active companions are unaffected. `PlayerSouls.forget(id)`
+repairs a removed selection and drops a species' favorite flag only when its last
+form disappears. Existing saved-data fields are unchanged. A removed form can be
+captured again; an unloaded recalled companion is discarded when it next loads.
+
+`SoulBalance.isBossSoul(maxHealth)` shares the >=150 maximum-health rule between
+skull remnants and purple collection styling. A species card and preview header are
+purple if any of its captured forms qualifies. This is a health grade, independent
+of mod-specific boss detection; it uses existing `Row.maxHealth` snapshot data.
+
 ## Key-bound collection and command wheel
 
 Client-only `ClientControls` registers remappable defaults O (collection) and held R
-(wheel) through Forge's `RegisterKeyMappingsEvent`. Both menus require a soul scythe
+(wheel) through Forge's `FMLClientSetupEvent` and `ClientRegistry`. Both menus require a soul scythe
 of any tier in the main hand or offhand to open. Key presses without one are consumed
 without opening a screen or sending an open request. The client rechecks this rule
 when a collection reply arrives, and the server rejects opens without a held scythe.
@@ -223,11 +263,21 @@ added there as well. Direct target attacks remain scythe interactions.
 
 ### Aggressive follow
 
-`CompanionBrain.Mode.AGGRESSIVE` uses normal owner following and return teleportation
-when idle. Every five ticks, it may acquire the nearest visible, attackable hostile
-Mob within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
+`CompanionBrain.Mode.AGGRESSIVE` uses normal owner following. Every five ticks,
+it may acquire the nearest visible, attackable hostile
+MobEntity within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
 the companion abandons combat and returns; a target beyond that owner radius is
-also dropped. Existing WAIT, GUARD and reactive FOLLOW rules are unchanged.
+also dropped. WAIT and GUARD keep their stationary behavior.
+
+Both FOLLOW and AGGRESSIVE enforce the 24-block owner leash directly in the
+five-tick server brain update, independently of the goal selector or current
+attack target. Outside that radius, the brain clears the target, stops navigation
+and tries to teleport near the owner instead of acquiring another target in the
+same update. Native higher-priority attack goals cannot block this return.
+The existing search checks up to 12 loaded positions within four blocks of the
+owner in X/Z, at the owner's block Y, requiring solid support and space for the
+companion's bounding box. An unsuccessful search retries on the next brain
+update without loading chunks. FOLLOW retains reactive combat inside the leash.
 
 `SoulAdapters.get(candidate).isHostile(candidate, owner)` classifies automatic
 targets. Its default recognizes `Enemy`, `MobCategory.MONSTER` or a mob currently
@@ -240,27 +290,27 @@ root companion's chosen target rather than running their own target search.
 
 ## Summoned minions
 
-`SoulMinions` discovers Mob descendants through `SoulAdapter.summoner(mob)`. Its
-default follows `TraceableEntity.getOwner()` and `OwnableEntity` ownership. Because
-the default `OwnableEntity.getOwner()` resolves players only, a null result also
-tries the owner UUID among loaded entities in the same server level. Discovery
+`SoulMinions` discovers MobEntity descendants through `SoulAdapter.summoner(mob)`. Its
+default uses native Vex, projectile, evoker-fangs, area-effect-cloud and TNT owners,
+plus tameable-animal and horse owner UUIDs. UUID lookup stays within loaded entities
+in the same server world; custom creator relationships use the adapter API. Discovery
 requires a chain reaching a marked companion; player-owned pets and unrelated
 nearby mobs are not adopted. Traversal stops on cycles, dimension boundaries or
 after 32 creators. The standard path uses no reflection, proximity guessing or
 chunk loading; optional integrations may expose explicit native owner links.
 
 For ownerless synchronous summons, the creator's adapter may opt in with
-`inheritsTickSpawn(Mob summoner, EntityType<?> childType)`. It defaults to false:
+`inheritsTickSpawn(MobEntity summoner, EntityType<?> childType)`. It defaults to false:
 execution nesting alone does not prove ownership (damage/death callbacks can
 create another mob's children). Approve only known child types. The callback runs
 during the child's base constructor and receives its type, never a partially
-initialized Mob to inspect or modify.
+initialized MobEntity to inspect or modify.
 
 `SoulSpawnContext` brackets the server's native `tick` and `rideTick` calls in
 try/finally, preserving nested sources and masking outer sources during ordinary
 entity ticks. The construction event records weak child/creator references only
 for adapter-approved types created by a companion with a canonical reservation.
-The join event consumes that record, including on rejected joins and disk loads.
+The load hook clears construction provenance; the join event consumes any remaining record, including rejected joins.
 Only a fresh join may use the construction fallback, and an explicitly resolved
 creator takes precedence even if it belongs to somebody else. An entity constructed
 outside the scope and inserted later is not adopted merely due to insertion timing.
@@ -292,9 +342,10 @@ loaded root, then calls `restoreSummoner(minion, root)`. The default restores Ve
 owner/idle origin; override it to repair native owner references before AI can
 search for a different master or self-destruct. Keep it cheap and idempotent,
 write only changed state and do not load chunks. When the root is valid but
-unloaded, the child's LivingTickEvent is canceled: native AI, movement and lifetime
-timers pause until the root is available. The external server tick counter still
-advances. The root link survives disk reload even though vanilla Vex does not
+unloaded, the child's LivingUpdateEvent is canceled, pausing the base living tick
+and its AI/movement. Subclass code outside `super.tick()` is not paused: vanilla
+Vex lifespan still decreases there. The external server tick counter also advances.
+The root link survives disk reload even though vanilla Vex does not
 save its own owner reference. Target inheritance, boss-bar rediscovery and the
 existing `tickMinion` callback retain their five-tick cadence.
 An old, unmarked Vex loaded from a save that already lost its native owner cannot
@@ -311,7 +362,7 @@ For a custom child type, extend its adapter's creator resolver:
 
 ```java
 @Override
-public Entity summoner(Mob mob) {
+public Entity summoner(MobEntity mob) {
     return ((TheirMinion) mob).getCaster(); // Integration owns this dependency.
 }
 ```
@@ -332,14 +383,14 @@ For a known synchronous child type, opt in on the **creator's** adapter:
 
 ```java
 @Override
-public boolean inheritsTickSpawn(Mob summoner, EntityType<?> childType) {
+public boolean inheritsTickSpawn(MobEntity summoner, EntityType<?> childType) {
     return childType == THEIR_SUMMONED_TYPE.get();
 }
 ```
 
-The optional Twilight Forest 4.3.2508 bridge enables this for Snow Queen's
+The integration addon's optional Twilight Forest 4.0.870 bridge enables this for Snow Queen's
 `ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
-`lich_minion` exposes a public `master` field. These members are discovered once
+`lich_minion` exposes a package-private `master` field (cached reflective access). These members are discovered once
 at common setup, without a compile-time Twilight dependency. The adapters restore
 the saved root into those native links before AI runs after reload. Older unmarked
 ownerless crystals have no reliable provenance and are not adopted retroactively.
@@ -398,7 +449,11 @@ is intentionally not transferred; ownership, selection, active identity, snapsho
 and cooldowns are retained.
 `PlayerSouls.activeCount()` replaces weighted slot accounting.
 
-`SoulScythe.summonLimit()` is 1 / 2 / 3 for iron / diamond / netherite.
+`SoulScythe.summonLimit()` is 1 / 2 / 3 / 4 for iron / diamond / netherite / supreme.
+The supreme scythe deals 10 total base player attack damage (one more than netherite),
+at 0.8 attacks/second. It uses netherite durability/enchantability and fire resistance,
+but accepts bones as its anvil repair ingredient. Its shaped recipe uses two bones,
+one Nether Star and two sticks, in the same layout as the iron/diamond scythes.
 `SoulScythe.heldBy(player)` chooses the main-hand scythe first, then the offhand.
 `SummonRules` supplies one availability decision to server summoning and UI state.
 Existing companions remain when the held limit decreases or no scythe is held;
@@ -409,6 +464,66 @@ energy is stored exclusively in cage item stacks.
 
 The legacy `soulcatcherplus:soul_scythe` registry ID and `SCYTHE` field alias refer
 to the iron tier. New registry IDs are `diamond_soul_scythe` and `netherite_soul_scythe`.
+
+## Soul Slot and enchanted-book loot
+
+`SoulEnchantments.SOUL_SLOT` registers `soulcatcherplus:soul_slot`, level I only,
+with `EnchantmentType.ARMOR` and `Rarity.RARE`. Its min/max enchanting-power costs
+delegate to vanilla `MOB_LOOTING` at level II (24–71 in this mapped 1.16.5 build).
+It is discoverable, tradeable, book-compatible and not treasure-only, like the
+other two soul enchantments; their existing rarity and costs are unchanged.
+
+`SoulEnchantments.additionalSlots(player)` sums the clamped Soul Slot level on
+the four worn `ArmorItem` stacks only. `SoulService.summonLimit(player)` adds it to
+the held scythe's base limit, or keeps the limit zero when no scythe is held. The
+existing shared availability path supplies both server validation and the menu's
+total limit. No packet fields, protocol version or saved-data format change.
+Removing enchanted armor retains current summons, like switching to a weaker
+scythe; the new limit governs subsequent summons. Item tooltips label the base
+limit, not the armor-adjusted total.
+
+Native random-enchantment book functions can choose all three discoverable
+registered soul enchantments. No global loot modifier, custom chest table or
+additional drop chance is installed. Existing loot tables keep their original
+book counts and probabilities. Tables with an explicit enchantment list retain
+that restriction; not every chest necessarily offers enchanted books.
+
+## Advancements
+
+Five native 1.16.5 advancement resources live under
+`data/soulcatcherplus/advancements`. Titles/descriptions are localized in RU/EN.
+
+| ID (namespace `soulcatcherplus`) | Completion |
+| --- | --- |
+| `root` | Vanilla `minecraft:tick`, completed after entering a world |
+| `first_soul` | Server-confirmed remnant collection |
+| `supreme_equipment` | Two ANDed `minecraft:inventory_changed` criteria for supreme cage and scythe |
+| `boss_soul` | Remnant collection with `SoulBalance.isBossSoul(maxHealth)` |
+| `soul_master` | Equipment grants at least 8 companion slots |
+
+The last two have `challenge` frames; supreme equipment has a `goal` frame.
+The root owns the tab's stone background and medium-soul icon, shows a toast,
+and does not announce entry to chat. Other milestones use standard toasts/chat
+announcements. There are no custom XP/item rewards or packets.
+
+`SoulAdvancements.captured` is called in `SoulRemnant.interact` only after owner,
+distance, cage and collection-limit validation. Both new appearances and accepted
+duplicate captures qualify. Merely marking/killing, uncollected remnants and QA
+ledger population do not award the two capture milestones. Existing ledger entries
+are not scanned for retroactive completion; collecting a soul again qualifies.
+
+`SoulAdvancements` checks the slot challenge on server login and native equipment
+changes (including held hotbar selection), with an early completed-progress guard.
+It uses the same equipment-only `SoulService.summonLimit` helper as summoning;
+this avoids scanning the collection or reading cage energy on equipment changes.
+The current target is 8: supreme scythe (4) plus Soul Slot on four armor pieces.
+No summoned creatures are required. Missing advancement definitions are ignored,
+so a datapack can remove them without breaking collection/equipment handling.
+
+Native `PlayerAdvancements` owns progress, persistence and synchronization. Parent
+links arrange the tree, not extra gameplay prerequisites; the two equipment item
+criteria retain progress if the items are obtained at different times. No existing
+collection/ownership NBT or network protocol changes.
 
 ## Soul cage storage
 
@@ -443,7 +558,7 @@ The admin `/soulcatcher energy <amount>` command sets that active cage, reports
 the actual bounded result and requires a hotbar or offhand cage.
 `SoulCages.location(slot)` supplies the translated location to both menu headers
 and the command reply, so offhand slot 40 is never presented as hotbar slot 41.
-The packet fields remain unchanged; the protocol stays at 9.
+Offhand cage priority does not add packet fields; it was introduced on protocol 9.
 
 All four item models inherit `item/soul_cage`, based on vanilla `item/handheld`.
 The sprite's plane follows the sword orientation along the hand. Third-person
@@ -467,7 +582,9 @@ Create `data/<your_namespace>/soul_profiles/<name>.json`:
 Set `enabled` to false to disable marking and capture. Ordinary credited kill
 energy still uses the maximum-health formula. Legacy `cost`, `slots` and `energy`
 fields are ignored; profiles cannot override the common economy or scythe limits.
-The Wroughtnaut profile is provided in the base mod even when Mowzie's is absent.
+The Wroughtnaut profile is provided by the integration addon, even when Mowzie's
+is absent. Its existing `data/soulcatcherplus/soul_profiles/wroughtnaut.json` path
+is preserved so existing datapack overrides still apply.
 Use the same resource path as an existing profile to override it. Reload with `/reload`.
 Existing collection entries retain their captured maximum health and cost; disabling
 capture does not delete collected souls. Avoid multiple profile files targeting one entity.
@@ -476,13 +593,16 @@ capture does not delete collected souls. Avoid multiple profile files targeting 
 
 The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
 `--all`. The bare command keeps its sample species and two sheep colors; both
-forms grant the existing scythe loadout and put a supreme cage with 1000 energy
+forms grant only the supreme scythe, held in the main hand, and a full supreme cage
 in the offhand if a cage is already there, otherwise before other hotbar cages.
+The issued/reused cage is filled to `SoulCage.capacity(stack)`: 2000 normally,
+or its enchantment-adjusted limit if an existing enchanted supreme cage is reused.
+Other scythe tiers are no longer issued; existing inventory items are retained.
 Displaced items return to inventory or drop
 if it is full. The command does not silently delete an existing cage.
 
 Bulk population takes a sorted snapshot of registered entity types and creates
-samples on the server thread in small tick batches. Only returned `Mob` instances
+samples on the server thread in small tick batches. Only returned `MobEntity` instances
 passing profile/adapter capture checks are added. No world insertion, ticking or
 `finalizeSpawn` is requested. Constructor-default forms are used, with a bow for
 skeleton QA samples; this does not enumerate every variant or spawn-dependent state.
@@ -498,6 +618,41 @@ Jobs stop when the player leaves or the server stops. A full collection stops
 further creation and reports remaining unprocessed entity types rather than
 claiming that they were all capturable. Partial additions remain saved.
 
+## Client boss music (1.16.5)
+
+The client-only `SoulMusic` service tracks the native client tick source in a
+`ThreadLocal`, restored in `finally` for normal entities and passengers. Calls to
+the vanilla `MusicTicker.startPlaying` and `stopPlaying` are rejected only when
+that source has the synchronized companion owner marker. Other music continues.
+
+The Forge `PlaySoundEvent` filter applies only to `SoundCategory.MUSIC`. An explicit
+source resolver takes precedence, followed by a single direct `Entity` field on
+the sound instance, then the current entity tick source. Field discovery is cached
+per sound class; ambiguous or inaccessible fields are not guessed. During client
+setup, use `SoulMusic.registerSource(Function<ISound, Entity>)` for other sound
+layouts; return null for unsupported sounds. These hooks must stay on `Dist.CLIENT`.
+
+Only active, attributed music instances are retained, with weak entity references.
+The end-of-tick check stops music if a late ownership packet identifies its source
+as a companion. World changes clear the tracking map. There is no world entity
+scan, server polling, extra packet, or sound-ID blacklist. Soundtracks without a
+recoverable source, async playback, and non-MUSIC categories need an integration.
+
+An optional Aquamirae 5.4.0 hook in the integration addon cancels `AquamiraeAmbient.playCorneliaMusic` for a
+companion tick before its shared cooldown is updated. It also tracks the last
+successful Cornelia music request weakly and clears that request's cooldown if
+its source is identified as a companion later. Another successful boss request
+replaces the tracked source; simply hitting the cooldown does not. No Aquamirae classes are
+required when that mod is absent. This protects the regular Cornelia encounter's
+music timer as well as the vanilla music manager.
+
+The Forge 1.20.1 addon targets the inspected Aquamirae 6.1.2/6.4.0
+`AquamiraeClient` controller instead. Its cooldown listener is registered on the
+client event bus because native ticking lives in the nested `ForgeEvents` class.
+Aquamirae 7.x uses a different implementation and is not covered by that hook.
+The 1.20.1 music-source API uses `SoundInstance` in place of the legacy `ISound`;
+addons must compile against the matching Minecraft version.
+
 ## Client rendering
 
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client
@@ -511,11 +666,11 @@ keep their separately supplied fade. Nested dispatcher calls unwrap our parent
 source before applying the child's own texture/provider, preventing repeated tint.
 No GeckoLib or Mowzie dependency is required.
 The default mapping makes standard solid/cutout body materials translucent. A
-renderer must use the supplied `MultiBufferSource` for this hook to affect it.
+renderer must use the supplied `IRenderTypeBuffer` for this hook to affect it.
 Custom shaders, independently acquired buffers and extra textures/layers may still
 need an integration through `SoulVisualProvider` and visual testing. The hook does
 not guarantee transparency for every third-party rendering pipeline.
 
-The built-in Wroughtnaut adapter uses the creature's public activation API. An optional
+The integration addon's Wroughtnaut adapter uses the creature's public activation API. An optional
 `@Pseudo` Mixin filters Mowzie's area-query results before native attacks apply
 damage, shield wear, knockback or other effects. No Mowzie code or assets are bundled.
