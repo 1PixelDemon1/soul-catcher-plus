@@ -5,23 +5,28 @@
 Primary development targets Minecraft 1.16.5, Forge 36.2.42 and a Java 8 runtime.
 Gradle and javac run on Java 17; Jabel 1.0.0 compiles modern syntax to Java 8
 with `--release 8`. Jabel is compile-only and must never be bundled into the mod.
-Use `develop` for ongoing 1.16.5 work. `codex/forge-1.20.1` preserves the former
-1.20.1 development line; the 1.19.2 and NeoForge 1.20.4 ports remain separate.
-`main` retains the existing release history and changes only for a requested release.
+Use `develop` for ongoing 1.16.5 work. `forge/1.19.2` and `forge/1.20.1`
+maintain their version-specific ports. `archive/neoforge-1.20.4` is a preserved
+experimental port, outside the current release.
+`main` retains release history and the public project overview. Update it for
+requested releases or explicitly requested publication/documentation preparation.
 Verify old APIs against the actual 1.16.5 mapped JAR and Forge sources. The class
 names are legacy MCP names with official member mappings; modern examples differ.
 Follow the installed `minecraft-modding` skill when changing mod code.
 
 ## Git branches
 
-- `develop` is the default working branch for ongoing Minecraft 1.16.5 development.
-- `codex/forge-1.16.5` records the original port and the transition to the primary line.
+- `develop` is the default working branch for Minecraft 1.16.5 development.
+- `main` holds release source and the GitHub-facing project overview.
+- `forge/1.19.2` and `forge/1.20.1` are maintained version-specific port branches.
+- `archive/neoforge-1.20.4` preserves the experimental port; do not develop there
+  without an explicit request to resume that platform.
 - Create optional `feature/<description>` or `fix/<description>` branches from `develop`.
-- `main` is the release line. Promote tested milestones from `develop` into `main`
-  through a merge that preserves development history only when the user explicitly
-  requests a release. Ordinary commits remain on development branches.
-- Both branches begin at the initial 0.1.0 prototype snapshot. That snapshot is a
-  development baseline, not a declaration of a stable 1.0 release.
+- Promote gameplay changes to `main` through a history-preserving merge only for
+  an explicitly requested release. Publication/documentation preparation may
+  synchronize README and repository guidance without promoting gameplay changes.
+- The former `codex/forge-1.16.5` bootstrap branch was fully merged and removed;
+  its commits remain in development/release history.
 - Do not rewrite shared history, force-push, or replace existing release tags.
 - Keep changes local unless the user requests a remote operation.
 
@@ -54,7 +59,7 @@ and nearby code before considering the work complete.
 
 Create releases only when the user explicitly asks. An ordinary feature, bugfix,
 commit, or request to continue development is not a release request. Do not bump
-versions, promote changes to `main`, create release tags, write new release-note
+versions, promote gameplay changes to `main`, create release tags, write new release-note
 documents, or publish releases automatically after changes.
 
 The `release_writer` subagent is activated only for an explicitly requested
@@ -86,8 +91,9 @@ agree, required validation passes, and the release is committed and promoted to
 Do not tag an uncommitted working tree or an unreleased major-version plan.
 Never move or replace an existing release tag; report a mismatch instead.
 
-The current `0.1.0+1.20.1` prototype is not a major release and needs no major tag.
-Do not invent version bumps or publish tags/remotes without a release to publish.
+Existing release tags are immutable. Repository housekeeping does not create a
+new release. Do not invent version bumps or publish tags/remotes without a release
+to publish.
 
 ## Validation
 
