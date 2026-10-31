@@ -2,7 +2,7 @@
 
 Combined integration addon. This source tree targets Minecraft **1.16.5 / Forge 36.2.42**.
 The 1.0.0 release also has a separate **1.20.1 / Forge 47.4.28 / Java 17**
-build on `codex/forge-1.20.1`; see [release notes](../../docs/releases/1.0.0.md).
+build on `forge/1.20.1`; see [release notes](../../docs/releases/1.0.0.md).
 Use only the core/addon pair matching your Minecraft version.
 Mod ID: `soulcatcherplus_compat`. Java 8 runtime; built with the same Java 17/Jabel
 toolchain as the core. This is a separate installable JAR, not a nested dependency.
