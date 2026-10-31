@@ -4,6 +4,17 @@
 
 No changes yet.
 
+## 1.0.0+1.19.2 — 2026-10-31
+
+Add a Forge **1.19.2 / 43.5.2 / Java 17** release of the 1.0.0 core and separate combined integration addon, identified as `v1.0.0+1.19.2`. This is an additive platform release; the original `v1.0.0` tag and its 1.16.5/1.20.1 release history remain unchanged.
+
+- Bring the earlier 1.19.2 development port to the 1.0.0 feature set: four scythe/cage tiers, Supreme equipment, Soul Capacity/Harvester/Slot, five advancements, scrolling/searchable collection, favorites, confirmed form deletion, individual/group commands, Aggressive mode, minion ownership/cleanup, and spectral presentation.
+- Use native 1.19.2 UI, explicit supported summoner links, and the version's music APIs. Netherite smithing uses a diamond item and netherite ingot without an upgrade template, preserving cage contents.
+- Require Forge `[43.5.2,44)` and matching `1.0.0+1.19.2` core/addon builds. Optional integration API baselines are Mowzie's Mobs 1.6.3 with GeckoLib 3.1.40, Twilight Forest 4.2.1518, and Aquamirae 6.API15 with Obscure API 15 or later for the matching Minecraft version. Source/bytecode inspection is not gameplay validation or a promise covering every third-party version.
+- Use protocol **11** with collection snapshots split into at most 32 rows per part. Update clients, servers, and installed addons together; the old 1.19.2 development protocol 9 is incompatible. Preserve compatible same-Minecraft collection data; old player energy is not converted into cage energy, and cross-Minecraft world migration is not supplied.
+
+Release packaging with `.\scripts\gradle.ps1 build -x test` and separate isolated compilation of the manual QA command succeeded. Both runtime JARs passed archive, JSON, version metadata, Java 17 bytecode, and core/addon isolation checks, with five core advancements, resource format 9, legacy smithing recipes, and no bundled QA/test helpers, Jabel, or embedded dependencies. Tests were excluded; no game launch, automated tests, GameTests, or UI automation were run for this supplement. See the [Forge 1.19.2 release supplement](docs/releases/1.0.0-forge-1.19.2.md) for artifacts, checksums, installation, and validation limits.
+
 ## 1.0.0 — 2026-10-31
 
 First major release, with separate Forge builds for **Minecraft 1.16.5 / Forge 36.2.42 / Java 8** and **Minecraft 1.20.1 / Forge 47.4.28 / Java 17**. Artifact versions are `1.0.0+1.16.5` and `1.0.0+1.20.1`; each has a core JAR and a separate combined integration addon. These are version-specific builds, not one cross-version JAR.

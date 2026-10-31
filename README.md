@@ -1,10 +1,11 @@
 # Soul Catcher Plus
 
-**1.0.0** provides separate core and integration-addon builds for two Forge versions:
+**1.0.0** provides separate core and integration-addon builds for three Forge versions:
 
 | Minecraft | Forge baseline | Game runtime | Core JAR | Optional integration addon |
 |---|---|---|---|---|
 | 1.16.5 | 36.2.42 | Java 8 | `soulcatcherplus-1.0.0+1.16.5.jar` | `soulcatcherplus-compat-1.0.0+1.16.5.jar` |
+| 1.19.2 | 43.5.2 | Java 17 | `soulcatcherplus-1.0.0+1.19.2.jar` | `soulcatcherplus-compat-1.0.0+1.19.2.jar` |
 | 1.20.1 | 47.4.28 | Java 17 | `soulcatcherplus-1.0.0+1.20.1.jar` | `soulcatcherplus-compat-1.0.0+1.20.1.jar` |
 
 Install the chosen core on both client and server. The integration addon is optional
@@ -12,14 +13,15 @@ and requires the exact matching core version and Minecraft suffix. Install it on
 both sides when using its Mowzie's Mobs, Twilight Forest, or Aquamirae corrections.
 Creature mods and their libraries are installed separately; the core requires none.
 These are separate JARs for separate Minecraft profiles, not one cross-version JAR.
-Fabric, NeoForge, and the 1.19.2/1.20.4 development ports are outside this release.
+Fabric, NeoForge, and the 1.20.4 development port are outside this release.
 
-Both builds use network protocol **11**. Update clients, servers, and any installed
+All three builds use network protocol **11**. Update clients, servers, and any installed
 addon together. Old player-ledger energy is not converted to cage energy; compatible
 same-Minecraft collection data is retained. No cross-Minecraft world migration is supplied.
-See [1.0.0 release notes](docs/releases/1.0.0.md) for integration baselines,
-migration, packaging checks, and validation limits. The final release was packaged
-and inspected; no release game launch or automated gameplay tests were run.
+See the [original 1.0.0 release notes](docs/releases/1.0.0.md) and the additive
+[Forge 1.19.2 release supplement](docs/releases/1.0.0-forge-1.19.2.md) for integration
+baselines, migration, packaging checks, and validation limits. No release game
+launch or automated gameplay tests were run.
 
 Primary development remains **1.16.5** on `develop`; `codex/forge-1.20.1` maintains
 the 1.20.1 source line. `main` is the requested-release history.
@@ -417,7 +419,7 @@ python scripts/bootstrap.py
 ```
 
 See [the private development playtest guide](docs/PLAYTEST_1.16.5.md) for pinned mods and limitations.
-That development archive is separate from the four project release JARs and includes
+That development archive is separate from the project release JARs and includes
 the core and integration addon, plus Aquamirae 5.4.0,
 Obscure API 11, GeckoLib and Twilight Forest. Development launches include the addon
 automatically; `-PwithoutCompatAddon` omits it for manual isolation checks.
@@ -431,8 +433,9 @@ systems should expose them through JAVA_HOME and SOULCATCHER_GAME_JAVA.
 
 Standalone JAR: `build/1.16.5/libs/soulcatcherplus-1.0.0+1.16.5.jar`.
 Integration addon: `build/1.16.5/libs/soulcatcherplus-compat-1.0.0+1.16.5.jar`.
-Release staging: `build/releases/1.0.0/{1.16.5,1.20.1}`, with four runtime JARs,
-`artifact-audit.json`, and `SHA256SUMS.txt`.
+Original release staging: `build/releases/1.0.0/{1.16.5,1.20.1}`.
+The 1.19.2 supplement is staged separately in `build/releases/1.0.0-forge-1.19.2`.
+Each release output includes its runtime JARs, `artifact-audit.json`, and `SHA256SUMS.txt`.
 Bundle: `build/1.16.5/playtest/soulcatcherplus-1.16.5-twilight-aquamirae-playtest.zip`.
 Client worlds/configuration: `run-client/1.16.5`; other branches' worlds stay separate.
 
