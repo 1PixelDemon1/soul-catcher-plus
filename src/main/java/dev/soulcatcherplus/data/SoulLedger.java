@@ -4,27 +4,27 @@ package dev.soulcatcherplus.data;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.storage.WorldSavedData;
 
 /** Canonical ownership and summon state, stored in the overworld across dimensions. */
-public final class SoulLedger extends SavedData {
+public final class SoulLedger extends WorldSavedData {
+    public SoulLedger() { super("soulcatcherplus"); }
     private final Map<UUID, PlayerSouls> players = new HashMap<>();
     public static SoulLedger get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(SoulLedger::load, SoulLedger::new, "soulcatcherplus");
+        return server.overworld().getDataStorage().computeIfAbsent(SoulLedger::new, "soulcatcherplus");
     }
     public PlayerSouls player(UUID player) { return players.computeIfAbsent(player, id -> new PlayerSouls()); }
-    public static SoulLedger load(CompoundTag tag) {
-        SoulLedger data = new SoulLedger();
-        CompoundTag list = tag.getCompound("Players");
-        list.getAllKeys().forEach(key -> data.players.put(UUID.fromString(key), PlayerSouls.load(list.getCompound(key))));
-        return data;
+    @Override public void load(CompoundNBT tag) {
+        players.clear();
+        CompoundNBT list = tag.getCompound("Players");
+        list.getAllKeys().forEach(key -> players.put(UUID.fromString(key), PlayerSouls.load(list.getCompound(key))));
     }
-    @Override public CompoundTag save(CompoundTag tag) {
-        CompoundTag list = new CompoundTag();
+    @Override public CompoundNBT save(CompoundNBT tag) {
+        CompoundNBT list = new CompoundNBT();
         players.forEach((id, data) -> list.put(id.toString(), data.save()));
-        tag.putInt("Version", 2); tag.put("Players", list);
+        tag.putInt("Version", 3); tag.put("Players", list);
         return tag;
     }
 }

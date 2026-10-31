@@ -1,0 +1,6 @@
+{
+  "parent": "soulcatcherplus:item/soul_cage",
+  "textures": {
+    "layer0": "soulcatcherplus:item/iron_soul_cage"
+  }
+}

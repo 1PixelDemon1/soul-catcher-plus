@@ -1,34 +1,34 @@
 // SPDX-License-Identifier: MIT
-package dev.soulcatcherplus.compat;
+package dev.soulcatcherplus.addon.compat;
 
 import dev.soulcatcherplus.api.SoulAdapter;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.MobEntity;
 
 /**
  * Optional bridge: uses only Mowzie's own public methods, without packaging its
  * code/assets or requiring it when the base mod loads.
  */
 public final class WroughtnautAdapter implements SoulAdapter {
-    @Override public CompoundTag previewData(CompoundTag snapshot) {
-        CompoundTag tag = SoulAdapter.super.previewData(snapshot);
+    @Override public CompoundNBT previewData(CompoundNBT snapshot) {
+        CompoundNBT tag = SoulAdapter.super.previewData(snapshot);
         tag.putBoolean("active", true);
         tag.putBoolean("alwaysActive", true);
         return tag;
     }
-    @Override public CompoundTag capture(Mob mob) {
-        CompoundTag tag = SoulAdapter.super.capture(mob);
+    @Override public CompoundNBT capture(MobEntity mob) {
+        CompoundNBT tag = SoulAdapter.super.capture(mob);
         tag.remove("restPos");
         tag.putBoolean("active", true); tag.putBoolean("alwaysActive", true);
         return tag;
     }
-    @Override public void prepareSummon(Mob mob, ServerPlayer owner) { activate(mob); mob.clearRestriction(); }
-    @Override public void configureCompanion(Mob mob) {
+    @Override public void prepareSummon(MobEntity mob, ServerPlayerEntity owner) { activate(mob); mob.restrictTo(net.minecraft.util.math.BlockPos.ZERO, -1); }
+    @Override public void configureCompanion(MobEntity mob) {
         activate(mob);
         SoulAdapter.super.configureCompanion(mob);
     }
-    private void activate(Mob mob) {
+    private void activate(MobEntity mob) {
         try {
             Class<?> type = mob.getClass();
             boolean always = (Boolean) type.getMethod("isAlwaysActive").invoke(mob);

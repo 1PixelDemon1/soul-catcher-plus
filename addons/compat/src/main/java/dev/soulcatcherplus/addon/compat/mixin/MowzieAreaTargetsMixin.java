@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-package dev.soulcatcherplus.mixin;
+package dev.soulcatcherplus.addon.compat.mixin;
 
 import dev.soulcatcherplus.companion.CompanionBrain;
 import java.util.List;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.MobEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +22,8 @@ public abstract class MowzieAreaTargetsMixin {
         "getEntitiesNearby(Ljava/lang/Class;DDDD)Ljava/util/List;"
     }, at = @At("RETURN"), cancellable = true, remap = false, require = 1)
     private void soulcatcherplus$excludeAllies(CallbackInfoReturnable<List<Entity>> callback) {
-        if ((Object) this instanceof Mob mob && CompanionBrain.isSoul(mob))
+        if ((Object) this instanceof MobEntity mob && CompanionBrain.isSoul(mob))
             callback.setReturnValue(callback.getReturnValue().stream()
-                .filter(target -> !CompanionBrain.allied(mob, target)).collect(java.util.stream.Collectors.toList()));
+                .filter(target -> !CompanionBrain.allied(mob, target)).collect(com.google.common.collect.ImmutableList.toImmutableList()));
     }
 }
