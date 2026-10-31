@@ -88,6 +88,10 @@ if (project.hasProperty('withMowzies') || project.hasProperty('withIceAndFire'))
 tasks.named('processResources', ProcessResources).configure {
     inputs.property 'mod_version', mod_version
     filesMatching('META-INF/mods.toml') { expand mod_version: mod_version }
+    // Forge 1.16.5's mod list reads logos through getRootResource (filenames only).
+    from('src/main/resources/assets/soulcatcherplus/textures/entity/soul_remnant/medium.png') {
+        rename { 'logo.png' }
+    }
 }
 tasks.named('processCompatResources', ProcessResources).configure {
     inputs.property 'mod_version', mod_version
