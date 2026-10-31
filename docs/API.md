@@ -461,6 +461,29 @@ energy is stored exclusively in cage item stacks.
 The legacy `soulcatcherplus:soul_scythe` registry ID and `SCYTHE` field alias refer
 to the iron tier. New registry IDs are `diamond_soul_scythe` and `netherite_soul_scythe`.
 
+## Soul Slot and enchanted-book loot
+
+`SoulEnchantments.SOUL_SLOT` registers `soulcatcherplus:soul_slot`, level I only,
+with `EnchantmentType.ARMOR` and `Rarity.RARE`. Its min/max enchanting-power costs
+delegate to vanilla `MOB_LOOTING` at level II (24–71 in this mapped 1.16.5 build).
+It is discoverable, tradeable, book-compatible and not treasure-only, like the
+other two soul enchantments; their existing rarity and costs are unchanged.
+
+`SoulEnchantments.additionalSlots(player)` sums the clamped Soul Slot level on
+the four worn `ArmorItem` stacks only. `SoulService.summonContext` adds it to the
+held scythe's base limit, or keeps the limit zero when no scythe is held. The
+existing shared availability path supplies both server validation and the menu's
+total limit. No packet fields, protocol version or saved-data format change.
+Removing enchanted armor retains current summons, like switching to a weaker
+scythe; the new limit governs subsequent summons. Item tooltips label the base
+limit, not the armor-adjusted total.
+
+Native random-enchantment book functions can choose all three discoverable
+registered soul enchantments. No global loot modifier, custom chest table or
+additional drop chance is installed. Existing loot tables keep their original
+book counts and probabilities. Tables with an explicit enchantment list retain
+that restriction; not every chest necessarily offers enchanted books.
+
 ## Soul cage storage
 
 `SoulCage` is a non-stackable item with capacities 150 / 400 / 1000 / 2000 for

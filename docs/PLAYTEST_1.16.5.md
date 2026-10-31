@@ -6,7 +6,7 @@ Minecraft 1.16.5 в ветке `develop`; это сборка разработк
 В папке `mods`:
 
 - Soul Catcher Plus `0.2.0+1.16.5`, с клетками душ, поиском, прокруткой коллекции,
-  зачарованиями Soul Capacity / Soul Harvester и отдельной вкладкой предметов.
+  зачарованиями Soul Capacity / Soul Harvester / Soul Slot и отдельной вкладкой предметов.
 - Soul Catcher Plus: Mod Integrations `0.2.0+1.16.5` — отдельный аддон с
   доработками для Twilight Forest, Aquamirae и Mowzie's Mobs (сам Mowzie's в архив не входит).
 - [GeckoLib 3.0.106](https://modrinth.com/mod/geckolib/version/UQGoJDhn) для Forge 1.16.5.

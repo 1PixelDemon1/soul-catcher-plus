@@ -6,6 +6,7 @@ import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.network.SoulNetwork;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import java.util.UUID;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -34,7 +35,7 @@ public final class SoulService {
     public static SummonRules.Context summonContext(ServerPlayerEntity player) {
         SoulScythe scythe = SoulScythe.heldBy(player);
         SoulCages.Active cage = SoulCages.active(player);
-        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(),
+        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit() + SoulEnchantments.additionalSlots(player),
             cage.energy(), cage.capacity(), player.server.overworld().getGameTime());
     }
     public static void summon(ServerPlayerEntity player, UUID id) {
