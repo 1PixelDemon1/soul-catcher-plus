@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Package approved imagegen artwork; System.Drawing is available on the Windows authoring host.
 param(
-    [ValidateSet('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe')]
-    [string[]]$Materials = @('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe')
+    [ValidateSet('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe', 'supreme_soul_scythe')]
+    [string[]]$Materials = @('soul_scythe', 'diamond_soul_scythe', 'netherite_soul_scythe', 'supreme_soul_scythe')
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

@@ -4,22 +4,31 @@
 
 ![Current assembled held models](held-preview.png)
 
-The approved **64x64** iron `soul_scythe.png` is the exact master for the held
+The approved **64x64** iron `soul_scythe.png` is the master for the held
 family: modest curved wood, slender metal blade, cyan soul lantern and thorned
 butt fitting. The diamond and netherite PNGs are palette variants of this master,
 including both the blade and bottom fitting. Their alpha silhouette and wood,
 lantern and intermediate collars match the iron master. Inventory icons are
 16x16 adaptations of this family. Earlier preview sheets below predate this family.
 
+The supreme variant uses an ivory bone ramp on the blade and butt fitting.
+Its former cyan lantern is replaced by a white/pale-gold Nether Star suspended
+in an open bone bracket. `held-palettes.json` records both the ramp and the
+native 8x7 ornament overlay; the existing wood, grip and hand transforms stay
+shared. The replacement silhouette is repackaged into its own closed mesh.
+
+![Supreme bone scythe, assembled from the runtime mesh](supreme-preview.png)
+
 `held-palettes.json` records the metal regions and five-tone material ramps.
 `prepare_scythe_materials.ps1` maps iron luminance through those ramps without
 resampling, moving or redrawing a pixel. The pommel recolor selects neutral metal
 below its configured row, preserving the brown wood there.
 
-`held-geometry.json` extends all three tails by repeating wooden source rows
+`held-geometry.json` extends all four tails by repeating wooden source rows
 41..46 into eight extra texel-sized geometry rows. The lower fitting shifts
 rigidly eight texels down and three right. UVs keep sampling the original 64x64
-sprites. All three generated closed meshes share the same geometry and thickness.
+sprites. All four use the same tail extension and thickness; the supreme star
+has its own opaque rectangles.
 
 The shared `soul_scythe_held.json` uses a grip closer to the handle midpoint:
 source texel center `(56.5,43.5)` becomes geometry point `(56.5,45.5)` after the
@@ -59,7 +68,9 @@ wood, slender blade, larger cyan lantern and pointed metal butt fitting. Blade
 and butt fitting share each tier's muted material palette; wood and lantern
 colors stay shared. These are deliberately drawn at 16x16, rather than downsampled
 from the held textures, so the small shapes remain readable in the hotbar.
-Run `python scripts/generate_assets.py` to rebuild the three runtime icons.
+The supreme icon has its own `pixels_by_material` map for the Nether Star pendant
+and bone palette. Run `python scripts/generate_assets.py` to rebuild all four
+runtime icons.
 
 ## Earlier artwork
 

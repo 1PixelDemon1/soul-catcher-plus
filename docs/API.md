@@ -445,7 +445,11 @@ is intentionally not transferred; ownership, selection, active identity, snapsho
 and cooldowns are retained.
 `PlayerSouls.activeCount()` replaces weighted slot accounting.
 
-`SoulScythe.summonLimit()` is 1 / 2 / 3 for iron / diamond / netherite.
+`SoulScythe.summonLimit()` is 1 / 2 / 3 / 4 for iron / diamond / netherite / supreme.
+The supreme scythe deals 10 total base player attack damage (one more than netherite),
+at 0.8 attacks/second. It uses netherite durability/enchantability and fire resistance,
+but accepts bones as its anvil repair ingredient. Its shaped recipe uses two bones,
+one Nether Star and two sticks, in the same layout as the iron/diamond scythes.
 `SoulScythe.heldBy(player)` chooses the main-hand scythe first, then the offhand.
 `SummonRules` supplies one availability decision to server summoning and UI state.
 Existing companions remain when the held limit decreases or no scythe is held;
@@ -525,7 +529,7 @@ capture does not delete collected souls. Avoid multiple profile files targeting 
 
 The dev-only `soulcatcherqa` command (permission level 2, player source) accepts
 `--all`. The bare command keeps its sample species and two sheep colors; both
-forms grant the existing scythe loadout and put a supreme cage with 1000 energy
+forms grant all four scythes, with the supreme scythe held, and put a supreme cage with 1000 energy
 in the offhand if a cage is already there, otherwise before other hotbar cages.
 Displaced items return to inventory or drop
 if it is full. The command does not silently delete an existing cage.

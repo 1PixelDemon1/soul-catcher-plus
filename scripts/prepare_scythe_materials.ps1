@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Exact palette variants of the approved iron master; no geometry or pixel-layout changes.
+# Palette variants of the approved iron master, with optional native pixel ornaments.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $artRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'art/scythes'
@@ -28,6 +28,18 @@ try {
                         $color = [Drawing.Color]::FromArgb($color.A, $channels[0], $channels[1], $channels[2])
                     }
                     $output.SetPixel($x, $y, $color)
+                }
+            }
+            $overlay = $spec.overlays.($material.Name)
+            if ($overlay) {
+                for ($y = 0; $y -lt $overlay.pixels.Count; $y++) {
+                    $row = $overlay.pixels[$y]
+                    for ($x = 0; $x -lt $row.Length; $x++) {
+                        $key = [string]$row[$x]
+                        $color = if ($key -eq '.') { [Drawing.Color]::Transparent }
+                            else { [Drawing.ColorTranslator]::FromHtml('#' + $overlay.palette.$key) }
+                        $output.SetPixel($overlay.origin[0] + $x, $overlay.origin[1] + $y, $color)
+                    }
                 }
             }
             $output.Save((Join-Path $artRoot ($material.Name + '.png')), [Drawing.Imaging.ImageFormat]::Png)

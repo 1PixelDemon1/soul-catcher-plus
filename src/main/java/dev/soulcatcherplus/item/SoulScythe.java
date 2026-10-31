@@ -15,6 +15,8 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.item.ItemTier;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.world.World;
@@ -24,10 +26,13 @@ public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB));
+            tier.material == ItemTier.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
+    @Override public boolean isValidRepairItem(ItemStack stack, ItemStack ingredient) {
+        return scytheTier == ScytheTier.SUPREME ? ingredient.getItem() == Items.BONE : super.isValidRepairItem(stack, ingredient);
+    }
     /** Main-hand scythes take precedence; another weapon does not revoke existing summons. */
     public static SoulScythe heldBy(PlayerEntity player) {
         if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;

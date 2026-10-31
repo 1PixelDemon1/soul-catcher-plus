@@ -83,8 +83,8 @@ public final class SoulPreviewCommand {
             source.sendFailure(new net.minecraft.util.text.TranslationTextComponent("command.soulcatcherplus.qa.running"));
             return 0;
         }
-        replaceItem(player, player.inventory.selected, new ItemStack(SoulCatcherPlus.NETHERITE_SCYTHE.get()));
-        for (var item : com.google.common.collect.ImmutableList.of(SoulCatcherPlus.IRON_SCYTHE, SoulCatcherPlus.DIAMOND_SCYTHE)) {
+        replaceItem(player, player.inventory.selected, new ItemStack(SoulCatcherPlus.SUPREME_SCYTHE.get()));
+        for (var item : com.google.common.collect.ImmutableList.of(SoulCatcherPlus.IRON_SCYTHE, SoulCatcherPlus.DIAMOND_SCYTHE, SoulCatcherPlus.NETHERITE_SCYTHE)) {
             ItemStack stack = new ItemStack(item.get());
             if (!player.inventory.contains(stack)) player.inventory.placeItemBackInInventory(player.level, stack);
         }
