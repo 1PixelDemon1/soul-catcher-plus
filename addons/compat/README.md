@@ -1,59 +1,28 @@
-# Soul Catcher Plus: Mod Integrations
+# Soul Catcher Plus: Mod Integrations — Forge 1.19.2
 
-Combined integration addon for Minecraft **1.20.1 / Forge 47.4.28 / Java 17**.
-The separate 1.16.5 build is maintained on `develop`.
-Use only the core/addon pair matching your Minecraft version; see
-[release notes](../../docs/releases/1.0.0.md).
-Mod ID: `soulcatcherplus_compat`. Java 17 runtime and build toolchain, like the core. This is a separate installable JAR, not a nested dependency.
+Optional, separately installable combined addon for Soul Catcher Plus 1.0.0+1.19.2.
+Requires Minecraft 1.19.2, Forge 43.5.2 and Java 17. Install the exact matching core
+and addon on both client and server. No creature mods or animation libraries are
+required by the core, and no third-party code or assets are bundled.
 
-The addon currently contains:
+API/bytecode-reviewed integration baselines:
 
-- Mowzie's Mobs 1.8.2: Wroughtnaut activation/appearance adapter, area-attack ally
-  filtering and its soul profile.
-- Twilight Forest 4.3.2508: Snow Queen ice-crystal spawn attribution and native
-  master links for Lich clones and Lich minions.
-- Aquamirae 6.1.2/6.4.0: the client hook preserving the regular Cornelia music cooldown
-  when its source is a summoned companion.
+- Mowzie's Mobs 1.6.3: Wroughtnaut activation, preview and area-attack ally filtering;
+  its development profile uses GeckoLib 3.1.40.
+- Twilight Forest 4.2.1518: Snow Queen spawn attribution and Lich/minion native master links.
+- Aquamirae 6.API15: companion music and shared cooldown handling; install its
+  required Minecraft 1.19.2 Obscure API 15+ separately.
 
-All creature mods are optional. Adapters register only when their mod is loaded;
-optional `@Pseudo` mixins are skipped if their target classes are absent.
-No third-party mod classes or assets are bundled.
+Source/API review is not gameplay validation. See
+[release notes](../../docs/releases/1.0.0-forge-1.19.2.md).
 
-The core retains generic capture/summoning, AI commands, ownership inheritance,
-boss-bar suppression, spectral rendering, music source tracking and the public
-extension APIs. Without this addon, these generic features still work, but the
-specific corrections listed above are absent. Existing collection IDs, ownership
-tags and data-profile paths are unchanged. Removing an addon may therefore affect
-the behavior of its supported creatures, without deleting their saved souls.
+Build both JARs with `.\scripts\gradle.ps1 build -x test`. Outputs are
+`build/1.19.2/libs/soulcatcherplus-1.0.0+1.19.2.jar` and
+`build/1.19.2/libs/soulcatcherplus-compat-1.0.0+1.19.2.jar`.
+The `compat` source set compiles against the core but packages only addon classes/resources.
+Development runs include the addon unless `-PwithoutCompatAddon` is specified.
 
-## Build and install
-
-From the repository root:
-
-```powershell
-.\scripts\gradle.ps1 build -x test
-```
-
-Outputs under `build/1.20.1/libs`:
-
-- `soulcatcherplus-1.0.0+1.20.1.jar` — core.
-- `soulcatcherplus-compat-1.0.0+1.20.1.jar` — this addon.
-
-Install both on client and server, with the chosen creature mods and their
-dependencies. The addon requires the matching core version; update the pair
-together. Third-party dependencies are not bundled in release artifacts.
-
-## Development layout
-
-`build.gradle` owns the `compat` source set and `compatJar`/`reobfCompatJar` tasks.
-The addon compiles against the core output, but packages only its own source-set
-output. A normal build assembles both reobfuscated JARs. Development `runClient`
-and `runServer` include both mod source sets and both Mixin configurations.
-Use `-PwithoutCompatAddon` to launch only the core for manual isolation checks.
-
-Keep each integration behind its optional-mod check and use
-`SoulAdapters.register(entityId, adapter)` during common setup. Do not copy the
-core's ownership or economy rules. See [the public API](../../docs/API.md).
-Future per-mod addons can move these adapters and mixins into their own source
-sets/JARs; they must remove their registration from this combined addon to avoid
-duplicate adapters. The current registry deliberately rejects duplicate IDs.
+The core owns generic economy, collection, AI commands, rendering, ownership and
+music-source tracking. Register mod-specific adapters during common setup through
+`SoulAdapters.register`, behind an optional-mod check. Keep economy/ownership rules
+in the core and avoid registering the same entity adapter from multiple addons.

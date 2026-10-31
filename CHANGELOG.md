@@ -4,6 +4,54 @@
 
 No changes yet.
 
+## 1.0.0+1.19.2 — 2026-10-31
+
+Add a Forge **1.19.2 / 43.5.2 / Java 17** release of the 1.0.0 core and separate combined integration addon, identified as `v1.0.0+1.19.2`. This is an additive platform release; the original `v1.0.0` tag and its 1.16.5/1.20.1 release history remain unchanged.
+
+- Bring the earlier 1.19.2 development port to the 1.0.0 feature set: four scythe/cage tiers, Supreme equipment, Soul Capacity/Harvester/Slot, five advancements, scrolling/searchable collection, favorites, confirmed form deletion, individual/group commands, Aggressive mode, minion ownership/cleanup, and spectral presentation.
+- Use native 1.19.2 UI, explicit supported summoner links, and the version's music APIs. Netherite smithing uses a diamond item and netherite ingot without an upgrade template, preserving cage contents.
+- Require Forge `[43.5.2,44)` and matching `1.0.0+1.19.2` core/addon builds. Optional integration API baselines are Mowzie's Mobs 1.6.3 with GeckoLib 3.1.40, Twilight Forest 4.2.1518, and Aquamirae 6.API15 with Obscure API 15 or later for the matching Minecraft version. Source/bytecode inspection is not gameplay validation or a promise covering every third-party version.
+- Use protocol **11** with collection snapshots split into at most 32 rows per part. Update clients, servers, and installed addons together; the old 1.19.2 development protocol 9 is incompatible. Preserve compatible same-Minecraft collection data; old player energy is not converted into cage energy, and cross-Minecraft world migration is not supplied.
+
+Release packaging with `.\scripts\gradle.ps1 build -x test` and separate isolated compilation of the manual QA command succeeded. Both runtime JARs passed archive, JSON, version metadata, Java 17 bytecode, and core/addon isolation checks, with five core advancements, resource format 9, legacy smithing recipes, and no bundled QA/test helpers, Jabel, or embedded dependencies. Tests were excluded; no game launch, automated tests, GameTests, or UI automation were run for this supplement. See the [Forge 1.19.2 release supplement](docs/releases/1.0.0-forge-1.19.2.md) for artifacts, checksums, installation, and validation limits.
+
+## 1.0.0 — 2026-10-31
+
+First major release, with separate Forge builds for **Minecraft 1.16.5 / Forge 36.2.42 / Java 8** and **Minecraft 1.20.1 / Forge 47.4.28 / Java 17**. Artifact versions are `1.0.0+1.16.5` and `1.0.0+1.20.1`; each has a core JAR and a separate combined integration addon. These are version-specific builds, not one cross-version JAR.
+
+### Equipment and soul energy
+
+- Move energy from the player ledger into transferable, non-stackable soul cages. Iron, diamond, netherite, and supreme cages hold 150, 400, 1000, and 2000 energy before enchantments. Old player energy is not converted; collection entries and favorites remain player-owned.
+- Use only cages in the offhand or hotbar. Spending uses one active cage, preferring the offhand and then the leftmost hotbar cage; an empty or undersized active cage is not bypassed, and cages never pool a summon price. Rewards and recall returns fill eligible cages in that order; excess energy is lost.
+- Add the supreme bone scythe and Nether Star cage. Scythes have base companion limits of 1/2/3/4, attack damage of 8/8/9/10, and attack speeds of 0.7/0.8/0.8/0.8. Preserve the original iron scythe item ID.
+- Add Soul Capacity I–III for cages (+one third of base capacity per level), Soul Harvester I–II for held scythes (+50%/+100% victory energy), and rare Soul Slot I armor (+one companion per worn piece, up to four). A supreme scythe with four enchanted armor pieces allows eight companions; changing equipment does not dismiss existing summons.
+- Keep health-based summon prices and victory rewards, and `floor(current HP / 2)` recall returns for living, loaded root companions only. Capturing an already known form grants no second energy reward. Capturing requires an eligible cage but spends no energy.
+- Add crafting recipes for cages and supreme equipment. Netherite smithing preserves cage contents; 1.16.5 uses diamond equipment plus an ingot, while 1.20.1 also requires the vanilla upgrade template.
+
+### Collection, commands, and presentation
+
+- Require a soul scythe in either hand for the remappable O collection and held-R wheel. Add whole-group wheel orders and Aggressive following, which selects eligible visible hostiles within 16 blocks of both companion and owner.
+- Force companions in Follow or Aggressive mode to leave combat and attempt a safe return when more than 24 blocks from the owner. Retry every five server ticks independently of native attack goals.
+- Replace collection paging with scrolling and name/ID search. Keep species favorites and captured-form previews, and add confirmed deletion of one form, recalling it first if active. Other forms remain; a deleted form can be captured again.
+- Highlight species containing a captured form with at least 150 maximum HP in purple. Use floating soul-lantern remnants graded by base victory energy and a flaming skull for the same high-health threshold; this is a health rule, not a universal boss detector.
+- Add animated four-frame soul cages, refreshed scythe icons and held meshes, supreme bone/Nether Star artwork, a dedicated creative tab, and a medium soul-lantern mod logo.
+- Add five advancements for joining, first capture, obtaining both supreme items, capturing a high-health soul, and reaching eight available companion slots.
+- Correct the 1.20.1 follow-goal repath delay for its reduced tick cadence and include the medium-soul creative icon in that version's item atlas.
+
+### Integrations and synchronization
+
+- Separate Mowzie's Mobs, Twilight Forest, and Aquamirae corrections into optional `soulcatcherplus-compat` JARs. Each addon requires its exact matching core version; install chosen creature mods and their libraries separately. The core requires no creature mod or animation library.
+- Keep generic capture, native companion AI, spectral rendering, ownership, boss-bar suppression, music filtering, and public extension hooks in the core. Preserve ownership-based minion cleanup, with native master restoration before AI and opt-in attribution for children constructed during a summoner tick. Unrecognized summons still require adapters.
+- Add Twilight Forest Snow Queen ice-crystal attribution and Lich clone/minion master links, Wroughtnaut activation/appearance and area-attack ally filtering, and version-specific Aquamirae Cornelia music-cooldown hooks. Suppress identifiable companion boss music without globally muting hostile bosses or ordinary sounds.
+- Use network protocol **11** on both Minecraft lines. Split collection snapshots into parts of at most 32 rows and display only fully assembled snapshots. Update clients, servers, and installed addons together; protocol 6 from 0.2.0 is incompatible.
+- Write ledger schema 3. Retain compatible same-version collection data, while storing new energy on cages; no cross-Minecraft world migration is supplied.
+
+### Validation and limitations
+
+Release packaging succeeded with `.\scripts\gradle.ps1 build -x test` for both Minecraft versions. All four runtime JARs passed archive/JSON/metadata/isolation inspection, with Java class versions 52 for 1.16.5 and 61 for 1.20.1, five advancements in each core, and no bundled Jabel, QA helpers, or nested third-party JARs. The 1.20.1 manual QA command was also compiled separately and is excluded from release JARs; compilation did not execute tests.
+
+At the user's request, no release client/server launch, automated tests, GameTests, or UI automation were run. Earlier user gameplay reports apply to their development snapshots, not to comprehensive validation of these final artifacts or the new 1.20.1 port. Dedicated source/API review and successful packaging do not establish universal mod compatibility. See [1.0.0 release notes](docs/releases/1.0.0.md) for installation, integration baselines, migration, and remaining limits, and the [validation record](docs/releases/1.0.0-validation.md) for source revisions and completed checks.
+
 ## 0.2.0+1.20.1 — 2026-10-27
 
 Release tag: `v0.2.0`. Artifact version: `0.2.0+1.20.1`. Targets Minecraft 1.20.1, Forge 47.4.28, and Java 17.
