@@ -1,5 +1,79 @@
 # Scythe artwork
 
+## Current held family (1.16.5)
+
+![Current assembled held models](held-preview.png)
+
+The approved **64x64** iron `soul_scythe.png` is the master for the held
+family: modest curved wood, slender metal blade, cyan soul lantern and thorned
+butt fitting. The diamond and netherite PNGs are palette variants of this master,
+including both the blade and bottom fitting. Their alpha silhouette and wood,
+lantern and intermediate collars match the iron master. Inventory icons are
+16x16 adaptations of this family. Earlier preview sheets below predate this family.
+
+The supreme variant uses an ivory bone ramp on the blade and butt fitting.
+Its former cyan lantern is replaced by a white/pale-gold Nether Star suspended
+in an open bone bracket. `held-palettes.json` records both the ramp and the
+native 8x7 ornament overlay; the existing wood, grip and hand transforms stay
+shared. The replacement silhouette is repackaged into its own closed mesh.
+
+![Supreme bone scythe, assembled from the runtime mesh](supreme-preview.png)
+
+`held-palettes.json` records the metal regions and five-tone material ramps.
+`prepare_scythe_materials.ps1` maps iron luminance through those ramps without
+resampling, moving or redrawing a pixel. The pommel recolor selects neutral metal
+below its configured row, preserving the brown wood there.
+
+`held-geometry.json` extends all four tails by repeating wooden source rows
+41..46 into eight extra texel-sized geometry rows. The lower fitting shifts
+rigidly eight texels down and three right. UVs keep sampling the original 64x64
+sprites. All four use the same tail extension and thickness; the supreme star
+has its own opaque rectangles.
+
+The shared `soul_scythe_held.json` uses a grip closer to the handle midpoint:
+source texel center `(56.5,43.5)` becomes geometry point `(56.5,45.5)` after the
+row extension. Third-person translation is `-16 * Ry(-90) * Rz(-27) * Scale(2,2,1)
+* grip`, measured from the texture center with Y flipped. First-person translation
+preserves the original `(0.27,-0.10,0)` grip anchor using the corresponding rotated
+and scaled delta. The iron wrapper no longer overrides these shared hand poses.
+Rotations, length scaling and one-model-pixel thickness remain unchanged; the new
+grip still needs the user's check in-game.
+
+The iron master was generated with the built-in `image_gen` tool and reduced to
+64x64. Final iron prompt: preserve the moderate handle bend, thin iron blade,
+enlarged cyan soul lantern and thorned pommel; use coarse Minecraft pixel clusters
+and reduced metal/wood detail on transparency. Material palette trials also used
+the built-in tool; the committed variants instead use the exact master and the
+versioned palette file to preserve the requested layout.
+
+Regenerate in this order on the Windows authoring host:
+
+```powershell
+./scripts/prepare_scythe_materials.ps1
+./scripts/prepare_scythe_art.ps1
+```
+
+The packager preserves source dimensions up to 128x128 and rebuilds closed meshes.
+These generated PNGs/JSONs are committed; a normal Gradle build does not need the
+Windows artwork scripts. The preview is assembled from the mesh and texture,
+not captured from Minecraft.
+
+## Current inventory icons
+
+![Magnified 16x16 inventory icons, with native-size copies below](inventory-preview.png)
+
+`inventory.json` is the editable 16x16 pixel map. The small sprites retain the
+clockwise crafting-recipe orientation while adopting the held family's curved
+wood, slender blade, larger cyan lantern and pointed metal butt fitting. Blade
+and butt fitting share each tier's muted material palette; wood and lantern
+colors stay shared. These are deliberately drawn at 16x16, rather than downsampled
+from the held textures, so the small shapes remain readable in the hotbar.
+The supreme icon has its own `pixels_by_material` map for the Nether Star pendant
+and bone palette. Run `python scripts/generate_assets.py` to rebuild all four
+runtime icons.
+
+## Earlier artwork
+
 ![Iron, diamond and netherite scythe previews](preview.png)
 
 The three designs use the user's approved wooden shaft, left-facing crescent
@@ -12,15 +86,13 @@ the right. Its cyan area is two pixels high (2x2), with a narrow top cap and
 a dark bottom rim. Shafts, fittings
 and lantern colors share the same palette in inventory icons.
 
-![Magnified 16x16 inventory icons](inventory-preview.png)
-
 ## Runtime assets
 
 - `src/main/resources/assets/soulcatcherplus/textures/item/<item>.png`: exact
   **16x16** inventory sprite. `inventory.json` is the editable 16-row pixel map and
   RGBA palette, with shared colors and three blade-face palettes. The outline was
   simplified to keep a continuous shaft and readable lantern at this resolution.
-- `<item>_held.png` in the same directory: **128x128**, sampled from the matching
+- `<item>_held.png` in the same directory: **64x64**, packaged from the matching
   full-size source PNG in this folder. Nearest sampling and binary alpha keep the
   texture sharp and reduce unnecessary atlas and generated-geometry size.
 - `models/item/<item>.json`: Forge `forge:separate_transforms` models choose the

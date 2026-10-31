@@ -1,5 +1,8 @@
 # Soul cage concepts — 16x16
 
+These are the earlier static designs. The current cleaned four-frame runtime
+textures are documented in [animated/README.md](../animated/README.md).
+
 ![Four soul cages enlarged twelve times](preview.png)
 
 Approved artwork used by the four soul cage items. Runtime copies are in

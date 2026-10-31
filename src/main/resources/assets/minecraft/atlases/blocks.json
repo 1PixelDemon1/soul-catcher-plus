@@ -2,7 +2,7 @@
   "sources": [
     {
       "type": "minecraft:single",
-      "resource": "soulcatcherplus:entity/soul_remnant/skull"
+      "resource": "soulcatcherplus:entity/soul_remnant/medium"
     }
   ]
 }

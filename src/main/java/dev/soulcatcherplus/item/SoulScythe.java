@@ -19,10 +19,13 @@ public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier == ScytheTier.NETHERITE ? new Item.Properties().fireResistant() : new Item.Properties());
+            tier.material == Tiers.NETHERITE ? new Item.Properties().fireResistant() : new Item.Properties());
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
+    @Override public boolean isValidRepairItem(ItemStack stack, ItemStack ingredient) {
+        return scytheTier == ScytheTier.SUPREME ? ingredient.getItem() == Items.BONE : super.isValidRepairItem(stack, ingredient);
+    }
     /** Main-hand scythes take precedence; another weapon does not revoke existing summons. */
     public static SoulScythe heldBy(Player player) {
         if (player.getMainHandItem().getItem() instanceof SoulScythe scythe) return scythe;

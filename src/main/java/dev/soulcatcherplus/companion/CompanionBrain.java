@@ -8,12 +8,13 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";
@@ -36,7 +37,7 @@ public final class CompanionBrain {
         UUID owner = owner(mob);
         if (other.getUUID().equals(owner)) return true;
         if (isSoul(other) && owner(other).equals(owner)) return true;
-        if (other instanceof OwnableEntity tame && owner.equals(tame.getOwnerUUID())) return true;
+        if (owner.equals(SoulMinions.ownerUuid(other))) return true;
         ServerPlayer player = mob.getServer() == null ? null : mob.getServer().getPlayerList().getPlayer(owner);
         return player != null && player.isAlliedTo(other);
     }
@@ -50,6 +51,9 @@ public final class CompanionBrain {
         GoalSelector goals = mob.goalSelector;
         if (targets == null || goals == null) throw new IllegalStateException("Missing mob goal selectors");
         targets.removeAllGoals(goal -> true);
+        goals.getAvailableGoals().stream().map(net.minecraft.world.entity.ai.goal.WrappedGoal::getGoal)
+            .filter(goal -> goal instanceof HoldPositionGoal || goal instanceof FollowOwnerGoal)
+            .collect(com.google.common.collect.ImmutableList.toImmutableList()).forEach(goals::removeGoal);
         goals.addGoal(0, new HoldPositionGoal(mob));
         goals.addGoal(2, new FollowOwnerGoal(mob));
     }
@@ -62,17 +66,22 @@ public final class CompanionBrain {
         if (player == null || player.level() != mob.level()) { SoulService.recall(mob.getServer(), entry); return; }
         if (mob.getTarget() != null && !canAttack(mob, mob.getTarget())) mob.setTarget(null);
         Mode mode = mode(mob);
-        if (mode == Mode.WAIT) mob.setTarget(null);
+        // Return outside the goal selector: a native attack goal must not block the owner's leash.
+        if ((mode == Mode.FOLLOW || mode == Mode.AGGRESSIVE)
+                && mob.distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH) {
+            mob.setTarget(null);
+            mob.getNavigation().stop();
+            teleportToOwner(mob, player);
+        } else if (mode == Mode.WAIT) mob.setTarget(null);
         else if (mode == Mode.GUARD) {
             BlockPos guard = BlockPos.of(mob.getPersistentData().getLong("scp_guard"));
             if (mob.getTarget() != null && mob.getTarget().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(guard)) > 16 * 16)
                 mob.setTarget(null);
             if (mob.getTarget() == null) findEnemy(mob, guard);
         } else if (mode == Mode.AGGRESSIVE) {
-            boolean nearOwner = mob.distanceToSqr(player) <= OWNER_LEASH * OWNER_LEASH;
-            if (!nearOwner || (mob.getTarget() != null && mob.getTarget().distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH))
+            if (mob.getTarget() != null && mob.getTarget().distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH)
                 mob.setTarget(null);
-            if (nearOwner && mob.getTarget() == null) findHostile(mob, player);
+            if (mob.getTarget() == null) findHostile(mob, player);
         } else if (mob.getTarget() == null) {
             LivingEntity attacker = player.getLastHurtByMob();
             LivingEntity victim = player.getLastHurtMob();
@@ -83,6 +92,17 @@ public final class CompanionBrain {
         }
         SoulAdapters.get(mob).tick(mob, player);
         mob.setPersistenceRequired();
+    }
+    private static void teleportToOwner(Mob mob, ServerPlayer player) {
+        for (int i = 0; i < 12; i++) {
+            BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);
+            if (mob.level().hasChunkAt(pos) && mob.level().getBlockState(pos.below()).isSolidRender(mob.level(), pos.below())
+                    && mob.level().noCollision(mob, mob.getBoundingBox().move(
+                        pos.getX() + 0.5 - mob.getX(), pos.getY() - mob.getY(), pos.getZ() + 0.5 - mob.getZ()))) {
+                mob.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+                return;
+            }
+        }
     }
     private static void findEnemy(Mob mob, BlockPos guard) {
         mob.level().getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(12),
@@ -125,17 +145,6 @@ public final class CompanionBrain {
                 ticksUntilRepath = adjustedTickDelay(10);
                 mob.getNavigation().moveTo(destination.getX() + 0.5,
                     destination.getY(), destination.getZ() + 0.5, 1.1);
-            }
-            if ((mode(mob) == Mode.FOLLOW || mode(mob) == Mode.AGGRESSIVE)
-                    && mob.distanceToSqr(player) > OWNER_LEASH * OWNER_LEASH) {
-                for (int i = 0; i < 12; i++) {
-                    BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(9) - 4, 0, mob.getRandom().nextInt(9) - 4);
-                    if (mob.level().hasChunkAt(pos) && mob.level().getBlockState(pos.below()).isSolidRender(mob.level(), pos.below())
-                            && mob.level().noCollision(mob, mob.getBoundingBox().move(
-                                pos.getX() + 0.5 - mob.getX(), pos.getY() - mob.getY(), pos.getZ() + 0.5 - mob.getZ()))) {
-                        mob.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5); break;
-                    }
-                }
             }
         }
     }

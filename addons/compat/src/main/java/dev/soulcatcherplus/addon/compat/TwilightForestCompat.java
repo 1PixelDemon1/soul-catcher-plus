@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-package dev.soulcatcherplus.compat;
+package dev.soulcatcherplus.addon.compat;
 
 import dev.soulcatcherplus.api.SoulAdapter;
 import dev.soulcatcherplus.api.SoulAdapters;

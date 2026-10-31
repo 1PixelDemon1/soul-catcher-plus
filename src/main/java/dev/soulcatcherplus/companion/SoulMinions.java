@@ -29,6 +29,9 @@ public final class SoulMinions {
     public static boolean isMinion(Entity entity) { return entity.getPersistentData().hasUUID(ROOT); }
 
     /** Default discovery is based on explicit ownership, never proximity or spawn timing. */
+    public static UUID ownerUuid(Entity entity) {
+        return entity instanceof OwnableEntity ownable ? ownable.getOwnerUUID() : null;
+    }
     public static Entity defaultSummoner(Entity entity) {
         if (entity instanceof TraceableEntity traceable) {
             Entity owner = traceable.getOwner();

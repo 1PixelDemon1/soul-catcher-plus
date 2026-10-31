@@ -6,6 +6,7 @@ import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.network.SoulNetwork;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
+import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -27,10 +28,14 @@ public final class SoulService {
     public static boolean holdsScythe(ServerPlayer player) {
         return SoulScythe.heldBy(player) != null;
     }
-    public static SummonRules.Context summonContext(ServerPlayer player) {
+    /** Shared equipment-only limit; querying it does not scan the player's soul collection. */
+    public static int summonLimit(ServerPlayer player) {
         SoulScythe scythe = SoulScythe.heldBy(player);
+        return scythe == null ? 0 : scythe.summonLimit() + SoulEnchantments.additionalSlots(player);
+    }
+    public static SummonRules.Context summonContext(ServerPlayer player) {
         SoulCages.Active cage = SoulCages.active(player);
-        return SummonRules.context(data(player), scythe == null ? 0 : scythe.summonLimit(),
+        return SummonRules.context(data(player), summonLimit(player),
             cage.energy(), cage.capacity(), player.server.overworld().getGameTime());
     }
     public static void summon(ServerPlayer player, UUID id) {
@@ -154,6 +159,18 @@ public final class SoulService {
     public static void recallAll(ServerPlayer player) {
         data(player).entries.values().forEach(e -> recall(player.server, e, player));
         changed(player);
+    }
+    /** The supplied ID is resolved only in this player's collection, never in another player's data. */
+    public static void forgetForm(ServerPlayer player, UUID id) {
+        if (!holdsScythe(player)) { message(player, "forget_scythe_needed"); return; }
+        PlayerSouls collection = data(player);
+        SoulEntry target = collection.entries.get(id);
+        if (target == null) return;
+        // Keep the entry valid during native onRecall callbacks and the normal energy refund.
+        recall(player.server, target, player);
+        collection.forget(id);
+        changed(player);
+        message(player, "forgotten");
     }
     public static void command(ServerPlayer player, CompanionBrain.Mode mode) {
         PlayerSouls collection = data(player);

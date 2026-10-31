@@ -8,6 +8,7 @@ final class SoulTheme {
     static final int INK = 0xFF0B131C, PANEL = 0xFF101E28, BORDER = 0xFF2B454B;
     static final int LIGHT = 0xFFE4F0E9, MUTED = 0xFF89A5A4, TEAL = 0xFF7BE2C9;
     static final int GOLD = 0xFFC6AA76, RED = 0xFFD58F82;
+    static final int BOSS_PURPLE = 0xFFC295EB;
     private static final String[] STAR = {
         "....#....", "...###...", "...###...", "#########", ".#######.",
         "..#####..", "..#####..", ".###.###.", ".##...##."

@@ -13,10 +13,10 @@ def chunk(name, data):
 
 def scythe_icons():
     spec = json.loads((ROOT / 'art/scythes/inventory.json').read_text(encoding='utf-8'))
-    rows = spec['pixels']
-    if len(rows) != 16 or any(len(row) != 16 for row in rows):
-        raise ValueError('Scythe inventory sprites must be exactly 16x16')
     for name, material in spec['materials'].items():
+        rows = spec.get('pixels_by_material', {}).get(name, spec['pixels'])
+        if len(rows) != 16 or any(len(row) != 16 for row in rows):
+            raise ValueError('Scythe inventory sprites must be exactly 16x16')
         colors = {key: tuple(bytes.fromhex(value))
                   for key, value in (spec['shared'] | material).items()}
         raw = b''.join(b'\x00' + bytes(channel for key in row for channel in colors[key]) for row in rows)
@@ -55,4 +55,4 @@ arena = {'DataVersion': (3, 3465), 'size': (9, (3, [16, 8, 16])),
 structure = ROOT / 'src/gametest/resources/data/soulcatcherplus/structures/arena.nbt'
 structure.parent.mkdir(parents=True, exist_ok=True)
 structure.write_bytes(gzip.compress(b'\x0a\x00\x00' + payload(10, arena), mtime=0))
-print('Generated three 16x16 scythe icons and GameTest arena')
+print('Generated 16x16 scythe icons and GameTest arena')

@@ -27,6 +27,16 @@ public final class PlayerSouls {
     public int activeCount() {
         return (int) entries.values().stream().filter(e -> e.activeEntity != null).count();
     }
+    /** Called after SoulService has recalled this entry and its inherited minions. */
+    public boolean forget(UUID id) {
+        SoulEntry removed = entries.remove(id);
+        if (removed == null) return false;
+        if (entries.values().stream().noneMatch(entry -> entry.entityType.equals(removed.entityType)))
+            favoriteTypes.remove(removed.entityType);
+        if (selected != null && !entries.containsKey(selected))
+            selected = entries.isEmpty() ? null : entries.keySet().iterator().next();
+        return true;
+    }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("CommandMode", commandMode);
@@ -46,7 +56,7 @@ public final class PlayerSouls {
         data.commandGroup = tag.getBoolean("Group");
         if (tag.hasUUID("Selected")) data.selected = tag.getUUID("Selected");
         Set<String> ownedTypes = new HashSet<>();
-        for (Tag raw : tag.getList("Souls", Tag.TAG_COMPOUND)) {
+        for (Tag raw : tag.getList("Souls", 10)) {
             SoulEntry entry = SoulEntry.load((CompoundTag) raw);
             data.entries.put(entry.id, entry);
             ownedTypes.add(entry.entityType);
