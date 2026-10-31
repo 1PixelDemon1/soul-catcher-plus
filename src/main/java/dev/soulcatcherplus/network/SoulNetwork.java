@@ -24,7 +24,9 @@ import net.minecraftforge.fml.network.*;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "10";
+    private static final String VERSION = "11";
+    // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
+    public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayerEntity, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
@@ -46,13 +48,14 @@ public final class SoulNetwork {
             boolean mode = b.readBoolean(), group = b.readBoolean();
             UUID selected = b.readBoolean() ? b.readUUID() : null;
             int size = b.readVarInt();
-            if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid soul collection size");
+            if (size < 0 || size > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Invalid soul state part size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
                 b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
             return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, com.google.common.collect.ImmutableList.copyOf(rows));
         }
         void write(PacketBuffer b) {
+            if (rows.size() > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Soul state part too large");
             b.writeBoolean(openScreen);
             b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot);
             b.writeVarInt(activeCount); b.writeVarInt(summonLimit);
@@ -62,6 +65,21 @@ public final class SoulNetwork {
             for (Row row : rows) { b.writeUUID(row.id); b.writeUtf(row.entityType, 256); b.writeUtf(row.name, 256); b.writeVarInt(row.cost);
                 b.writeDouble(row.maxHealth); b.writeBoolean(row.active); b.writeVarLong(row.cooldown);
                 b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
+        }
+    }
+    @com.github.bsideup.jabel.Desugar
+    public record StatePart(UUID snapshot, int offset, int total, State state) {
+        static StatePart read(PacketBuffer b) {
+            UUID snapshot = b.readUUID();
+            int offset = b.readVarInt(), total = b.readVarInt();
+            State state = State.read(b);
+            if (total < 0 || total > PlayerSouls.MAX_ENTRIES || offset < 0 || offset > total
+                    || offset + state.rows().size() > total || (total > 0 && state.rows().isEmpty()))
+                throw new IllegalArgumentException("Invalid soul snapshot bounds");
+            return new StatePart(snapshot, offset, total, state);
+        }
+        void write(PacketBuffer b) {
+            b.writeUUID(snapshot); b.writeVarInt(offset); b.writeVarInt(total); state.write(b);
         }
     }
     public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM }
@@ -140,7 +158,7 @@ public final class SoulNetwork {
         }
     }
     public static void register() {
-        CHANNEL.registerMessage(0, State.class, State::write, State::read, SoulNetwork::state,
+        CHANNEL.registerMessage(0, StatePart.class, StatePart::write, StatePart::read, SoulNetwork::state,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(1, Request.class, Request::write, Request::read, SoulNetwork::request,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
@@ -171,9 +189,14 @@ public final class SoulNetwork {
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
                 availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-            new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
-                data.commandMode, data.commandGroup, data.selected, rows));
+        UUID snapshot = UUID.randomUUID();
+        // Always send one part, including an empty collection. Clients apply only a complete snapshot.
+        for (int offset = 0; offset < Math.max(1, rows.size()); offset += STATE_ROWS_PER_PART) {
+            State part = new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
+                data.commandMode, data.commandGroup, data.selected,
+                com.google.common.collect.ImmutableList.copyOf(rows.subList(offset, Math.min(rows.size(), offset + STATE_ROWS_PER_PART))));
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new StatePart(snapshot, offset, rows.size(), part));
+        }
     }
     public static void ghost(ServerPlayerEntity player, Entity entity) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
@@ -229,10 +252,10 @@ public final class SoulNetwork {
         });
         context.setPacketHandled(true);
     }
-    private static void state(State packet, Supplier<NetworkEvent.Context> supplier) {
+    private static void state(StatePart packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-            () -> () -> dev.soulcatcherplus.client.ClientPackets.open(packet)));
+            () -> () -> dev.soulcatcherplus.client.ClientPackets.statePart(packet)));
         context.setPacketHandled(true);
     }
     private static void sendWheelState(ServerPlayerEntity player) {
