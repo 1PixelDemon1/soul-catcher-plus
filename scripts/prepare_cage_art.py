@@ -36,7 +36,7 @@ def export():
         pose = [list(row) for row in body]
         occupied = set()
         for symbol, soul in zip('ABC', frame):
-            for part, color in [('tail', 't'), ('head', symbol)]:
+            for part, color in [('tail', 't'), ('body', symbol), ('head', symbol)]:
                 x, y = soul[part]
                 if not (0 <= x < size and 0 <= y < size) or body[y][x] != 'b' or (x, y) in occupied:
                     raise ValueError('Soul pixels must remain separate inside the glass')

@@ -9,8 +9,9 @@ frame, indices 0–3, no interpolation: one loop per second.
 The fixed vessel uses a compact palette instead of the earlier many near-identical
 shades. A basket-like arched handle of alternating iron chain links connects to
 both shoulders of the cage. This handle, glass highlights and frame remain fixed.
-Three two-pixel soul wisps travel clockwise; distinct head shades make the motion
-traceable. The space between them is fully transparent, including the opening in
+Three three-pixel soul wisps travel clockwise: a two-pixel luminous body and a
+darker tail. Each wisp is 50% larger than the previous two-pixel design; distinct
+head shades make the motion traceable. The space between them is fully transparent, including the opening in
 the chain handle. Only the moving souls change the internal alpha footprint;
 Minecraft's generated item model collects their edges across the animation frames.
 Animation uses Minecraft's texture atlas, without an item renderer, entity scan,
