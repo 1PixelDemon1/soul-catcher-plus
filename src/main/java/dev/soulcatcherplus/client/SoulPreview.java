@@ -17,6 +17,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Detached visual entities: never inserted into a level and never AI-ticked. */
 final class SoulPreview {
+    private final boolean spectral;
     private final Map<UUID, MobEntity> cache = new LinkedHashMap<>();
     private final Set<UUID> failed = new HashSet<>();
     private UUID requested;
@@ -24,6 +25,9 @@ final class SoulPreview {
     private float rotation = 155;
     private float zoom = 1;
     private boolean manuallyRotated;
+
+    SoulPreview() { this(false); }
+    SoulPreview(boolean spectral) { this.spectral = spectral; }
 
     void request(UUID entry, int tick) {
         if (entry == null || cache.containsKey(entry) || failed.contains(entry)) return;
@@ -41,6 +45,9 @@ final class SoulPreview {
                 failed.add(packet.entry()); return;
             }
             mob.load(packet.appearance().copy());
+            // A detached preview never joins a level or runs entity ticks. The marker
+            // lets it use the exact same dispatcher tint/provider as a summoned soul.
+            if (spectral) mob.getPersistentData().putUUID(dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0, 0));
             mob.setNoAi(true);
             mob.setHealth(mob.getMaxHealth());
             mob.setPos(0, 0, 0);

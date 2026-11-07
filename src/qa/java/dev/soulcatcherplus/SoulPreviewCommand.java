@@ -72,7 +72,35 @@ public final class SoulPreviewCommand {
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("soulcatcherqa").requires(s -> s.hasPermission(2))
             .executes(c -> populate(c.getSource(), false))
-            .then(Commands.literal("--all").executes(c -> populate(c.getSource(), true))));
+            .then(Commands.literal("--all").executes(c -> populate(c.getSource(), true)))
+            .then(Commands.literal("raven").executes(c -> raven(c.getSource()))));
+    }
+
+    private static int raven(CommandSource source) throws CommandSyntaxException {
+        ServerPlayerEntity player = source.getPlayerOrException();
+        PlayerSouls data = SoulService.data(player);
+        String type = SoulCatcherPlus.SOUL_RAVEN.getId().toString();
+        SoulEntry entry = data.entries.values().stream().filter(soul -> soul.entityType.equals(type)).findFirst().orElse(null);
+        if (entry == null) {
+            if (data.entries.size() >= PlayerSouls.MAX_ENTRIES) {
+                SoulService.message(player, "collection_full");
+                return 0;
+            }
+            dev.soulcatcherplus.entity.SoulRavenEntity sample = SoulCatcherPlus.SOUL_RAVEN.get().create(player.getLevel());
+            if (sample == null) return 0;
+            try {
+                entry = new SoulEntry(UUID.randomUUID(), type, "Soul Raven",
+                    SoulSnapshots.sanitize(sample.saveWithoutId(new net.minecraft.nbt.CompoundNBT())), 4.0);
+                data.entries.put(entry.id, entry);
+            } finally { sample.remove(); }
+        }
+        data.selected = entry.id;
+        replaceItem(player, player.inventory.selected, new ItemStack(SoulCatcherPlus.SUPREME_SCYTHE.get()));
+        prepareCage(player);
+        SoulService.changed(player);
+        source.sendSuccess(new net.minecraft.util.text.TranslationTextComponent("command.soulcatcherplus.qa.raven"), false);
+        SoulService.open(player);
+        return 1;
     }
     private static int populate(CommandSource source, boolean all) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrException();

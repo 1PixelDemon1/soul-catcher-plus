@@ -1,0 +1,14 @@
+{
+  "skeleton": {
+    "minecraft_version": "1.16.5",
+    "source": "assets/minecraft/textures/entity/skeleton/skeleton.png",
+    "sha256": "9d467811493a08c4a9a0bd8810c1b6df097a09b6c8d6f63fc631f93aaec74dc9",
+    "copyright": "Mojang Studios"
+  },
+  "ender_chest": {
+    "minecraft_version": "1.16.5",
+    "source": "assets/minecraft/textures/entity/chest/ender.png",
+    "sha256": "07c95f7eef39c0c4e3cf44842183a872bc3ad20e01903c6db98dd22b5b6137d3",
+    "copyright": "Mojang Studios"
+  }
+}

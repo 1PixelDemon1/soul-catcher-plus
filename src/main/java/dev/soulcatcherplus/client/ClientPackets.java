@@ -39,6 +39,7 @@ public final class ClientPackets {
     public static void open(SoulNetwork.State state) {
         Minecraft client = Minecraft.getInstance();
         if (client.screen instanceof SoulScreen screen) screen.update(state);
+        else if (client.screen instanceof SoulAppearanceScreen screen) screen.update(state);
         else if (state.openScreen() && client.screen == null && ClientControls.canUseMenus(client))
             client.setScreen(new SoulScreen(state));
     }
@@ -54,6 +55,7 @@ public final class ClientPackets {
     }
     public static void preview(SoulNetwork.Preview preview) {
         if (Minecraft.getInstance().screen instanceof SoulScreen screen) screen.receivePreview(preview);
+        else if (Minecraft.getInstance().screen instanceof SoulAppearanceScreen screen) screen.receivePreview(preview);
     }
     public static void dissolve(SoulNetwork.Dissolve dissolve) { SoulDissolves.start(dissolve); }
     private ClientPackets() {}

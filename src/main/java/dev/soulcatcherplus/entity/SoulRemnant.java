@@ -65,31 +65,49 @@ public final class SoulRemnant extends Entity {
     }
     @Override public ActionResultType interact(PlayerEntity player, Hand hand) {
         if (!(player.getItemInHand(hand).getItem() instanceof dev.soulcatcherplus.item.SoulScythe)) return ActionResultType.PASS;
-        if (player instanceof ServerPlayerEntity server && server.getUUID().equals(owner) && soul != null
-                && player.distanceToSqr(this) <= 6 * 6) {
-            if (!SoulCages.active(server).present()) {
-                SoulService.message(server, "cage_needed");
-                return ActionResultType.FAIL;
-            }
-            PlayerSouls data = SoulService.data(server);
-            boolean known = data.entries.values().stream().anyMatch(e -> SoulVariants.same(e, soul));
-            if (!known) {
-                if (data.entries.size() >= PlayerSouls.MAX_ENTRIES) {
-                    SoulService.message(server, "collection_full");
-                    return ActionResultType.FAIL;
-                }
-                data.entries.put(soul.id, soul);
-                data.selected = soul.id;
-                SoulService.message(server, "captured", soul.name);
-            } else {
-                // Victory already awarded HP / 2. A known appearance must not pay a second time.
-                SoulService.message(server, "duplicate");
-            }
-            SoulService.changed(server);
-            SoulAdvancements.captured(server, soul.maxHealth);
-            remove();
-        }
+        if (player instanceof ServerPlayerEntity server && availableTo(server) && !collect(server)) return ActionResultType.FAIL;
         return ActionResultType.sidedSuccess(level.isClientSide);
+    }
+
+    private boolean availableTo(ServerPlayerEntity player) {
+        return isAlive() && soul != null && player.isAlive() && !player.isSpectator()
+            && player.level == level && player.getUUID().equals(owner)
+            && player.server.overworld().getGameTime() < expires;
+    }
+
+    private boolean knownBy(PlayerSouls data) {
+        return data.entries.values().stream().anyMatch(entry -> SoulVariants.same(entry, soul));
+    }
+
+    /** A silent eligibility check for collectors; no scythe is required for raven delivery. */
+    public boolean canCollect(ServerPlayerEntity player) {
+        if (!availableTo(player) || !SoulCages.active(player).present()) return false;
+        PlayerSouls data = SoulService.data(player);
+        return data.entries.size() < PlayerSouls.MAX_ENTRIES || knownBy(data);
+    }
+
+    /** Shared, server-authoritative collection path for right-click and physical raven delivery. */
+    public boolean collect(ServerPlayerEntity player) {
+        if (!availableTo(player) || player.distanceToSqr(this) > 6 * 6) return false;
+        if (!SoulCages.active(player).present()) { SoulService.message(player, "cage_needed"); return false; }
+        PlayerSouls data = SoulService.data(player);
+        boolean known = knownBy(data);
+        if (!known) {
+            if (data.entries.size() >= PlayerSouls.MAX_ENTRIES) {
+                SoulService.message(player, "collection_full");
+                return false;
+            }
+            data.entries.put(soul.id, soul);
+            data.selected = soul.id;
+            SoulService.message(player, "captured", soul.name);
+        } else {
+            // Victory already awarded HP / 2. A known appearance must not pay a second time.
+            SoulService.message(player, "duplicate");
+        }
+        SoulService.changed(player);
+        SoulAdvancements.captured(player, soul.maxHealth);
+        remove();
+        return true;
     }
     @Override protected void readAdditionalSaveData(CompoundNBT tag) {
         if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");

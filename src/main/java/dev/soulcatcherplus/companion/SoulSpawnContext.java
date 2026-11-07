@@ -37,6 +37,7 @@ public final class SoulSpawnContext {
 
     /** Called around the native server tick, including ordinary nested ticks that mask an outer soul. */
     public static void tick(Entity entity, boolean passenger) {
+        if (pauseWithoutOwner(entity, passenger)) return;
         Entity previous = TICKING.get();
         TICKING.set(entity);
         try {
@@ -46,6 +47,26 @@ public final class SoulSpawnContext {
             // Keep the thread-local slot, avoiding a new ThreadLocalMap entry on every entity tick.
             TICKING.set(previous);
         }
+    }
+
+    /** Pause outside the entire native tick: custom AI, fuses and lifetime timers
+     * may run before/after LivingUpdateEvent. Passengers are ticked separately. */
+    private static boolean pauseWithoutOwner(Entity entity, boolean passenger) {
+        if (entity instanceof net.minecraft.entity.player.PlayerEntity || !entity.isAlive()) return false;
+        Entity source = entity;
+        while (source != null && !(source instanceof MobEntity && CompanionBrain.isSoul(source)))
+            source = passenger ? source.getVehicle() : null;
+        if (!(source instanceof MobEntity mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob) || mob.getServer() == null
+                || mob.getServer().getPlayerList().getPlayer(CompanionBrain.owner(mob)) != null
+                // Invalid reservations still reach normal stale-entity/cargo cleanup.
+                || CompanionBrain.activeEntry(mob) == null) return false;
+        if (entity == source) {
+            mob.setTarget(null);
+            mob.getNavigation().stop();
+            CompanionBrain.resetReturn(mob);
+        }
+        entity.setDeltaMovement(net.minecraft.util.math.vector.Vector3d.ZERO);
+        return true;
     }
 
     /** Entity's base constructor is still running: only record identity, never touch MobEntity state or AI. */

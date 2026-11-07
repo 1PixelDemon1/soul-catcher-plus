@@ -124,3 +124,12 @@ Archive original SRG dependencies from `playtestMods`, never the remapped dev JA
 Do not delete artifacts or open worlds belonging to the other version branches.
 
 Keep build output, downloaded tools, Gradle caches, logs, and local worlds ignored.
+
+
+## Development isolation
+
+Keep core builds, development runs and playtest archives independent of external
+integration projects. Do not load compatibility addon sources, build scripts or
+JARs during routine core development. Test external integrations separately only
+when the user requests it. Generic public extension APIs remain in the core;
+do not embed mod-specific behavior corrections here.

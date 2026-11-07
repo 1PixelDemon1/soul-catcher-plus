@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "soulcatcherplus:item/boss_soul_scroll"
+  }
+}

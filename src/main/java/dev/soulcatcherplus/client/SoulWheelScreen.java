@@ -24,10 +24,11 @@ import net.minecraft.world.World;
 public final class SoulWheelScreen extends Screen {
     private static final int W = 460, H = 430, CX = 230, CY = 205, PAGE_SIZE = 5;
     private static final int COMPANION_INNER = 64, COMPANION_OUTER = 116, COMMAND_INNER = 124, COMMAND_OUTER = 178;
+    private static final int CENTER_RADIUS = 58;
     private static final double TAU = Math.PI * 2;
     private static final List<SoulNetwork.WheelAction> COMMANDS = com.google.common.collect.ImmutableList.of(SoulNetwork.WheelAction.FOLLOW,
         SoulNetwork.WheelAction.AGGRESSIVE, SoulNetwork.WheelAction.WAIT,
-        SoulNetwork.WheelAction.GUARD, SoulNetwork.WheelAction.RECALL);
+        SoulNetwork.WheelAction.GUARD, SoulNetwork.WheelAction.TELEPORT, SoulNetwork.WheelAction.RECALL);
     private final World openedLevel = Minecraft.getInstance().level;
     private SoulNetwork.WheelState state;
     private UUID selected;
@@ -50,12 +51,17 @@ public final class SoulWheelScreen extends Screen {
     public void update(SoulNetwork.WheelState state) {
         this.state = state;
         page = Math.min(page, lastPage());
-        if (state.companions().isEmpty()
-                || (selected != null && state.companions().stream().noneMatch(c -> c.entry().equals(selected)))) {
-            selected = null;
-            allSelected = false;
+        if (selected != null) {
+            for (int i = 0; i < state.companions().size(); i++) {
+                if (state.companions().get(i).entry().equals(selected)) {
+                    page = i / PAGE_SIZE; // Keep the locked recipient visible when the roster changes.
+                    return;
+                }
+            }
+            // Losing a recipient must not silently lock a different soul under the pointer.
             armed = null;
         }
+        if (state.companions().isEmpty()) armed = null;
     }
     private List<SoulNetwork.Companion> visible() {
         if (state == null) return com.google.common.collect.ImmutableList.of();
@@ -99,14 +105,25 @@ public final class SoulWheelScreen extends Screen {
         return true;
     }
     @Override public void mouseMoved(double x, double y) { updatePointer(x, y); }
+    private boolean hasSelection() { return selected != null || allSelected; }
+    private void clearSelection() {
+        selected = null;
+        allSelected = false;
+        armed = null;
+    }
     private void updatePointer(double x, double y) {
         pointerX = (x - originX) / scale;
         pointerY = (y - originY) / scale;
-        List<SoulNetwork.Companion> companions = visible();
-        int companion = hit(pointerX, pointerY, COMPANION_INNER, COMPANION_OUTER, choiceCount(companions));
-        if (companion >= 0) {
-            allSelected = companion == 0;
-            selected = allSelected ? null : companions.get(companion - 1).entry();
+        double dx = pointerX - CX, dy = pointerY - CY;
+        if (dx * dx + dy * dy <= CENTER_RADIUS * CENTER_RADIUS) {
+            clearSelection();
+        } else if (!hasSelection()) {
+            List<SoulNetwork.Companion> companions = visible();
+            int companion = hit(pointerX, pointerY, COMPANION_INNER, COMPANION_OUTER, choiceCount(companions));
+            if (companion >= 0) {
+                allSelected = companion == 0;
+                selected = allSelected ? null : companions.get(companion - 1).entry();
+            }
         }
         int command = hit(pointerX, pointerY, COMMAND_INNER, COMMAND_OUTER, COMMANDS.size());
         armed = command >= 0 && enabled(COMMANDS.get(command)) ? COMMANDS.get(command) : null;
@@ -124,12 +141,13 @@ public final class SoulWheelScreen extends Screen {
     }
     @Override public boolean mouseScrolled(double x, double y, double delta) {
         if (delta == 0) return false;
+        updatePointer(x, y);
+        // Paging must not silently replace a locked recipient; return to the center first.
+        if (hasSelection()) return true;
         int next = MathHelper.clamp(page + (delta < 0 ? 1 : -1), 0, lastPage());
         if (next != page) {
             page = next;
-            selected = null;
-            allSelected = false;
-            armed = null;
+            clearSelection();
         }
         return true;
     }
@@ -160,11 +178,11 @@ public final class SoulWheelScreen extends Screen {
         double x = pointerX, y = pointerY;
         List<SoulNetwork.Companion> companions = visible();
         int choices = choiceCount(companions);
-        int hoveredCompanion = hit(x, y, COMPANION_INNER, COMPANION_OUTER, choices);
+        int hoveredCompanion = hasSelection() ? -1 : hit(x, y, COMPANION_INNER, COMPANION_OUTER, choices);
         int hoveredCommand = hit(x, y, COMMAND_INNER, COMMAND_OUTER, COMMANDS.size());
         g.drawCenteredString(font, title, CX, 10, SoulTheme.GOLD);
-        sector(g, 0, 58, 0, TAU, SoulTheme.INK);
-        SoulTheme.ellipse(g, CX, CY, 58, 58, SoulTheme.GOLD);
+        sector(g, 0, CENTER_RADIUS, 0, TAU, SoulTheme.INK);
+        SoulTheme.ellipse(g, CX, CY, CENTER_RADIUS, CENTER_RADIUS, SoulTheme.GOLD);
         g.drawCenteredString(font, state == null ? new net.minecraft.util.text.TranslationTextComponent("screen.soulcatcherplus.energy")
             : SoulCages.location(state.cageSlot()), CX, CY - 21, SoulTheme.MUTED);
         g.drawCenteredString(font, state == null ? "…" : state.cageCapacity() == 0 ? "—"
@@ -217,6 +235,7 @@ public final class SoulWheelScreen extends Screen {
         }
         if (companions.isEmpty()) g.drawCenteredString(font, text(state == null ? "loading" : "empty"), CX, CY - 92, SoulTheme.MUTED);
         ITextComponent hint = allSelected ? text("group_hint", ClientControls.COMMAND_WHEEL.getTranslatedKeyMessage())
+            : selected != null && selected() == null ? text("selection_lost")
             : selected() != null && !selected().loaded() ? text("unloaded_hint")
             : text("hint", ClientControls.COMMAND_WHEEL.getTranslatedKeyMessage());
         if (lastPage() > 0) g.drawCenteredString(font, text("page", page + 1, lastPage() + 1), CX, 386, SoulTheme.GOLD);
@@ -233,6 +252,7 @@ public final class SoulWheelScreen extends Screen {
             case "WAIT" -> new net.minecraft.util.text.TranslationTextComponent("screen.soulcatcherplus.wait");
             case "GUARD" -> new net.minecraft.util.text.TranslationTextComponent("screen.soulcatcherplus.guard_short");
             case "RECALL" -> new net.minecraft.util.text.TranslationTextComponent("screen.soulcatcherplus.recall");
+            case "TELEPORT" -> new net.minecraft.util.text.TranslationTextComponent("screen.soulcatcherplus.teleport_short");
             default -> new net.minecraft.util.text.StringTextComponent("");
         };
     }
