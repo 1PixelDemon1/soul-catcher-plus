@@ -31,6 +31,13 @@ final class SoulGui extends AbstractGui {
     void fillGradient(int x1, int y1, int x2, int y2, int top, int bottom) {
         fillGradient(pose, x1, y1, x2, y2, top, bottom);
     }
+    void fillHorizontalGradient(int x1, int y1, int x2, int y2, int left, int right) {
+        pose.pushPose();
+        pose.translate(x2, y1, 0);
+        pose.mulPose(net.minecraft.util.math.vector.Vector3f.ZP.rotationDegrees(90));
+        fillGradient(0, 0, y2 - y1, x2 - x1, right, left);
+        pose.popPose();
+    }
     void renderOutline(int x, int y, int width, int height, int color) {
         fill(x, y, x + width, y + 1, color);
         fill(x, y + height - 1, x + width, y + height, color);

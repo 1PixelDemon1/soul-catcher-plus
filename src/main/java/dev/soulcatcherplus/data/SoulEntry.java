@@ -30,9 +30,14 @@ public final class SoulEntry {
         return tag;
     }
     public static SoulEntry load(CompoundNBT tag) {
-        SoulEntry entry = new SoulEntry(tag.getUUID("Id"), tag.getString("Type"),
-            tag.getString("Name"), tag.getCompound("Snapshot"), tag.contains("MaxHealth") ? tag.getDouble("MaxHealth")
-                : SoulBalance.legacyHealth(tag.getCompound("Snapshot"), tag.getInt("Cost")));
+        String type = tag.getString("Type");
+        double maxHealth = tag.contains("MaxHealth") ? tag.getDouble("MaxHealth")
+            : SoulBalance.legacyHealth(tag.getCompound("Snapshot"), tag.getInt("Cost"));
+        // Rebalance the built-in courier prototype without replacing its collection or summon identity.
+        if (type.equals("soulcatcherplus:soul_courier") && maxHealth == 20)
+            maxHealth = dev.soulcatcherplus.entity.SoulCourierEntity.MAX_HEALTH;
+        SoulEntry entry = new SoulEntry(tag.getUUID("Id"), type,
+            tag.getString("Name"), tag.getCompound("Snapshot"), maxHealth);
         if (tag.hasUUID("Active")) entry.activeEntity = tag.getUUID("Active");
         entry.dimension = tag.getString("Dimension"); entry.readyAt = tag.getLong("ReadyAt");
         return entry;

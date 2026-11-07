@@ -3,27 +3,6 @@
 Primary target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (`develop`). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
 
-## Integration addon packaging
-
-Mod-specific implementations live in the separate **Soul Catcher Plus: Mod
-Integrations** addon (`soulcatcherplus_compat`), under `addons/compat`. It currently
-combines Mowzie's Mobs, Twilight Forest and Aquamirae corrections in one installable
-JAR. The core does not register those adapters, declare those optional mods, or
-load their mixins. Generic fallback behavior and extension APIs remain in the core.
-
-The `compat` source set compiles against core output. `compatJar` packages only
-addon output and its own `META-INF/mods.toml` and Mixin configuration;
-`reobfCompatJar` produces the installable 1.16.5 artifact. `build` assembles both
-JARs; `playtestZip` includes both. The addon requires the matching core version
-on client and server; it does not bundle core classes or third-party dependencies.
-Dev launches load both source sets unless `-PwithoutCompatAddon` is supplied.
-
-Adapters still use the public registration API below. Missing creature mods do
-not register adapters; absent optional Mixin targets are skipped with `@Pseudo`.
-Moving these implementations changes no registry IDs, packet protocol or saved
-ownership/collection fields. Future per-mod addons must coordinate registration:
-the registry rejects a second adapter for the same entity ID.
-
 ## Entity adapters
 
 Register exactly one adapter per entity ID during `FMLCommonSetupEvent.enqueueWork`:
@@ -60,6 +39,12 @@ Lifecycle:
 5. `configureCompanion(mob)`: replace target selection and add companion movement.
    Also called when an active mob reloads from disk. The default keeps native
    combat goals and replaces the target selector. Override for Brain-based AI.
+   `usesStandardBrain(mob)` defaults to `true`. Return `false` when the adapter
+   installs its own complete movement/targeting behavior, such as Soul Raven's
+   passive collector. The core still validates the canonical entry and owner,
+   preserves offline ownership, handles dimension changes and recall, and calls `tick`; standard
+   combat/follow logic and movement commands are skipped. Keep this choice stable
+   for a configured companion and override `configureCompanion` accordingly.
 6. `tick(mob, owner)`: every five server ticks. Avoid resetting native animations.
 7. `onRecall(mob, owner)`: optional cleanup for loaded entities. Unloaded entities
    are invalidated in the ledger and rejected when their chunk next loads.
@@ -156,6 +141,8 @@ Release 1.0.0 uses protocol **11**. Collection snapshots are sent as ordered
 total. The client replaces collection state only after reassembling the complete
 snapshot; a partial snapshot is never displayed. Protocol 10 added
 `Action.FORGET_FORM`.
+Current development uses protocol **12**, adding appended `TELEPORT` actions to
+both collection and wheel requests. Client and server must update together.
 Protocol 9 added active cage capacity/slot to collection and wheel snapshots
 and new cage availability states; clients and
 servers must update together. Released 0.2.0 artifacts
@@ -231,9 +218,17 @@ when a collection reply arrives, and the server rejects opens without a held scy
 The wheel opens locally and receives update-only `WheelState` packets: late replies
 cannot reopen it after release. The inner ring has an All sector plus up to five
 active entries per page. All addresses the full group across pages. The outer ring
-offers FOLLOW, AGGRESSIVE, WAIT, GUARD and RECALL; All + RECALL recalls everyone.
-Hovering an inner sector selects the recipient; hovering the outer ring arms a
-command. Releasing the trigger commits only the currently hovered enabled command.
+offers FOLLOW, AGGRESSIVE, WAIT, GUARD, TELEPORT and RECALL; All + RECALL recalls everyone.
+The first hovered inner sector locks its recipient, including All. Passing over
+other recipients preserves that lock and highlights only the selected sector.
+Returning inside the visible center disc clears selection and the armed command,
+allowing another recipient to be chosen. Page scrolling also requires clearing
+the lock first. State refreshes preserve selection by entry UUID and keep a
+locked recipient's page visible when the roster changes. If that recipient
+disappears, commands disable and a hint requires returning to center before
+another can be selected; the pointer cannot silently acquire a replacement.
+Hovering the outer ring arms a command. Releasing the trigger commits only the
+currently hovered enabled command.
 Center, ring gaps, outside, Escape, lost focus,
 death, disconnect, losing the held scythe or a changed client level close without
 executing an armed action.
@@ -261,23 +256,57 @@ companions only; recalls also invalidate unloaded reservations through the norma
 ledger path. Existing command buttons remain in the collection, with AGGRESSIVE
 added there as well. Direct target attacks remain scythe interactions.
 
+TELEPORT is an immediate action, not a saved behavior mode. The collection button
+uses the current selected-species / all scope; the wheel uses its explicit single
+entry / all recipients. Server-side service methods require a held scythe and
+resolve each entity in the sender's ledger through canonical UUID, owner and
+entry checks. Only loaded root companions in the player's current dimension are
+eligible; no chunk is loaded to retrieve an unavailable companion. Minions are
+not separately addressed by this action.
+
+Successful teleports preserve entity identity, HP, energy and behavior mode. They
+clear the old attack target and navigation, stop riding, zero velocity/fall
+distance, and move GUARD's anchor to the new position. Custom-brain companions
+can also be relocated; their own AI continues afterward. A single feedback
+message reports success or partial failure due to unavailable entities or space.
+
 ### Aggressive follow
 
 `CompanionBrain.Mode.AGGRESSIVE` uses normal owner following. Every five ticks,
 it may acquire the nearest visible, attackable hostile
-MobEntity within 16 blocks of both itself and the owner. Beyond 24 blocks from the owner,
-the companion abandons combat and returns; a target beyond that owner radius is
-also dropped. WAIT and GUARD keep their stationary behavior.
+MobEntity within 16 blocks of itself and within 40 blocks of the owner. Both FOLLOW
+and AGGRESSIVE drop targets beyond the 40-block owner combat radius; FOLLOW's
+reactive target acquisition applies the same owner-radius check. WAIT and GUARD
+keep their stationary behavior.
 
-Both FOLLOW and AGGRESSIVE enforce the 24-block owner leash directly in the
-five-tick server brain update, independently of the goal selector or current
-attack target. Outside that radius, the brain clears the target, stops navigation
-and tries to teleport near the owner instead of acquiring another target in the
-same update. Native higher-priority attack goals cannot block this return.
-The existing search checks up to 12 loaded positions within four blocks of the
-owner in X/Z, at the owner's block Y, requiring solid support and space for the
-companion's bounding box. An unsuccessful search retries on the next brain
-update without loading chunks. FOLLOW retains reactive combat inside the leash.
+Beyond 40 blocks, standard-brain FOLLOW and AGGRESSIVE companions abandon combat
+and begin an ordinary return. This transient return stays active until the mob
+comes within four blocks of its owner or teleports successfully, preventing
+combat/return oscillation at the boundary. A return-only movement goal at priority
+0 shares pathing with the normal priority-2 follow goal. Native attack goals
+remain installed, but returning companions do not acquire combat targets.
+
+The five-tick brain update independently monitors return progress, even when a
+native goal prevents the return goal from starting. Beyond 64 blocks, it tries
+to teleport regardless of combat. Inside that limit, a return with no further
+one-block advance toward the owner over 100 game ticks (five seconds at 20 TPS)
+also tries to teleport. Progress compares the last credited mob position and the
+current mob position against the same current owner position, so owner movement
+alone and shuttling over already credited ground cannot reset the timer.
+Failed teleport searches retry no more than
+once per 20 ticks while ordinary return continues.
+
+Return tracking is server-only weakly held runtime state and adds no saved NBT
+or network fields. Mode commands, goal reinstallation and successful manual or
+automatic teleports clear it. Adapters that opt out of the standard brain keep
+their own movement behavior.
+The shared automatic/manual search checks up to 12 positions at the owner's block
+Y. X/Z radius is at least four blocks, grows with companion width, and is capped
+at 16 to remain inside the follow leash. Candidates require loaded chunks over
+the entire bounding box, solid support, world-border clearance, no liquid, no
+overlap with the player and space for the companion. Successful relocation also
+clears velocity and fall distance. No chunks are loaded to find a destination.
+FOLLOW retains reactive combat inside the combat radius when not returning.
 
 `SoulAdapters.get(candidate).isHostile(candidate, owner)` classifies automatic
 targets. Its default recognizes `Enemy`, `MobCategory.MONSTER` or a mob currently
@@ -388,15 +417,40 @@ public boolean inheritsTickSpawn(MobEntity summoner, EntityType<?> childType) {
 }
 ```
 
-The integration addon's optional Twilight Forest 4.0.870 bridge enables this for Snow Queen's
-`ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
-`lich_minion` exposes a package-private `master` field (cached reflective access). These members are discovered once
-at common setup, without a compile-time Twilight dependency. The adapters restore
-the saved root into those native links before AI runs after reload. Older unmarked
-ownerless crystals have no reliable provenance and are not adopted retroactively.
-The integration was inspected against the installed artifact. It compiles and the
-development client has started; actual gameplay verification is pending. Performance analysis is in
-[MINION_PERFORMANCE.md](MINION_PERFORMANCE.md).
+## Logout and world reload
+
+Logging out preserves active ledger UUIDs, dimensions and native entity NBT.
+Saved companions and inherited minions stay summoned with their current health,
+position, command and mod-specific saved state. Login does not charge a new
+summon price or create replacement entities. Death and dimension-change recalls
+retain their existing behavior.
+
+An online owner's absence during startup/login is not a recall condition. The
+existing server-tick wrapper pauses valid owned entities before the entire native
+`tick`/`rideTick`, including independently ticked non-player passengers. This also
+prevents an offline creature's native fuse or lifetime logic from running outside
+`LivingUpdateEvent`. Players are never paused through their mount. Reservations
+are still validated so stale entities reach normal cleanup instead of remaining
+paused forever. No world scan, chunk loading, save-schema or packet change is
+added. A loaded companion resumes when its owner is online again.
+
+## Companion display names
+
+Summoned roots and inherited minions receive an ordinary server-side custom name
+in the form `PlayerName's CreatureName`. Vanilla entity metadata synchronizes it;
+no client integration or custom packet is needed. Translatable creature names and
+captured custom names are retained as text components. Client-side nameplate
+rendering is suppressed through Forge's `RenderNameplateEvent`; the underlying
+entity name stays available to other mods. The collection's stored names and
+captured snapshots remain unchanged.
+
+`SoulNames` stores the original component and previous owner nickname in the
+entity's `scp_name_base` / `scp_name_owner` persistent fields. Rejoining a world
+or changing the owner's nickname rebuilds one prefix rather than nesting it.
+Loaded companions are checked once per 20 entity ticks using a weak-key cache;
+unchanged names do not serialize JSON or resend name metadata. Existing summoned
+entities receive the prefix on join or their next naming update. These checks do
+not scan the world, load chunks or query external profile services.
 
 ## Departure effects
 
@@ -435,7 +489,7 @@ Current HP is read before adapter cleanup; the active reservation is invalidated
 before callbacks to prevent duplicate refunds. Credits fill the owner's offhand
 cage first, then hotbar cages from left to right. Without an available owner inventory or free cage space,
 the refund cannot be stored. `recallAll(player)` supplies its player directly for
-logout and death handling. The shared recall
+death handling. Logout does not recall companions. The shared recall
 path covers single, group and automatic recalls; companion death gives no refund.
 Unloaded/missing entities are invalidated without a refund or chunk loading because
 their current health is unknown.
@@ -582,9 +636,6 @@ Create `data/<your_namespace>/soul_profiles/<name>.json`:
 Set `enabled` to false to disable marking and capture. Ordinary credited kill
 energy still uses the maximum-health formula. Legacy `cost`, `slots` and `energy`
 fields are ignored; profiles cannot override the common economy or scythe limits.
-The Wroughtnaut profile is provided by the integration addon, even when Mowzie's
-is absent. Its existing `data/soulcatcherplus/soul_profiles/wroughtnaut.json` path
-is preserved so existing datapack overrides still apply.
 Use the same resource path as an existing profile to override it. Reload with `/reload`.
 Existing collection entries retain their captured maximum health and cost; disabling
 capture does not delete collected souls. Avoid multiple profile files targeting one entity.
@@ -638,22 +689,59 @@ as a companion. World changes clear the tracking map. There is no world entity
 scan, server polling, extra packet, or sound-ID blacklist. Soundtracks without a
 recoverable source, async playback, and non-MUSIC categories need an integration.
 
-An optional Aquamirae 5.4.0 hook in the integration addon cancels `AquamiraeAmbient.playCorneliaMusic` for a
-companion tick before its shared cooldown is updated. It also tracks the last
-successful Cornelia music request weakly and clears that request's cooldown if
-its source is identified as a companion later. Another successful boss request
-replaces the tracked source; simply hitting the cooldown does not. No Aquamirae classes are
-required when that mod is absent. This protects the regular Cornelia encounter's
-music timer as well as the vanilla music manager.
+## Soul scrolls
 
-The Forge 1.20.1 addon targets the inspected Aquamirae 6.1.2/6.4.0
-`AquamiraeClient` controller instead. Its cooldown listener is registered on the
-client event bus because native ticking lives in the nested `ForgeEvents` class.
-Aquamirae 7.x uses a different implementation and is not covered by that hook.
-The 1.20.1 music-source API uses `SoundInstance` in place of the legacy `ISound`;
-addons must compile against the matching Minecraft version.
+`soulcatcherplus:soul_scroll` contains a Pig by default, including when obtained
+with `/give`. `soulcatcherplus:boss_soul_scroll` is the separate purple-sealed variant
+and defaults to a Wither. `soulcatcherplus:forgotten_soul_scroll` has explicit Raven
+and Courier creative variants; a bare stack defaults to Raven. The older
+`courier_soul_scroll` ID remains readable but is omitted from the creative tab.
+`SoulScroll.containing(SoulEntry)` creates a scroll for another form, choosing the
+Forgotten variant for built-in Raven/Courier types, otherwise the boss variant at
+maximum health of 150 or more using `SoulBalance.isBossSoul`. All use the same unlock logic.
+Its `Soul` NBT compound stores `Type`, `Name` and `Snapshot`; it never carries the
+original collection UUID, active companion reference or recovery timer. Opening
+uses a detached server-side mob sample to validate the type and reconstruct its
+health and sanitized snapshot. Tooltip rendering only reads the stored name/type.
+
+Right-clicking from either hand adds a fresh entry to the player's collection and
+consumes one scroll, including in creative mode. A known form, full collection,
+invalid payload or missing entity type preserves the scroll. Unlocking requires
+neither a cage nor a scythe and grants no energy. Normal summoning rules still
+apply. Scroll unlocks deliberately bypass ordinary capture eligibility so that
+legendary creatures such as Soul Raven can be distributed without capturing them.
+They do not count as a combat capture for capture events or advancements. No
+crafting recipe or ordinary/Boss Scroll survival source is defined. Forgotten
+Scrolls have the chest-loot source below.
+
+### Forgotten Soul chest loot
+
+The Forge global loot modifier `soulcatcherplus:forgotten_souls` appends at most
+one typed Forgotten Soul Scroll per root loot-table generation. It checks the
+queried root table's path for the `chests/` prefix in any namespace before drawing
+random numbers, leaving non-chest paths, including entity drops, untouched. This
+includes modded tables following that path convention; other modded chest paths
+are not automatically included. Nested helper tables do not receive extra rolls.
+
+`data/soulcatcherplus/loot_modifiers/forgotten_souls.json` sets `chance` to `0.02`
+and has no extra conditions. A successful 2% roll uses
+`ForgottenSoulScroll.randomPreset(Random)` to choose Raven or Courier with equal
+probability and stores an explicit type in the scroll payload. Existing generated
+chests are not rerolled. A datapack can replace this modifier JSON; `chance` must
+be finite and in `[0,1]`. The Forge registration file sets `replace: false`, so
+this mod does not replace other mods' global modifier registrations.
 
 ## Client rendering
+
+The palette icon beside the captured-form controls in menu O opens local soul
+appearance settings. Hue/saturation/brightness, HEX RGB and opacity adjust a
+spectral preview of the selected form. Reset restores the original blue tint and
+42% opacity. Changes are previewed in memory and saved when the editor closes
+in the Forge CLIENT config (`soulcatcherplus-client.toml`). They apply only to
+this client's summoned-soul rendering, including departure echoes, and are not
+sent to the server or other clients. Unsummoned creatures and soul-resource items
+retain their own renderers. The editor preserves collection state synchronization
+and single-player pause behavior. It does not tick its detached preview entity.
 
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client
 setup. `SoulVisualProvider.remap(originalRenderType, bodyTexture)` lets an integration
@@ -670,7 +758,3 @@ renderer must use the supplied `IRenderTypeBuffer` for this hook to affect it.
 Custom shaders, independently acquired buffers and extra textures/layers may still
 need an integration through `SoulVisualProvider` and visual testing. The hook does
 not guarantee transparency for every third-party rendering pipeline.
-
-The integration addon's Wroughtnaut adapter uses the creature's public activation API. An optional
-`@Pseudo` Mixin filters Mowzie's area-query results before native attacks apply
-damage, shield wear, knockback or other effects. No Mowzie code or assets are bundled.

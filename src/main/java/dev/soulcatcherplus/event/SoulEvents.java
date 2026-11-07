@@ -8,6 +8,7 @@ import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.network.SoulNetwork;
+import dev.soulcatcherplus.item.SoulScroll;
 import java.util.UUID;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundNBT;
@@ -22,11 +23,19 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.EntityLeaveWorldEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.*;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
 public final class SoulEvents {
+    /** Handle creative use before vanilla restores the old stack count after Item.use. */
+    @SubscribeEvent public static void creativeScrollUse(PlayerInteractEvent.RightClickItem event) {
+        if (!event.getPlayer().isCreative() || !(event.getItemStack().getItem() instanceof SoulScroll scroll)) return;
+        event.setCancellationResult(scroll.use(event.getWorld(), event.getPlayer(), event.getHand()).getResult());
+        event.setCanceled(true);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
         if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return;
@@ -96,9 +105,16 @@ public final class SoulEvents {
         if (!(event.getEntity() instanceof MobEntity mob) || event.getWorld().isClientSide) return;
         SoulMinions.inheritOnJoin(mob, SoulSpawnContext.wasLoaded(mob));
         if (!CompanionBrain.isSoul(mob)) return;
-        if (CompanionBrain.activeEntry(mob) == null) { event.setCanceled(true); return; }
+        if (CompanionBrain.activeEntry(mob) == null) {
+            // Register a stale loaded raven's native passengers before the brain discards it.
+            // Its normal remove path then releases the real cargo instead of losing saved loot.
+            if (!(mob instanceof dev.soulcatcherplus.entity.SoulRavenEntity) || mob.getPassengers().isEmpty())
+                event.setCanceled(true);
+            return;
+        }
         if (SoulMinions.isMinion(mob)) SoulMinions.configure(mob);
         else if (SoulSpawnContext.wasLoaded(mob)) SoulAdapters.get(mob).configureCompanion(mob);
+        SoulNames.update(mob);
         SoulBossBars.suppress(mob);
     }
     @SubscribeEvent public static void leave(EntityLeaveWorldEvent event) {
@@ -118,9 +134,6 @@ public final class SoulEvents {
         if (event.getTarget() instanceof MobEntity mob && !mob.level.isClientSide) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof ServerPlayerEntity player && CompanionBrain.isSoul(event.getTarget()))
             SoulNetwork.ghost(player, event.getTarget());
-    }
-    @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayerEntity player) SoulService.recallAll(player);
     }
     @SubscribeEvent public static void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayerEntity player) SoulService.recallAll(player);

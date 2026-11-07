@@ -13,6 +13,8 @@ final class SoulTheme {
         "....#....", "...###...", "...###...", "#########", ".#######.",
         "..#####..", "..#####..", ".###.###.", ".##...##."
     };
+    private static final String[] PALETTE = { "..######....", ".#########..", "###########.", "############",
+        "############", "########..##", ".#######..#.", "..########..", "....####...." };
 
     static void panel(SoulGui g, int x, int y, int w, int h) {
         g.fillGradient(x, y, x + w, y + h, PANEL, INK);
@@ -39,6 +41,15 @@ final class SoulTheme {
                     || !starPixel(column, row - 1) || !starPixel(column, row + 1))
                 g.fill(left + column, top + row, left + column + 1, top + row + 1, color);
         }
+    }
+    static void palette(SoulGui g, int x, int y) {
+        for (int row = 0; row < PALETTE.length; row++) for (int column = 0; column < PALETTE[row].length(); column++)
+            if (PALETTE[row].charAt(column) == '#')
+                g.fill(x - 6 + column, y - 4 + row, x - 5 + column, y - 3 + row, SoulTheme.LIGHT);
+        g.fill(x - 3, y - 3, x - 1, y - 1, 0xFFE37D84);
+        g.fill(x + 1, y - 2, x + 3, y, 0xFFEBC56C);
+        g.fill(x - 5, y, x - 3, y + 2, 0xFF769FEB);
+        g.fill(x - 2, y + 2, x, y + 4, SoulTheme.TEAL);
     }
     private static boolean starPixel(int x, int y) {
         return y >= 0 && y < STAR.length && x >= 0 && x < STAR[y].length() && STAR[y].charAt(x) == '#';

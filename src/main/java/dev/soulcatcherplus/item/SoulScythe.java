@@ -39,6 +39,8 @@ public final class SoulScythe extends SwordItem {
         return player.getOffhandItem().getItem() instanceof SoulScythe scythe ? scythe : null;
     }
     @Override public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity target, Hand hand) {
+        // The porter's native interaction must remain usable while holding a command scythe.
+        if (target instanceof dev.soulcatcherplus.entity.SoulCourierEntity) return ActionResultType.PASS;
         if (!(target instanceof MobEntity mob)) return ActionResultType.PASS;
         if (player instanceof ServerPlayerEntity server) {
             SoulMinions.tryInherit(mob);

@@ -81,6 +81,7 @@ public final class SoulService {
             SoulBossBars.suppress(mob);
             if (!place(mob, player)) { message(player, "no_space"); return; }
             if (MinecraftForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob))) return;
+            SoulNames.update(mob, player);
             // Charge only after integrations approve, before join callbacks can use the companion.
             SoulCages.Active cage = SoulCages.active(player);
             if (!SoulCages.spend(player, entry.cost)) {
@@ -193,6 +194,34 @@ public final class SoulService {
         SoulEntry entry = data(player).entries.get(id);
         if (entry != null && applyCommand(player, entry, mode)) changed(player);
     }
+    /** Collection orders follow the selected-species / whole-group scope. */
+    public static void teleport(ServerPlayerEntity player) {
+        PlayerSouls collection = data(player);
+        teleportEntries(player, entry -> receivesCommand(collection, entry));
+    }
+    /** Wheel orders never alter the saved collection selection or scope. */
+    public static void teleportAll(ServerPlayerEntity player) {
+        teleportEntries(player, entry -> true);
+    }
+    public static void teleportOne(ServerPlayerEntity player, UUID id) {
+        teleportEntries(player, entry -> entry.id.equals(id));
+    }
+    private static void teleportEntries(ServerPlayerEntity player, java.util.function.Predicate<SoulEntry> selected) {
+        if (!holdsScythe(player)) { message(player, "teleport_scythe_needed"); return; }
+        int moved = 0, failed = 0;
+        for (SoulEntry entry : data(player).entries.values()) {
+            if (entry.activeEntity == null || !selected.test(entry)) continue;
+            MobEntity mob = activeMob(player, entry);
+            if (mob == null || !CompanionBrain.teleportToOwner(mob, player)) { failed++; continue; }
+            mob.setTarget(null);
+            mob.getNavigation().stop();
+            if (CompanionBrain.mode(mob) == CompanionBrain.Mode.GUARD)
+                mob.getPersistentData().putLong("scp_guard", mob.blockPosition().asLong());
+            moved++;
+        }
+        if (failed > 0) message(player, "teleport_partial", moved, failed);
+        else if (moved > 0) message(player, "teleported", moved);
+    }
     /** Resolve canonical ownership without loading a chunk for a menu request. */
     public static MobEntity activeMob(ServerPlayerEntity player, SoulEntry entry) {
         Entity entity = entry.activeEntity == null ? null : player.getLevel().getEntity(entry.activeEntity);
@@ -205,6 +234,8 @@ public final class SoulService {
     private static boolean applyCommand(ServerPlayerEntity player, SoulEntry entry, CompanionBrain.Mode mode) {
         MobEntity mob = activeMob(player, entry);
         if (mob == null) return false;
+        if (!SoulAdapters.get(mob).usesStandardBrain(mob)) return false;
+        CompanionBrain.resetReturn(mob);
         mob.setTarget(null);
         mob.getPersistentData().putString(CompanionBrain.MODE, mode.name());
         mob.getPersistentData().putLong("scp_guard", player.blockPosition().asLong());

@@ -7,7 +7,7 @@ import net.minecraft.client.gui.widget.button.AbstractButton;
 import net.minecraft.util.text.ITextComponent;
 
 final class SoulButton extends AbstractButton {
-    enum Style { PRIMARY, SUBTLE, DANGER, CARD, FAVORITE }
+    enum Style { PRIMARY, SUBTLE, DANGER, CARD, FAVORITE, PALETTE }
     private final Runnable action;
     private final Style style;
     private ITextComponent subtitle = new net.minecraft.util.text.StringTextComponent("");
@@ -51,6 +51,8 @@ final class SoulButton extends AbstractButton {
         } else if (style == Style.FAVORITE) {
             SoulTheme.star(g, x + width / 2, y + height / 2,
                 selected ? SoulTheme.GOLD : hover ? SoulTheme.LIGHT : SoulTheme.MUTED, selected);
+        } else if (style == Style.PALETTE) {
+            SoulTheme.palette(g, x + width / 2, y + height / 2);
         } else {
             g.drawCenteredString(font, new net.minecraft.util.text.StringTextComponent(fit(getMessage().getString(), width - 10)),
                 x + width / 2, y + (height - 8) / 2, color);

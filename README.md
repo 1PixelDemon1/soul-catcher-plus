@@ -12,9 +12,14 @@ companions in battle.
 - Summon spectral companions and give individual or group orders: follow, wait,
   guard, attack nearby enemies, or recall.
 - Progress through four scythe tiers, custom enchantments, and advancements.
-- Extend mod compatibility through an optional integration addon and a public API.
+- Extend creature support through a public API.
 
 ## Supported versions
+
+The local **1.1.0** release targets **Forge 1.16.5 only**. See the
+[1.1.0 release notes](docs/releases/1.1.0.md) for Forgotten Souls, scrolls,
+commands, upgrade requirements, and validation status. The other maintained ports
+retain their 1.0.0 releases; no new integration-addon build is included.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
@@ -25,11 +30,6 @@ companions in battle.
 Each Minecraft version has its own JAR. Install the matching core mod in the
 `mods` folder on both client and server. The core does not require any creature
 mods or animation libraries.
-
-The optional **Mod Integrations** addon adds specific support for Mowzie's Mobs,
-The Twilight Forest, and Aquamirae. Use the addon matching your core mod and
-Minecraft version. Creature mods and their dependencies are installed separately;
-compatibility depends on their versions and behavior.
 
 ## Quick start
 

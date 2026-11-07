@@ -36,7 +36,7 @@ public final class SoulScreen extends Screen {
     private long receivedGameTime;
     private float scale = 1, originX, originY;
     private boolean turning;
-    private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, scope, recallAll, forget;
+    private SoulButton primary, previousForm, nextForm, follow, wait, guard, aggressive, teleport, scope, recallAll, forget;
 
     @com.github.bsideup.jabel.Desugar
     private record SoulGroup(String entityType, List<SoulNetwork.Row> forms) {
@@ -215,6 +215,8 @@ public final class SoulScreen extends Screen {
             () -> changeForm(1)).hint(text("next_form"));
         forget = button(234, 276, 144, 18, text("forget"), SoulButton.Style.DANGER, this::confirmForget)
             .hint(text("forget_hint"));
+        button(390, 276, 24, 18, text("appearance"), SoulButton.Style.PALETTE,
+            () -> minecraft.setScreen(new SoulAppearanceScreen(this, selected))).hint(text("appearance"));
         primary = button(448, 161, 144, 27, text("summon"), SoulButton.Style.PRIMARY, () -> {
             SoulNetwork.Row active = group() == null ? null : group().active();
             if (active == null) send(SoulNetwork.Action.SUMMON);
@@ -234,6 +236,8 @@ public final class SoulScreen extends Screen {
             () -> send(SoulNetwork.Action.TOGGLE_MODE)).hint(text(state.commandMode() ? "command_hint" : "harvest_hint"));
         recallAll = button(438, 311, 164, 24, text("recall_all"), SoulButton.Style.DANGER,
             () -> send(SoulNetwork.Action.RECALL_ALL)).hint(text("recall_all_hint"));
+        teleport = button(198, 311, 216, 24, text("teleport"), SoulButton.Style.SUBTLE,
+            () -> send(SoulNetwork.Action.TELEPORT)).hint(text("teleport_hint"));
         rebuildCards();
         updateControls();
         preview.request(selected, ticks);
@@ -305,6 +309,17 @@ public final class SoulScreen extends Screen {
             default -> text("summon_hint");
         };
     }
+    private String displayedCommand(SoulNetwork.Row active) {
+        if (!state.group()) return active == null ? "" : active.command();
+        // Group highlighting reflects a shared order, never the selected species alone.
+        String common = null;
+        for (SoulNetwork.Row companion : state.rows()) {
+            if (!companion.active()) continue;
+            if (common == null) common = companion.command();
+            else if (!common.equals(companion.command())) return "";
+        }
+        return common == null ? "" : common;
+    }
     private void updateControls() {
         if (primary == null) return;
         var group = group();
@@ -316,11 +331,13 @@ public final class SoulScreen extends Screen {
         previousForm.active = nextForm.active = group != null && group.forms().size() > 1;
         forget.active = group != null;
         boolean hasCommands = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
-        follow.active = wait.active = guard.active = aggressive.active = hasCommands;
-        follow.selected(!state.group() && active != null && active.command().equals("FOLLOW"));
-        wait.selected(!state.group() && active != null && active.command().equals("WAIT"));
-        guard.selected(!state.group() && active != null && active.command().equals("GUARD"));
-        aggressive.selected(!state.group() && active != null && active.command().equals("AGGRESSIVE"));
+        follow.active = wait.active = guard.active = aggressive.active = teleport.active = hasCommands;
+        teleport.setMessage(text(state.group() ? "teleport_all" : "teleport"));
+        String command = displayedCommand(active);
+        follow.selected(command.equals("FOLLOW"));
+        wait.selected(command.equals("WAIT"));
+        guard.selected(command.equals("GUARD"));
+        aggressive.selected(command.equals("AGGRESSIVE"));
         scope.setMessage(text(state.group() ? "group" : "single"));
         recallAll.active = state.rows().stream().anyMatch(SoulNetwork.Row::active);
         // Keep card indicators and toggle labels current without losing mouse/keyboard focus.
@@ -386,8 +403,9 @@ public final class SoulScreen extends Screen {
             g.drawString(font, text("search_hint"), 32, 94, SoulTheme.MUTED, false);
         ITextComponent hint = null;
         for (SoulButton button : controls) if ((button.isHovered() || button.isFocused()) && !button.hint().getString().isEmpty()) hint = button.hint();
-        if (hint != null) g.drawWordWrap(font, hint, 185, 312, 239, SoulTheme.MUTED);
         g.pose().popPose();
+        // Footer space now holds teleport; native tooltips also stay inside the actual screen bounds.
+        if (hint != null) renderTooltip(pose, font.split(hint, Math.max(40, Math.min(240, width - 24))), mouseX, mouseY);
     }
     private void metric(SoulGui g, int x, int width, ITextComponent label, String value, int accent) {
         g.fill(x, 14, x + width, 46, 0xFF0B1720);

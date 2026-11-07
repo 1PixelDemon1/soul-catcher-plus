@@ -1,0 +1,34 @@
+{
+  "size": 16,
+  "palette": {
+    ".": "00000000",
+    "o": "433022FF",
+    "d": "715035FF",
+    "m": "A47F4EFF",
+    "h": "C5A16BFF",
+    "l": "D8BC87FF",
+    "k": "16171AFF",
+    "c": "086D88FF",
+    "b": "12B3CFFF",
+    "s": "76EDF1FF",
+    "w": "BAFBF4FF"
+  },
+  "pixels": [
+    "................",
+    "....ooooooooo...",
+    "...ohllllllhdo..",
+    "..odhhhhhhdomo..",
+    "..odmmmmmmdmdo..",
+    "...oddhhhmmdo...",
+    "....ohhhhmd.....",
+    "....ohcbbcmd....",
+    "...kkkbswbkkk...",
+    "....ohbssbmd....",
+    "...odhcbbcdd....",
+    "...omhhhhmdo....",
+    "..ohlllllhdmo...",
+    "..odmmmmmddoo...",
+    "...ooooooooo....",
+    "................"
+  ]
+}
