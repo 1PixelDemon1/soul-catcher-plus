@@ -10,7 +10,8 @@ import net.minecraft.world.item.ItemStack;
 
 /** Offhand cages take priority, followed by the hotbar from left to right. */
 public final class SoulCages {
-    private static final int[] SLOTS = {Inventory.SLOT_OFFHAND, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+    private static final int OFFHAND_SLOT = 40;
+    private static final int[] SLOTS = {OFFHAND_SLOT, 0, 1, 2, 3, 4, 5, 6, 7, 8};
     public record Active(int slot, ItemStack stack) {
         public boolean present() { return slot >= 0; }
         public int energy() { return SoulCage.energy(stack); }
@@ -24,9 +25,9 @@ public final class SoulCages {
         return new Active(-1, ItemStack.EMPTY);
     }
     public static Component location(int slot) {
-        if (slot < 0) return Component.translatable("screen.soulcatcherplus.cage_missing");
-        if (slot == Inventory.SLOT_OFFHAND) return Component.translatable("screen.soulcatcherplus.cage_offhand");
-        return Component.translatable("screen.soulcatcherplus.cage_slot", slot + 1);
+        if (slot < 0) return net.minecraft.network.chat.Component.translatable("screen.soulcatcherplus.cage_missing");
+        if (slot == OFFHAND_SLOT) return net.minecraft.network.chat.Component.translatable("screen.soulcatcherplus.cage_offhand");
+        return net.minecraft.network.chat.Component.translatable("screen.soulcatcherplus.cage_slot", slot + 1);
     }
     public static boolean spend(ServerPlayer player, int amount) {
         Active active = active(player);

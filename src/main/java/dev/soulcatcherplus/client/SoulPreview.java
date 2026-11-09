@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 
 /** Detached visual entities: never inserted into a level and never AI-ticked. */
 final class SoulPreview {
+    private final boolean spectral;
     private final Map<UUID, Mob> cache = new LinkedHashMap<>();
     private final Set<UUID> failed = new HashSet<>();
     private UUID requested;
@@ -26,22 +21,28 @@ final class SoulPreview {
     private float zoom = 1;
     private boolean manuallyRotated;
 
+    SoulPreview() { this(false); }
+    SoulPreview(boolean spectral) { this.spectral = spectral; }
+
     void request(UUID entry, int tick) {
         if (entry == null || cache.containsKey(entry) || failed.contains(entry)) return;
         if (entry.equals(requested) && tick - requestTick < 40) return;
         requested = entry;
         requestTick = tick;
-        SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.PreviewRequest(entry));
+        SoulNetwork.sendToServer(new SoulNetwork.PreviewRequest(entry));
     }
     void receive(SoulNetwork.Preview packet) {
         var client = Minecraft.getInstance();
         if (client.level == null) return;
         try {
-            var type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(packet.entityType()));
-            if (type == null || !(type.create(client.level) instanceof Mob mob)) {
+            var type = ForgeRegistries.ENTITY_TYPES.getValue(Identifier.parse(packet.entityType()));
+            if (type == null || !(type.create(client.level, net.minecraft.world.entity.EntitySpawnReason.LOAD) instanceof Mob mob)) {
                 failed.add(packet.entry()); return;
             }
-            mob.load(packet.appearance().copy());
+            dev.soulcatcherplus.data.SoulNbt.restore(mob, packet.appearance().copy());
+            // A detached preview never joins a level or runs entity ticks. The marker
+            // lets it use the exact same dispatcher tint/provider as a summoned soul.
+            if (spectral) dev.soulcatcherplus.data.SoulNbt.putUuid(mob.getPersistentData(), dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0, 0));
             mob.setNoAi(true);
             mob.setHealth(mob.getMaxHealth());
             mob.setPos(0, 0, 0);
@@ -53,7 +54,7 @@ final class SoulPreview {
             while (cache.size() > 12) cache.remove(cache.keySet().iterator().next());
         } catch (RuntimeException error) {
             failed.add(packet.entry());
-            com.mojang.logging.LogUtils.getLogger().warn("Unable to create soul preview: {}", packet.entityType(), error);
+            org.apache.logging.log4j.LogManager.getLogger().warn("Unable to create soul preview: {}", packet.entityType(), error);
         }
     }
     void tick() {
@@ -68,42 +69,26 @@ final class SoulPreview {
     boolean available(UUID entry) { return cache.containsKey(entry) && !failed.contains(entry); }
     void clear() { cache.clear(); failed.clear(); requested = null; }
 
-    void render(GuiGraphics graphics, UUID entry, int centerX, int baseline, int width, int height, float partialTick) {
-        Mob mob = cache.get(entry);
-        if (mob == null || failed.contains(entry)) return;
-        var client = Minecraft.getInstance();
-        var dispatcher = client.getEntityRenderDispatcher();
-        Quaternionf previousCamera = new Quaternionf(dispatcher.cameraOrientation());
-        PoseStack pose = new PoseStack();
-        pose.last().pose().set(graphics.pose().last().pose());
-        pose.last().normal().set(graphics.pose().last().normal());
-        // Reserve visible space around the model, including protruding weapons and horns.
-        // Width/depth jointly bound the footprint while it rotates.
-        float usableWidth = width * 0.66f;
-        float usableHeight = height * 0.70f;
-        float footprint = Math.max(1.0f, mob.getBbWidth() * 1.65f);
-        float scale = Math.min(usableWidth / footprint, usableHeight / Math.max(0.75f, mob.getBbHeight()));
-        scale = Math.max(0.5f, Math.min(58, scale)) * zoom;
-        pose.translate(centerX, baseline, 60);
-        pose.mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
-        pose.mulPose(Axis.ZP.rotationDegrees(180));
-        pose.mulPose(Axis.YP.rotationDegrees(rotation));
-        Lighting.setupForEntityInInventory();
-        dispatcher.setRenderShadow(false);
-        dispatcher.overrideCameraOrientation(new Quaternionf());
+    void render(GuiGraphicsExtractor g, UUID entry, int centerX, int baseline, int width, int height, float partialTick) {
+        Mob mob=cache.get(entry);
+        if(mob==null || failed.contains(entry)) return;
         try {
-            RenderSystem.runAsFancy(() -> dispatcher.render(mob, 0, 0, 0, 0, partialTick,
-                pose, graphics.bufferSource(), LightTexture.FULL_BRIGHT));
-            graphics.flush();
-        } catch (RuntimeException error) {
+            var renderer=Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(mob);
+            var state=renderer.createRenderState(mob,partialTick);
+            state.shadowPieces.clear();state.outlineColor=0;state.nameTag=null;
+            float footprint=Math.max(1f,mob.getBbWidth()*1.65f);
+            float size=Math.max(.5f,Math.min(58,Math.min(width*.66f/footprint,height*.7f/Math.max(.75f,mob.getBbHeight()))))*zoom;
+            var rotation=new org.joml.Quaternionf().rotateZ((float)Math.PI).rotateY((float)Math.toRadians(rotation()));
+            // Entity extraction takes screen coordinates directly, unlike 2D widgets.
+            var min=g.pose().transformPosition(centerX-width/2f,baseline-height,new org.joml.Vector2f());
+            var max=g.pose().transformPosition(centerX+width/2f,baseline,new org.joml.Vector2f());
+            float screenScale=(float)Math.hypot(g.pose().m00(),g.pose().m01());
+            g.entity(state,size*screenScale,new org.joml.Vector3f(0,mob.getBbHeight()/2,0),rotation,new org.joml.Quaternionf(),
+                Math.round(min.x),Math.round(min.y),Math.round(max.x),Math.round(max.y));
+        } catch(RuntimeException error) {
             failed.add(entry);
-            com.mojang.logging.LogUtils.getLogger().warn("Unable to render soul preview: {}", mob.getType(), error);
-        } finally {
-            dispatcher.overrideCameraOrientation(previousCamera);
-            dispatcher.setRenderShadow(true);
-            Lighting.setupFor3DItems();
-            // Flush the detached model before the screen draws its remaining panels.
-            graphics.flush();
+            org.apache.logging.log4j.LogManager.getLogger().warn("Unable to render soul preview: {}",mob.getType(),error);
         }
     }
+    private float rotation() { return rotation; }
 }

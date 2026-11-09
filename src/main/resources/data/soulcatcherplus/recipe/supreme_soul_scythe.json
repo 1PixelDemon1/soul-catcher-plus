@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BBN",
+    " S ",
+    "S  "
+  ],
+  "key": {
+    "B": "minecraft:bone",
+    "N": "minecraft:nether_star",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "soulcatcherplus:supreme_soul_scythe"
+  }
+}

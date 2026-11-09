@@ -24,15 +24,15 @@ public final class SoulBalance {
 
     /** Best-effort migration for old entries that stored attributes but no max-health field. */
     public static double legacyHealth(CompoundTag snapshot, int oldCost) {
-        for (Tag raw : snapshot.getList("Attributes", 10)) {
+        for (Tag raw : snapshot.getListOrEmpty("Attributes")) {
             CompoundTag attribute = (CompoundTag) raw;
-            String name = attribute.getString("Name");
+            String name = attribute.getStringOr("Name", "");
             if (!name.equals("minecraft:generic.max_health") && !name.equals("generic.max_health")) continue;
-            double base = attribute.getDouble("Base"), add = 0, multiplyBase = 0, totalFactor = 1;
-            for (Tag modifierRaw : attribute.getList("Modifiers", 10)) {
+            double base = attribute.getDoubleOr("Base", 0d), add = 0, multiplyBase = 0, totalFactor = 1;
+            for (Tag modifierRaw : attribute.getListOrEmpty("Modifiers")) {
                 CompoundTag modifier = (CompoundTag) modifierRaw;
-                double amount = modifier.getDouble("Amount");
-                switch (modifier.getInt("Operation")) {
+                double amount = modifier.getDoubleOr("Amount", 0d);
+                switch (modifier.getIntOr("Operation", 0)) {
                     case 0 -> add += amount;
                     case 1 -> multiplyBase += amount;
                     case 2 -> totalFactor *= 1 + amount;

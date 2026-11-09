@@ -7,7 +7,7 @@ import dev.soulcatcherplus.companion.SoulCages;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /** Development/admin resource grant; ordinary gameplay earns energy from victories. */
@@ -15,17 +15,17 @@ import net.minecraftforge.fml.common.Mod;
 public final class SoulCommands {
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("soulcatcher")
-            .then(Commands.literal("energy").requires(source -> source.hasPermission(2))
+            .then(Commands.literal("energy").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(0, 1000000))
                     .executes(context -> {
                         var player = context.getSource().getPlayerOrException();
                         SoulCages.Active cage = SoulCages.active(player);
                         if (!cage.present()) {
-                            context.getSource().sendFailure(Component.translatable("message.soulcatcherplus.cage_needed"));
+                            context.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("message.soulcatcherplus.cage_needed"));
                             return 0;
                         }
                         int stored = SoulCages.set(player, IntegerArgumentType.getInteger(context, "amount"));
-                        context.getSource().sendSuccess(() -> Component.translatable("command.soulcatcherplus.energy",
+                        context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("command.soulcatcherplus.energy",
                             SoulCages.location(cage.slot()), stored, cage.capacity()), false);
                         return 1;
                     }))));

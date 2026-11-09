@@ -11,18 +11,18 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
+
 
 /** In-game shortcuts; Screens own release events after Minecraft clears KeyMapping state. */
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID, value = Dist.CLIENT)
 public final class ClientControls {
-    private static final String CATEGORY = "key.categories.soulcatcherplus";
+    private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(SoulCatcherPlus.ID,"controls"));
     public static final KeyMapping COLLECTION = new KeyMapping("key.soulcatcherplus.collection",
-        KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_O, CATEGORY);
+        KeyConflictContext.IN_GAME, InputConstants.Type.KEYBOARD, InputConstants.KEY_O, CATEGORY, 0);
     public static final KeyMapping COMMAND_WHEEL = new KeyMapping("key.soulcatcherplus.command_wheel",
-        KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY);
+        KeyConflictContext.IN_GAME, InputConstants.Type.KEYBOARD, InputConstants.KEY_R, CATEGORY, 1);
     private static boolean wheelBlockedUntilRelease;
     private static InputConstants.Key heldScanBinding;
     private static boolean scanWheelDown;
@@ -32,8 +32,7 @@ public final class ClientControls {
             && !client.player.isSpectator() && SoulScythe.heldBy(client.player) != null
             && client.getConnection() != null && client.isWindowActive();
     }
-    @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    @SubscribeEvent public static void tick(TickEvent.ClientTickEvent.Post event) {
         Minecraft client = Minecraft.getInstance();
         boolean collection = false, wheel = false;
         while (COLLECTION.consumeClick()) collection = true;
@@ -44,14 +43,14 @@ public final class ClientControls {
             return;
         }
         if (wheelBlockedUntilRelease && !wheelHeld()) wheelBlockedUntilRelease = false;
-        if (client.screen != null) return;
-        if (collection) SoulNetwork.CHANNEL.sendToServer(new SoulNetwork.Request(SoulNetwork.Action.OPEN, null));
-        else if (wheel && !wheelBlockedUntilRelease && wheelHeld()) client.setScreen(new SoulWheelScreen());
+        if (client.gui.screen() != null) return;
+        if (collection) SoulNetwork.sendToServer(new SoulNetwork.Request(SoulNetwork.Action.OPEN, null));
+        else if (wheel && !wheelBlockedUntilRelease && wheelHeld()) client.gui.setScreen(new SoulWheelScreen());
     }
     @SubscribeEvent public static void key(InputEvent.Key event) {
-        if (!COMMAND_WHEEL.matches(event.getKey(), event.getScanCode())) return;
-        if (event.getAction() == GLFW.GLFW_RELEASE) wheelTriggerReleased();
-        else if (event.getAction() == GLFW.GLFW_PRESS) {
+        if (!COMMAND_WHEEL.matches(event.getInfo())) return;
+        if (event.getAction() == InputConstants.RELEASE) wheelTriggerReleased();
+        else if (event.getAction() == InputConstants.PRESS) {
             heldScanBinding = COMMAND_WHEEL.getKey();
             scanWheelDown = true;
         }
@@ -64,13 +63,15 @@ public final class ClientControls {
     static boolean wheelHeld() {
         if (COMMAND_WHEEL.isUnbound()) return false;
         InputConstants.Key key = COMMAND_WHEEL.getKey();
-        long window = Minecraft.getInstance().getWindow().getWindow();
-        if (key.getType() == InputConstants.Type.MOUSE)
-            return GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
-        if (key.getType() == InputConstants.Type.KEYSYM)
-            return InputConstants.isKeyDown(window, key.getValue());
-        // Scancodes have no direct GLFW polling API; matching press/release events own this state.
+        if(key.getType()==InputConstants.Type.KEYBOARD) return InputConstants.isKeyDown(key.getValue());
         return key.equals(heldScanBinding) && scanWheelDown;
     }
+    @SubscribeEvent public static void mouse(InputEvent.MouseButton.Post event) {
+        var key=InputConstants.Type.MOUSE.getOrCreate(event.getInfo().button());
+        if(!COMMAND_WHEEL.matches(key)) return;
+        if(event.getAction()==InputConstants.RELEASE) wheelTriggerReleased();
+        else if(event.getAction()==InputConstants.PRESS) { heldScanBinding=key;scanWheelDown=true; }
+    }
+
     private ClientControls() {}
 }

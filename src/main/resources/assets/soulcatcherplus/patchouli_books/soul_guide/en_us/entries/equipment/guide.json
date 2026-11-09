@@ -1,0 +1,22 @@
+{
+  "name": "guide.soulcatcherplus.equipment.guide.name",
+  "category": "soulcatcherplus:equipment",
+  "icon": "patchouli:guide_book{\"patchouli:book\":\"soulcatcherplus:soul_guide\"}",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.guide.name",
+      "text": "guide.soulcatcherplus.equipment.guide.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.guide.name",
+      "text": "guide.soulcatcherplus.equipment.guide.page1"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_guide"
+    }
+  ]
+}

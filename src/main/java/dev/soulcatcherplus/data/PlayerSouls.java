@@ -41,7 +41,7 @@ public final class PlayerSouls {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("CommandMode", commandMode);
         tag.putBoolean("Group", commandGroup);
-        if (selected != null) tag.putUUID("Selected", selected);
+        if (selected != null) dev.soulcatcherplus.data.SoulNbt.putUuid(tag, "Selected", selected);
         ListTag list = new ListTag();
         entries.values().forEach(entry -> list.add(entry.save()));
         tag.put("Souls", list);
@@ -52,17 +52,17 @@ public final class PlayerSouls {
     }
     public static PlayerSouls load(CompoundTag tag) {
         PlayerSouls data = new PlayerSouls();
-        data.commandMode = tag.getBoolean("CommandMode");
-        data.commandGroup = tag.getBoolean("Group");
-        if (tag.hasUUID("Selected")) data.selected = tag.getUUID("Selected");
+        data.commandMode = tag.getBooleanOr("CommandMode", false);
+        data.commandGroup = tag.getBooleanOr("Group", false);
+        if (dev.soulcatcherplus.data.SoulNbt.hasUuid(tag, "Selected")) data.selected = dev.soulcatcherplus.data.SoulNbt.uuid(tag, "Selected");
         Set<String> ownedTypes = new HashSet<>();
-        for (Tag raw : tag.getList("Souls", 10)) {
+        for (Tag raw : tag.getListOrEmpty("Souls")) {
             SoulEntry entry = SoulEntry.load((CompoundTag) raw);
             data.entries.put(entry.id, entry);
             ownedTypes.add(entry.entityType);
         }
-        for (Tag raw : tag.getList("Favorites", Tag.TAG_STRING))
-            if (ownedTypes.contains(raw.getAsString())) data.favoriteTypes.add(raw.getAsString());
+        for (Tag raw : tag.getListOrEmpty("Favorites"))
+            if (ownedTypes.contains(raw.asString().orElse(""))) data.favoriteTypes.add(raw.asString().orElse(""));
         return data;
     }
 }

@@ -1,5 +1,8 @@
 # Repository instructions
 
+This checkout is the `forge/26.3` port described below. Primary-development
+Java 8 commands in this shared policy apply to `develop`, not to this checkout.
+
 ## Target
 
 Primary development targets Minecraft 1.16.5, Forge 36.2.42 and a Java 8 runtime.
@@ -124,3 +127,18 @@ Archive original SRG dependencies from `playtestMods`, never the remapped dev JA
 Do not delete artifacts or open worlds belonging to the other version branches.
 
 Keep build output, downloaded tools, Gradle caches, logs, and local worlds ignored.
+
+## Forge 26.3 port
+
+`forge/26.3` targets Minecraft 26.3, Forge 66.1.5 and Java 25 with the official
+ForgeGradle 7 / Gradle 9.7.1 layout. The game is unobfuscated: do not add legacy
+mappings, Jabel, fg.deobf or reobfJar on that branch. Use its Java 25 bootstrap and
+Gradle scripts. Build output is `build/26.3`; keep its profiles separate from other
+ports. The client uses queued render-state submission and SDL input. Verify those
+APIs against the actual Forge 66.1.5 sources rather than copying 1.20.1 callbacks.
+Published Forge Patchouli and creature-integration builds have not been verified
+for 26.3. Do not claim their compatibility based only on core/addon startup.
+
+Authored model sources are maintained on develop. Port their generated geometry
+with the platform-specific renderer API; legacy exporters are not a substitute
+for reviewing a newer branch's native rendering code.

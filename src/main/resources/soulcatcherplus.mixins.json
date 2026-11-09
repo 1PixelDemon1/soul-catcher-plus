@@ -2,15 +2,23 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.soulcatcherplus.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CompanionBossBarMixin",
-    "SoulSpawnContextMixin"
+    "SoulSpawnContextMixin",
+    "RavenDeliveredItemMixin"
   ],
   "client": [
     "client.SoulEntityRenderMixin",
     "client.SoulMusicContextMixin",
-    "client.CompanionMusicMixin"
+    "client.CompanionMusicMixin",
+    "client.SoulSpecialModelsMixin",
+    "client.SoulRenderStateMixin",
+    "client.SoulRenderExtractionMixin",
+    "client.SoulRenderTypeAccess",
+    "client.SoulRenderSetupAccess",
+    "client.SoulTextureBindingAccess",
+    "client.SoulDissolveRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

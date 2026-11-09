@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MCM",
+    "GSG",
+    "MMM"
+  ],
+  "key": {
+    "M": "minecraft:iron_ingot",
+    "C": "minecraft:iron_chain",
+    "G": "minecraft:glass",
+    "S": "minecraft:soul_sand"
+  },
+  "result": {
+    "id": "soulcatcherplus:iron_soul_cage"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "guide.soulcatcherplus.basics.collection.name",
+  "category": "soulcatcherplus:basics",
+  "icon": "soulcatcherplus:soul_icon",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.collection.name",
+      "text": "guide.soulcatcherplus.basics.collection.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.collection.name",
+      "text": "guide.soulcatcherplus.basics.collection.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.collection.name",
+      "text": "guide.soulcatcherplus.basics.collection.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.collection.name",
+      "text": "guide.soulcatcherplus.basics.collection.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.collection.name",
+      "text": "guide.soulcatcherplus.basics.collection.page4"
+    }
+  ]
+}

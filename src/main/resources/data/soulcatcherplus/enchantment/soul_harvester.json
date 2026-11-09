@@ -1,0 +1,21 @@
+{
+  "description": {
+    "translate": "enchantment.soulcatcherplus.soul_harvester"
+  },
+  "supported_items": "#soulcatcherplus:scythes",
+  "weight": 5,
+  "max_level": 2,
+  "min_cost": {
+    "base": 10,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 30,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 2,
+  "slots": [
+    "hand"
+  ],
+  "effects": {}
+}

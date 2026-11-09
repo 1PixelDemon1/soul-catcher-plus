@@ -1,39 +1,6 @@
 {
-  "loader": "forge:separate_transforms",
-  "gui_light": "front",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "particle": "soulcatcherplus:item/netherite_soul_scythe"
-  },
-  "base": {
-    "parent": "soulcatcherplus:item/netherite_soul_scythe_held_mesh",
-    "textures": {
-      "layer0": "soulcatcherplus:item/netherite_soul_scythe_held"
-    }
-  },
-  "perspectives": {
-    "gui": {
-      "parent": "minecraft:item/generated",
-      "textures": {
-        "layer0": "soulcatcherplus:item/netherite_soul_scythe"
-      }
-    },
-    "ground": {
-      "parent": "minecraft:item/generated",
-      "textures": {
-        "layer0": "soulcatcherplus:item/netherite_soul_scythe"
-      }
-    },
-    "fixed": {
-      "parent": "minecraft:item/generated",
-      "textures": {
-        "layer0": "soulcatcherplus:item/netherite_soul_scythe"
-      }
-    },
-    "head": {
-      "parent": "minecraft:item/generated",
-      "textures": {
-        "layer0": "soulcatcherplus:item/netherite_soul_scythe"
-      }
-    }
+    "layer0": "soulcatcherplus:item/netherite_soul_scythe"
   }
 }

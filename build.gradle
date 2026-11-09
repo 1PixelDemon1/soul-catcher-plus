@@ -1,108 +1,88 @@
+// This is a minimal setup of a Forge mod workspace.
+// For complex examples (including AccessTransformers, Jar-in-Jar, and Mixin), see our examples repository.
+// https://github.com/MinecraftForge/MDKExamples
+
 plugins {
     id 'java'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
 }
 
 version = mod_version
 group = mod_group_id
 base { archivesName = mod_id }
-layout.buildDirectory = layout.projectDirectory.dir('build/1.20.1')
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    withSourcesJar()
-}
-// One development addon today; keep its classes and resources out of the core JAR.
-sourceSets {
-    compat {
-        java.srcDirs = ['addons/compat/src/main/java']
-        resources.srcDirs = ['addons/compat/src/main/resources']
-        compileClasspath += sourceSets.main.output
-        runtimeClasspath += sourceSets.main.output
-    }
-}
-configurations {
-    compatImplementation.extendsFrom implementation
-    compatCompileOnly.extendsFrom compileOnly
-    compatAnnotationProcessor.extendsFrom annotationProcessor
-    compatRuntimeOnly.extendsFrom runtimeOnly
-}
-sourceSets.compat.compileClasspath += sourceSets.main.compileClasspath
-sourceSets.compat.runtimeClasspath += sourceSets.main.runtimeClasspath
+layout.buildDirectory = layout.projectDirectory.dir('build/26.3')
+java.withSourcesJar()
+
+// Mojang ships Java 25 to end users in 26.1+, so your mod should target Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+// Include generated resources
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
 minecraft {
-    mappings channel: 'official', version: minecraft_version
-    copyIdeResources = true
     runs {
         configureEach {
-            workingDirectory project.file('run/1.20.1')
-            property 'forge.logging.console.level', 'info'
-            property 'forge.enabledGameTestNamespaces', mod_id
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
+            workingDir = layout.projectDirectory.dir('run')
+
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
             args '--mixin', 'soulcatcherplus.mixins.json'
-            mods {
-                "${mod_id}" { source sourceSets.main }
-                if (!project.hasProperty('withoutCompatAddon')) {
-                    soulcatcherplus_compat { source sourceSets.compat }
-                }
-            }
-            if (!project.hasProperty('withoutCompatAddon')) args '--mixin', 'soulcatcherplus_compat.mixins.json'
+            systemProperty 'forge.enabledGameTestNamespaces', mod_id
         }
-        client { workingDirectory project.file('run-client/1.20.1') }
-        server { args '--nogui' }
-    }
-}
-if (project.hasProperty('gameTests')) {
-    sourceSets.main.java.srcDir 'src/qa/java'
-}
-repositories {
-    maven { url = 'https://libraries.minecraft.net' }
-    mavenCentral()
-    maven { url = 'https://cursemaven.com'; content { includeGroup 'curse.maven' } }
-    maven { url = 'https://api.modrinth.com/maven'; content { includeGroup 'maven.modrinth' } }
-}
-configurations { playtestMods { transitive = false } }
-dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
-    if (project.hasProperty('withTwilightForest')) runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:5468648')
-    if (project.hasProperty('withMowzies')) {
-        runtimeOnly fg.deobf('curse.maven:mowzies-mobs-250498:7815705')
-        runtimeOnly fg.deobf('curse.maven:geckolib-388172:7553267')
+
+        register('client')
+
+        register('server') {
+            args '--nogui'
+        }
+
+        register('gameTestServer')
+
+        register('data') {
+            workingDir = layout.projectDirectory.dir('run-data')
+
+            args '--mod', mod_id, '--all', '--output', layout.projectDirectory.dir('src/generated/resources'), '--existing', layout.projectDirectory.dir('src/main/resources')
+        }
     }
 }
 
-tasks.named('processResources', ProcessResources).configure {
-    inputs.property 'mod_version', mod_version
-    filesMatching('META-INF/mods.toml') { expand mod_version: mod_version }
-    // Forge 1.16.5's mod list reads logos through getRootResource (filenames only).
-    from('src/main/resources/assets/soulcatcherplus/textures/entity/soul_remnant/medium.png') {
-        rename { 'logo.png' }
-    }
+repositories {
+    minecraft.mavenizer(it) // In Kotlin, it = this
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
 }
-tasks.named('processCompatResources', ProcessResources).configure {
-    inputs.property 'mod_version', mod_version
-    filesMatching('META-INF/mods.toml') { expand mod_version: mod_version }
+
+dependencies {
+    implementation minecraft.dependency('net.minecraftforge:forge:26.3-66.1.5')
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 }
+
 tasks.withType(JavaCompile).configureEach {
+    // Use the UTF-8 charset for Java compilation
+    // This is done by default in Java 18+, but this ensures it no matter the Java or Gradle version
     options.encoding = 'UTF-8'
-    options.release = 17
-    options.compilerArgs += ['-Xmaxerrs', '500']
 }
-tasks.matching { it.name in ['runClient', 'runServer'] }.configureEach {
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+
+def releaseVersion = providers.gradleProperty('mod_version').get()
+tasks.named('processResources', ProcessResources).configure {
+    inputs.property 'mod_version', releaseVersion
+    filesMatching('META-INF/mods.toml') { expand mod_version: releaseVersion }
 }
-tasks.named('test') { useJUnitPlatform() }
+tasks.withType(JavaCompile).configureEach { options.compilerArgs += ['-Xmaxerrs', '1500'] }
 tasks.named('jar', Jar).configure {
-    manifest { attributes 'Implementation-Version': mod_version, 'MixinConfigs': 'soulcatcherplus.mixins.json' }
-    finalizedBy 'reobfJar'
+    manifest { attributes 'Implementation-Version': releaseVersion, 'MixinConfigs': 'soulcatcherplus.mixins.json' }
 }
-tasks.register('compatJar', Jar) {
-    group = 'build'
-    description = 'Builds the separate combined mod-integration addon.'
-    archiveBaseName = 'soulcatcherplus-compat'
-    from sourceSets.compat.output
-    manifest { attributes 'Implementation-Version': mod_version, 'MixinConfigs': 'soulcatcherplus_compat.mixins.json' }
-    finalizedBy 'reobfCompatJar'
+
+tasks.named('test') { useJUnitPlatform() }
+
+// ForgeGradle's merged development output is shared by these tasks. Resource
+// restoration must finish first, otherwise cached resources can erase classes.
+tasks.named('compileJava') {
+    dependsOn tasks.named('processResources')
+    outputs.cacheIf { false }
 }
-reobf { compatJar {} }
-tasks.named('assemble').configure { dependsOn 'reobfCompatJar' }
+tasks.named('processResources') { outputs.cacheIf { false } }

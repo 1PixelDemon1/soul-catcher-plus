@@ -1,45 +1,24 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.mixin.client;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.soulcatcherplus.client.SoulVisuals;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Group;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-/** Wraps the native renderer once, including renderers outside LivingEntityRenderer. */
-@Mixin(value = EntityRenderDispatcher.class, remap = false)
+@Mixin(EntityRenderDispatcher.class)
 public abstract class SoulEntityRenderMixin {
-    @Inject(method = {"render", "m_114384_"}, at = @At("HEAD"), cancellable = true, remap = false)
-    private void soulcatcherplus$hideDepartingSoul(Entity entity, double x, double y, double z,
-            float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light,
-            CallbackInfo callback) {
-        if (SoulVisuals.hideDepartingSoul(entity)) callback.cancel();
+    @Inject(method="submit",at=@At("HEAD"),cancellable=true)
+    private void soulcatcherplus$hide(EntityRenderState state,CameraRenderState camera,double x,double y,double z,PoseStack pose,SubmitNodeCollector nodes,CallbackInfo callback) {
+        if(SoulVisuals.hideDepartingSoul(state)) callback.cancel();
     }
-
-    // Official development and verified Forge 1.20.1 SRG names. Exactly one must match.
-    // Only the model-render call is wrapped; dispatcher fire, shadows and hitboxes keep their source.
-    @Group(name = "soulcatcherplus$modelBuffers", min = 1, max = 1)
-    @ModifyArg(method = {"render", "m_114384_"}, at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;render(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"),
-        index = 4, remap = false, require = 0)
-    private MultiBufferSource soulcatcherplus$officialBuffers(Entity entity, float yaw, float partialTick,
-            PoseStack pose, MultiBufferSource buffers, int light) {
-        return SoulVisuals.companionBuffers(entity, buffers);
-    }
-
-    @Group(name = "soulcatcherplus$modelBuffers", min = 1, max = 1)
-    @ModifyArg(method = {"render", "m_114384_"}, at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;m_7392_(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"),
-        index = 4, remap = false, require = 0)
-    private MultiBufferSource soulcatcherplus$srgBuffers(Entity entity, float yaw, float partialTick,
-            PoseStack pose, MultiBufferSource buffers, int light) {
-        return SoulVisuals.companionBuffers(entity, buffers);
+    @ModifyArg(method="submit",at=@At(value="INVOKE",target="Lnet/minecraft/client/renderer/entity/EntityRenderer;submit(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V"),index=2)
+    private SubmitNodeCollector soulcatcherplus$nodes(EntityRenderState state,PoseStack pose,SubmitNodeCollector nodes,CameraRenderState camera) {
+        return SoulVisuals.companionNodes(state,nodes);
     }
 }

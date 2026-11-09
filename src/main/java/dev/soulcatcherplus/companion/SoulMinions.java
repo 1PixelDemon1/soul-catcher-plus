@@ -26,11 +26,11 @@ public final class SoulMinions {
     private static final Set<Mob> CONFIGURED = Collections.newSetFromMap(new WeakHashMap<>());
     private record Bond(UUID owner, UUID entry, UUID root) {}
 
-    public static boolean isMinion(Entity entity) { return entity.getPersistentData().hasUUID(ROOT); }
+    public static boolean isMinion(Entity entity) { return dev.soulcatcherplus.data.SoulNbt.hasUuid(entity.getPersistentData(), ROOT); }
 
     /** Default discovery is based on explicit ownership, never proximity or spawn timing. */
     public static UUID ownerUuid(Entity entity) {
-        return entity instanceof OwnableEntity ownable ? ownable.getOwnerUUID() : null;
+        return entity instanceof OwnableEntity ownable ? ownable.getOwnerReference() == null ? null : ownable.getOwnerReference().getUUID() : null;
     }
     public static Entity defaultSummoner(Entity entity) {
         if (entity instanceof TraceableEntity traceable) {
@@ -40,7 +40,7 @@ public final class SoulMinions {
         if (entity instanceof OwnableEntity ownable) {
             LivingEntity owner = ownable.getOwner();
             if (owner != null) return owner;
-            UUID id = ownable.getOwnerUUID();
+            UUID id = ownable.getOwnerReference() == null ? null : ownable.getOwnerReference().getUUID();
             if (id != null && entity.level() instanceof ServerLevel level) return level.getEntity(id);
         }
         return null;
@@ -50,13 +50,13 @@ public final class SoulMinions {
     }
     /** May be retried after spawn for mods that assign a creator after world insertion. */
     public static boolean tryInherit(Mob mob) {
-        if (mob.level().isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
+        if (mob.level().isClientSide() || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
         return attach(mob, summoner(mob));
     }
     /** Fresh construction provenance is a fallback only; an explicitly foreign creator is authoritative. */
     public static boolean inheritOnJoin(Mob mob, boolean loadedFromDisk) {
         Entity constructedBy = SoulSpawnContext.consume(mob);
-        if (mob.level().isClientSide || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
+        if (mob.level().isClientSide() || CompanionBrain.isSoul(mob) || mob.isRemoved()) return false;
         Entity creator = summoner(mob);
         if (creator != null) return attach(mob, creator);
         return !loadedFromDisk && attach(mob, constructedBy);
@@ -68,11 +68,12 @@ public final class SoulMinions {
         Bond bond = findBond(creator, level, child.getUUID());
         if (bond == null) return false;
         var tag = child.getPersistentData();
-        tag.putUUID(CompanionBrain.OWNER, bond.owner());
-        tag.putUUID(CompanionBrain.ENTRY, bond.entry());
-        tag.putUUID(ROOT, bond.root());
+        dev.soulcatcherplus.data.SoulNbt.putUuid(tag, CompanionBrain.OWNER, bond.owner());
+        dev.soulcatcherplus.data.SoulNbt.putUuid(tag, CompanionBrain.ENTRY, bond.entry());
+        dev.soulcatcherplus.data.SoulNbt.putUuid(tag, ROOT, bond.root());
         if (CompanionBrain.activeEntry(child) == null) { child.discard(); return false; }
-        if (child.isAddedToWorld()) {
+        SoulNames.update(child);
+        if ((child.level().getEntity(child.getId()) == child)) {
             SoulNetwork.ghost(child);
         }
         return true;
@@ -83,9 +84,9 @@ public final class SoulMinions {
         for (int depth = 0; creator != null && depth < MAX_CREATOR_DEPTH; depth++) {
             if (creator.level() != level || !seen.add(creator.getUUID())) return null;
             if (creator instanceof Mob mob && CompanionBrain.isSoul(mob)) {
-                if (!mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)) return null;
-                UUID root = isMinion(mob) ? mob.getPersistentData().getUUID(ROOT) : mob.getUUID();
-                return new Bond(CompanionBrain.owner(mob), mob.getPersistentData().getUUID(CompanionBrain.ENTRY), root);
+                if (!dev.soulcatcherplus.data.SoulNbt.hasUuid(mob.getPersistentData(), CompanionBrain.ENTRY)) return null;
+                UUID root = isMinion(mob) ? dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), ROOT) : mob.getUUID();
+                return new Bond(CompanionBrain.owner(mob), dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), CompanionBrain.ENTRY), root);
             }
             creator = summoner(creator);
         }
@@ -104,7 +105,7 @@ public final class SoulMinions {
     public static boolean tick(Mob minion) {
         SoulEntry entry = CompanionBrain.activeEntry(minion);
         if (entry == null || !minion.isAlive()) { minion.discard(); return false; }
-        Entity entity = ((ServerLevel)minion.level()).getEntity(minion.getPersistentData().getUUID(ROOT));
+        Entity entity = ((ServerLevel)minion.level()).getEntity(dev.soulcatcherplus.data.SoulNbt.uuid(minion.getPersistentData(), ROOT));
         if (entity == null) {
             if (minion.getTarget() != null) minion.setTarget(null);
             return false;
@@ -113,6 +114,7 @@ public final class SoulMinions {
             dismissOne(minion); return false;
         }
         configure(minion);
+        if (minion.tickCount % 20 == 0) SoulNames.update(minion);
         var adapter = SoulAdapters.get(minion);
         adapter.restoreSummoner(minion, root);
         if (minion.tickCount % 5 == 0) {
@@ -128,7 +130,7 @@ public final class SoulMinions {
     public static void dismiss(MinecraftServer server, UUID root) {
         var minions = new ArrayList<Mob>();
         for (ServerLevel level : server.getAllLevels()) for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof Mob mob && isMinion(mob) && root.equals(mob.getPersistentData().getUUID(ROOT)))
+            if (entity instanceof Mob mob && isMinion(mob) && root.equals(dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), ROOT)))
                 minions.add(mob);
         }
         // Removal changes the level's entity collection, so iterate a detached list.

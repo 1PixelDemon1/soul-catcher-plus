@@ -1,1 +1,10 @@
-{"pack":{"description":"Soul Catcher Plus resources","pack_format":15}}
+{
+  "pack": {
+    "description": "Soul Catcher Plus resources",
+    "min_format": [
+      97,
+      1
+    ],
+    "max_format": 121
+  }
+}

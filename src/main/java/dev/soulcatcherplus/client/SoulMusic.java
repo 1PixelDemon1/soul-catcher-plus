@@ -16,8 +16,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.Priority;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /** Attributes music to its entity without muting the whole music category or a mod's soundtrack. */
@@ -81,7 +81,7 @@ public final class SoulMusic {
         PLAYING.clear();
         world = client.level;
     }
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = Priority.LOWEST)
     public static void play(PlaySoundEvent event) {
         SoundInstance sound = event.getSound();
         if (sound == null || sound.getSource() != SoundSource.MUSIC) return;
@@ -94,8 +94,7 @@ public final class SoulMusic {
         if (CompanionBrain.isSoul(source)) event.setSound(null);
         else PLAYING.put(sound, new WeakReference<>(source));
     }
-    @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    @SubscribeEvent public static void tick(TickEvent.ClientTickEvent.Post event) {
         Minecraft client = Minecraft.getInstance();
         updateWorld(client);
         // Keep only active music, not every world entity. This also handles a late ownership packet.

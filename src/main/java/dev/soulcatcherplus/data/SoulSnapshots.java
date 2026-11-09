@@ -12,10 +12,13 @@ public final class SoulSnapshots {
         CompoundTag tag = original.copy();
         for (String key : new String[]{"UUID", "Pos", "Motion", "Rotation", "Passengers", "Leash",
                 "Brain", "DeathTime", "HurtTime", "HurtByTimestamp", "Health", "Fire",
-                "FallDistance", "PortalCooldown", "SleepingX", "SleepingY", "SleepingZ"})
+                "FallDistance", "PortalCooldown", "SleepingX", "SleepingY", "SleepingZ", "AbsorptionAmount",
+                "fall_distance", "invulnerable_time", "leash", "sleeping_pos", "active_effects",
+                "last_hurt_by_player", "last_hurt_by_player_memory_time", "last_hurt_by_mob",
+                "ticks_since_last_hurt_by_mob", "current_impulse_context_reset_grace_time", "current_explosion_impact_pos"})
             tag.remove(key);
-        CompoundTag forge = tag.getCompound("ForgeData");
-        forge.getAllKeys().stream().filter(k -> k.startsWith("scp_")).toList().forEach(forge::remove);
+        CompoundTag forge = tag.getCompoundOrEmpty("ForgeData");
+        forge.keySet().stream().filter(k -> k.startsWith("scp_")).collect(com.google.common.collect.ImmutableList.toImmutableList()).forEach(forge::remove);
         if (!forge.isEmpty()) tag.put("ForgeData", forge);
         tag.putBoolean("PersistenceRequired", true);
         tag.putBoolean("CanPickUpLoot", false);

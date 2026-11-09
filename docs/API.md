@@ -1,28 +1,12 @@
+> This branch targets Forge 26.3 / Java 25. Legacy examples below describe the
+> extension concepts. For exact native types and EventBus 7 subscriptions, use
+> this branch's `src/main/java/dev/soulcatcherplus/api` sources. In particular,
+> identifiers are `Identifier` and custom soul events expose their own typed BUS.
+
 # Soul Catcher Plus API — 0.1 (experimental)
 
 Primary target: Minecraft 1.16.5, Forge 36.2.42, Java 8 (`develop`). API stability is not yet guaranteed.
 The main mod is required on client and server. Third-party creature mods remain optional.
-
-## Integration addon packaging
-
-Mod-specific implementations live in the separate **Soul Catcher Plus: Mod
-Integrations** addon (`soulcatcherplus_compat`), under `addons/compat`. It currently
-combines Mowzie's Mobs, Twilight Forest and Aquamirae corrections in one installable
-JAR. The core does not register those adapters, declare those optional mods, or
-load their mixins. Generic fallback behavior and extension APIs remain in the core.
-
-The `compat` source set compiles against core output. `compatJar` packages only
-addon output and its own `META-INF/mods.toml` and Mixin configuration;
-`reobfCompatJar` produces the installable 1.16.5 artifact. `build` assembles both
-JARs; `playtestZip` includes both. The addon requires the matching core version
-on client and server; it does not bundle core classes or third-party dependencies.
-Dev launches load both source sets unless `-PwithoutCompatAddon` is supplied.
-
-Adapters still use the public registration API below. Missing creature mods do
-not register adapters; absent optional Mixin targets are skipped with `@Pseudo`.
-Moving these implementations changes no registry IDs, packet protocol or saved
-ownership/collection fields. Future per-mod addons must coordinate registration:
-the registry rejects a second adapter for the same entity ID.
 
 ## Entity adapters
 
@@ -388,16 +372,6 @@ public boolean inheritsTickSpawn(MobEntity summoner, EntityType<?> childType) {
 }
 ```
 
-The integration addon's optional Twilight Forest 4.0.870 bridge enables this for Snow Queen's
-`ice_crystal` only. Lich shadow clones expose `getMasterLich`/`setMaster`, while
-`lich_minion` exposes a package-private `master` field (cached reflective access). These members are discovered once
-at common setup, without a compile-time Twilight dependency. The adapters restore
-the saved root into those native links before AI runs after reload. Older unmarked
-ownerless crystals have no reliable provenance and are not adopted retroactively.
-The integration was inspected against the installed artifact. It compiles and the
-development client has started; actual gameplay verification is pending. Performance analysis is in
-[MINION_PERFORMANCE.md](MINION_PERFORMANCE.md).
-
 ## Departure effects
 
 Companion death and recall send a tracking-client departure message before normal
@@ -582,9 +556,6 @@ Create `data/<your_namespace>/soul_profiles/<name>.json`:
 Set `enabled` to false to disable marking and capture. Ordinary credited kill
 energy still uses the maximum-health formula. Legacy `cost`, `slots` and `energy`
 fields are ignored; profiles cannot override the common economy or scythe limits.
-The Wroughtnaut profile is provided by the integration addon, even when Mowzie's
-is absent. Its existing `data/soulcatcherplus/soul_profiles/wroughtnaut.json` path
-is preserved so existing datapack overrides still apply.
 Use the same resource path as an existing profile to override it. Reload with `/reload`.
 Existing collection entries retain their captured maximum health and cost; disabling
 capture does not delete collected souls. Avoid multiple profile files targeting one entity.
@@ -638,21 +609,6 @@ as a companion. World changes clear the tracking map. There is no world entity
 scan, server polling, extra packet, or sound-ID blacklist. Soundtracks without a
 recoverable source, async playback, and non-MUSIC categories need an integration.
 
-An optional Aquamirae 5.4.0 hook in the integration addon cancels `AquamiraeAmbient.playCorneliaMusic` for a
-companion tick before its shared cooldown is updated. It also tracks the last
-successful Cornelia music request weakly and clears that request's cooldown if
-its source is identified as a companion later. Another successful boss request
-replaces the tracked source; simply hitting the cooldown does not. No Aquamirae classes are
-required when that mod is absent. This protects the regular Cornelia encounter's
-music timer as well as the vanilla music manager.
-
-The Forge 1.20.1 addon targets the inspected Aquamirae 6.1.2/6.4.0
-`AquamiraeClient` controller instead. Its cooldown listener is registered on the
-client event bus because native ticking lives in the nested `ForgeEvents` class.
-Aquamirae 7.x uses a different implementation and is not covered by that hook.
-The 1.20.1 music-source API uses `SoundInstance` in place of the legacy `ISound`;
-addons must compile against the matching Minecraft version.
-
 ## Client rendering
 
 On `Dist.CLIENT` only, call `SoulVisuals.register(entityId, provider)` during client
@@ -670,7 +626,3 @@ renderer must use the supplied `IRenderTypeBuffer` for this hook to affect it.
 Custom shaders, independently acquired buffers and extra textures/layers may still
 need an integration through `SoulVisualProvider` and visual testing. The hook does
 not guarantee transparency for every third-party rendering pipeline.
-
-The integration addon's Wroughtnaut adapter uses the creature's public activation API. An optional
-`@Pseudo` Mixin filters Mowzie's area-query results before native attacks apply
-damage, shield wear, knockback or other effects. No Mowzie code or assets are bundled.

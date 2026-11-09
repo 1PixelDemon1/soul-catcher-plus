@@ -18,7 +18,7 @@ class SoulPersistenceTest {
         data.selected = entry.id; data.entries.put(entry.id, entry);
         ledger.save(root);
         // Old ledger energy is intentionally ignored; collection ownership still survives.
-        root.getCompound("Players").getCompound(owner.toString()).putInt("Energy", 91);
+        root.getCompoundOrEmpty("Players").getCompoundOrEmpty(owner.toString()).putInt("Energy", 91);
         PlayerSouls restored = SoulLedger.load(root).player(owner);
         assertFalse(restored.save().contains("Energy"));
         assertEquals(entry.id, restored.selected);
@@ -30,24 +30,24 @@ class SoulPersistenceTest {
     }
     @Test void sanitizeDropsDeathIdentityAndOurOwnershipButKeepsModState() {
         CompoundTag source = new CompoundTag(), forge = new CompoundTag();
-        source.putUUID("UUID", UUID.randomUUID()); source.putFloat("Health", 0);
+        SoulNbt.putUuid(source, "UUID", UUID.randomUUID()); source.putFloat("Health", 0);
         source.putInt("DeathTime", 40); source.putString("CustomAbility", "fireball");
-        forge.putUUID("scp_owner", UUID.randomUUID()); forge.putString("othermod_state", "charged");
+        SoulNbt.putUuid(forge, "scp_owner", UUID.randomUUID()); forge.putString("othermod_state", "charged");
         source.put("ForgeData", forge);
         CompoundTag clean = SoulSnapshots.sanitize(source);
-        assertFalse(clean.hasUUID("UUID")); assertFalse(clean.contains("Health"));
-        assertFalse(clean.getCompound("ForgeData").hasUUID("scp_owner"));
-        assertEquals("charged", clean.getCompound("ForgeData").getString("othermod_state"));
-        assertEquals("fireball", clean.getString("CustomAbility"));
-        assertEquals(0, clean.getInt("DeathTime"));
-        assertTrue(source.hasUUID("UUID")); // Input is never mutated.
-        assertTrue(source.getCompound("ForgeData").hasUUID("scp_owner"));
+        assertFalse(SoulNbt.hasUuid(clean,"UUID")); assertFalse(clean.contains("Health"));
+        assertFalse(SoulNbt.hasUuid(clean.getCompoundOrEmpty("ForgeData"),"scp_owner"));
+        assertEquals("charged", clean.getCompoundOrEmpty("ForgeData").getStringOr("othermod_state",""));
+        assertEquals("fireball", clean.getStringOr("CustomAbility",""));
+        assertEquals(0, clean.getIntOr("DeathTime",0));
+        assertTrue(SoulNbt.hasUuid(source,"UUID")); // Input is never mutated.
+        assertTrue(SoulNbt.hasUuid(source.getCompoundOrEmpty("ForgeData"),"scp_owner"));
     }
     @Test void snapshotsAreDefensiveCopies() {
         CompoundTag snapshot = new CompoundTag(); snapshot.putString("Variant", "original");
         SoulEntry entry = new SoulEntry(UUID.randomUUID(), "example:mage", "Mage", snapshot, 5);
         snapshot.putString("Variant", "changed");
         entry.snapshot().putString("Variant", "changed again");
-        assertEquals("original", entry.snapshot().getString("Variant"));
+        assertEquals("original", entry.snapshot().getStringOr("Variant",""));
     }
 }

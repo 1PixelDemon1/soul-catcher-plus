@@ -14,17 +14,23 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import dev.soulcatcherplus.network.ClientDispatch;
 import net.minecraftforge.network.*;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.network.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "11";
+    public static void sendToServer(Object message) { CHANNEL.send(message,PacketDistributor.SERVER.noArg()); }
+    private static <T> void registerMessage(int id, Class<T> type, java.util.function.BiConsumer<T,FriendlyByteBuf> encoder,
+            java.util.function.Function<FriendlyByteBuf,T> decoder, java.util.function.BiConsumer<T,net.minecraftforge.event.network.CustomPayloadEvent.Context> handler,
+            Optional<NetworkDirection> direction) {
+        CHANNEL.messageBuilder(type,id,direction.orElseThrow()).encoder(encoder).decoder(decoder).consumerNetworkThread(handler).add();
+    }
+    private static final int VERSION = 12;
     // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
     public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
@@ -33,8 +39,7 @@ public final class SoulNetwork {
     private static final class UiRateLimit {
         long action, preview, refresh, wheelRefresh;
     }
-    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-        new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
+    public static final SimpleChannel CHANNEL = ChannelBuilder.named(Identifier.fromNamespaceAndPath(SoulCatcherPlus.ID,"main")).networkProtocolVersion(VERSION).simpleChannel();
     public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
             long cooldown, String command, SummonRules.Status status, boolean favorite) {}
     public record State(boolean openScreen, int energy, int cageCapacity, int cageSlot, int activeCount, int summonLimit,
@@ -79,14 +84,14 @@ public final class SoulNetwork {
             b.writeUUID(snapshot); b.writeVarInt(offset); b.writeVarInt(total); state.write(b);
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM, TELEPORT }
     public record Request(Action action, UUID entry) {
         static Request read(FriendlyByteBuf b) {
             return new Request(b.readEnum(Action.class), b.readBoolean() ? b.readUUID() : null);
         }
         void write(FriendlyByteBuf b) { b.writeEnum(action); b.writeBoolean(entry != null); if (entry != null) b.writeUUID(entry); }
     }
-    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL, AGGRESSIVE }
+    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL, AGGRESSIVE, TELEPORT }
     public record WheelRequest(WheelAction action, UUID entry, boolean group) {
         public WheelRequest(WheelAction action, UUID entry) { this(action, entry, false); }
         static WheelRequest read(FriendlyByteBuf b) {
@@ -129,40 +134,42 @@ public final class SoulNetwork {
         static Preview read(FriendlyByteBuf b) {
             UUID entry = b.readUUID();
             String type = b.readUtf(256);
-            CompoundTag appearance = b.readNbt(new NbtAccounter(2 * 1024 * 1024));
+            net.minecraft.nbt.Tag raw = b.readNbt(NbtAccounter.create(2 * 1024 * 1024));
+            if (!(raw instanceof CompoundTag appearance)) throw new IllegalArgumentException("Invalid soul appearance payload");
             return new Preview(entry, type, appearance == null ? new CompoundTag() : appearance);
         }
         void write(FriendlyByteBuf b) { b.writeUUID(entry); b.writeUtf(entityType, 256); b.writeNbt(appearance); }
     }
     /** Visual-only departure; includes a fallback envelope if the entity is already untracked. */
-    public record Dissolve(int entityId, UUID entityUuid, ResourceLocation dimension,
+    public record Dissolve(int entityId, UUID entityUuid, Identifier dimension,
             double x, double y, double z, float width, float height) {
         static Dissolve read(FriendlyByteBuf b) {
-            return new Dissolve(b.readVarInt(), b.readUUID(), b.readResourceLocation(),
+            return new Dissolve(b.readVarInt(), b.readUUID(), b.readIdentifier(),
                 b.readDouble(), b.readDouble(), b.readDouble(), b.readFloat(), b.readFloat());
         }
         void write(FriendlyByteBuf b) {
-            b.writeVarInt(entityId); b.writeUUID(entityUuid); b.writeResourceLocation(dimension);
+            b.writeVarInt(entityId); b.writeUUID(entityUuid); b.writeIdentifier(dimension);
             b.writeDouble(x); b.writeDouble(y); b.writeDouble(z); b.writeFloat(width); b.writeFloat(height);
         }
     }
     public static void register() {
-        CHANNEL.registerMessage(0, StatePart.class, StatePart::write, StatePart::read, SoulNetwork::state,
+        registerMessage(0, StatePart.class, StatePart::write, StatePart::read, SoulNetwork::state,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(1, Request.class, Request::write, Request::read, SoulNetwork::request,
+        registerMessage(1, Request.class, Request::write, Request::read, SoulNetwork::request,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(2, Ghost.class, Ghost::write, Ghost::read, SoulNetwork::ghostPacket,
+        registerMessage(2, Ghost.class, Ghost::write, Ghost::read, SoulNetwork::ghostPacket,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(3, PreviewRequest.class, PreviewRequest::write, PreviewRequest::read, SoulNetwork::previewRequest,
+        registerMessage(3, PreviewRequest.class, PreviewRequest::write, PreviewRequest::read, SoulNetwork::previewRequest,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(4, Preview.class, Preview::write, Preview::read, SoulNetwork::previewPacket,
+        registerMessage(4, Preview.class, Preview::write, Preview::read, SoulNetwork::previewPacket,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(5, Dissolve.class, Dissolve::write, Dissolve::read, SoulNetwork::dissolvePacket,
+        registerMessage(5, Dissolve.class, Dissolve::write, Dissolve::read, SoulNetwork::dissolvePacket,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(6, WheelRequest.class, WheelRequest::write, WheelRequest::read, SoulNetwork::wheelRequest,
+        registerMessage(6, WheelRequest.class, WheelRequest::write, WheelRequest::read, SoulNetwork::wheelRequest,
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(7, WheelState.class, WheelState::write, WheelState::read, SoulNetwork::wheelState,
+        registerMessage(7, WheelState.class, WheelState::write, WheelState::read, SoulNetwork::wheelState,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.build();
     }
     public static void open(ServerPlayer player) {
         if (SoulService.holdsScythe(player)) sendState(player, true);
@@ -172,8 +179,8 @@ public final class SoulNetwork {
         SoulCages.Active cage = SoulCages.active(player);
         SummonRules.Context availabilityContext = SoulService.summonContext(player);
         List<Row> rows = data.entries.values().stream().map(e -> {
-            Entity active = e.activeEntity == null ? null : player.serverLevel().getEntity(e.activeEntity);
-            String command = active == null ? "" : active.getPersistentData().getString(CompanionBrain.MODE);
+            Entity active = e.activeEntity == null ? null : player.level().getEntity(e.activeEntity);
+            String command = active == null ? "" : active.getPersistentData().getStringOr(CompanionBrain.MODE, "");
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
                 availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
@@ -184,24 +191,23 @@ public final class SoulNetwork {
             State part = new State(openScreen, cage.energy(), cage.capacity(), cage.slot(), availabilityContext.activeCount(), availabilityContext.limit(),
                 data.commandMode, data.commandGroup, data.selected,
                 com.google.common.collect.ImmutableList.copyOf(rows.subList(offset, Math.min(rows.size(), offset + STATE_ROWS_PER_PART))));
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new StatePart(snapshot, offset, rows.size(), part));
+            CHANNEL.send(new StatePart(snapshot, offset, rows.size(), part), PacketDistributor.PLAYER.with(player));
         }
     }
     public static void ghost(ServerPlayer player, Entity entity) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
+        CHANNEL.send(new Ghost(entity.getId(), CompanionBrain.owner(entity)), PacketDistributor.PLAYER.with(player));
     }
     public static void ghost(Entity entity) {
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
+        CHANNEL.send(new Ghost(entity.getId(), CompanionBrain.owner(entity)), PacketDistributor.TRACKING_ENTITY.with(entity));
     }
     public static void dissolve(Mob mob) {
-        if (mob.level().isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
+        if (mob.level().isClientSide() || mob.getPersistentData().getBooleanOr("scp_dissolving", false)) return;
         mob.getPersistentData().putBoolean("scp_dissolving", true);
         // Send before the removal packet; clients retain a short-lived visual echo only.
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> mob), new Dissolve(mob.getId(), mob.getUUID(),
-            mob.level().dimension().location(), mob.getX(), mob.getY(), mob.getZ(), mob.getBbWidth(), mob.getBbHeight()));
+        CHANNEL.send(new Dissolve(mob.getId(), mob.getUUID(),
+            mob.level().dimension().identifier(), mob.getX(), mob.getY(), mob.getZ(), mob.getBbWidth(), mob.getBbHeight()), PacketDistributor.TRACKING_ENTITY.with(mob));
     }
-    private static void request(Request packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    private static void request(Request packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator()) return;
@@ -223,12 +229,13 @@ public final class SoulNetwork {
             switch (packet.action) {
                 case SELECT -> { if (data.entries.containsKey(packet.entry)) data.selected = packet.entry; }
                 case SUMMON -> { if (packet.entry != null) SoulService.summon(player, packet.entry); }
-                case RECALL -> { SoulEntry entry = data.entries.get(packet.entry); if (entry != null) SoulService.recall(player.server, entry); }
+                case RECALL -> { SoulEntry entry = data.entries.get(packet.entry); if (entry != null) SoulService.recall(player.level().getServer(), entry); }
                 case RECALL_ALL -> SoulService.recallAll(player);
                 case FOLLOW -> SoulService.command(player, CompanionBrain.Mode.FOLLOW);
                 case WAIT -> SoulService.command(player, CompanionBrain.Mode.WAIT);
                 case GUARD -> SoulService.command(player, CompanionBrain.Mode.GUARD);
                 case AGGRESSIVE -> SoulService.command(player, CompanionBrain.Mode.AGGRESSIVE);
+                case TELEPORT -> SoulService.teleport(player);
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
@@ -241,9 +248,8 @@ public final class SoulNetwork {
         });
         context.setPacketHandled(true);
     }
-    private static void state(StatePart packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+    private static void state(StatePart packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.statePart(packet)));
         context.setPacketHandled(true);
     }
@@ -256,10 +262,9 @@ public final class SoulNetwork {
             return new Companion(entry.id, abbreviate(entry.name), loaded ? Math.max(0, mob.getHealth()) : 0,
                 loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? CompanionBrain.mode(mob).name() : "", loaded);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WheelState(cage.energy(), cage.capacity(), cage.slot(), companions));
+        CHANNEL.send(new WheelState(cage.energy(), cage.capacity(), cage.slot(), companions), PacketDistributor.PLAYER.with(player));
     }
-    private static void wheelRequest(WheelRequest packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    private static void wheelRequest(WheelRequest packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator()) return;
@@ -276,7 +281,10 @@ public final class SoulNetwork {
                 if (!packet.group && (entry == null || entry.activeEntity == null)) return;
                 if (packet.action == WheelAction.RECALL) {
                     if (packet.group) SoulService.recallAll(player);
-                    else SoulService.recall(player.server, entry);
+                    else SoulService.recall(player.level().getServer(), entry);
+                } else if (packet.action == WheelAction.TELEPORT) {
+                    if (packet.group) SoulService.teleportAll(player);
+                    else SoulService.teleportOne(player, entry.id);
                 } else {
                     CompanionBrain.Mode mode = switch (packet.action) {
                         case FOLLOW -> CompanionBrain.Mode.FOLLOW;
@@ -294,20 +302,17 @@ public final class SoulNetwork {
         });
         context.setPacketHandled(true);
     }
-    private static void wheelState(WheelState packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+    private static void wheelState(WheelState packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.wheel(packet)));
         context.setPacketHandled(true);
     }
-    private static void ghostPacket(Ghost packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+    private static void ghostPacket(Ghost packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.ghost(packet)));
         context.setPacketHandled(true);
     }
-    private static void previewRequest(PreviewRequest packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    private static void previewRequest(PreviewRequest packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || !player.isAlive() || player.isSpectator()) return;
@@ -319,7 +324,7 @@ public final class SoulNetwork {
             if (entry == null) return;
             CompoundTag appearance = new CompoundTag();
             try {
-                CompoundTag visual = SoulAdapters.get(new ResourceLocation(entry.entityType)).previewData(entry.snapshot());
+                CompoundTag visual = SoulAdapters.get(Identifier.parse(entry.entityType)).previewData(entry.snapshot());
                 // Never transmit identity, ownership, health, passengers, or the full server snapshot.
                 visual = SoulSnapshots.sanitize(visual);
                 visual.remove("ForgeData"); visual.remove("ForgeCaps");
@@ -330,19 +335,17 @@ public final class SoulNetwork {
             } catch (RuntimeException | IOException error) {
                 org.apache.logging.log4j.LogManager.getLogger().warn("Unable to prepare soul preview for {}", entry.entityType, error);
             }
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Preview(entry.id, entry.entityType, appearance));
+            CHANNEL.send(new Preview(entry.id, entry.entityType, appearance), PacketDistributor.PLAYER.with(player));
         });
         context.setPacketHandled(true);
     }
-    private static void previewPacket(Preview packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+    private static void previewPacket(Preview packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.preview(packet)));
         context.setPacketHandled(true);
     }
-    private static void dissolvePacket(Dissolve packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+    private static void dissolvePacket(Dissolve packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.dissolve(packet)));
         context.setPacketHandled(true);
     }

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MML",
+    " S ",
+    "S  "
+  ],
+  "key": {
+    "M": "minecraft:iron_ingot",
+    "L": "minecraft:soul_lantern",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "soulcatcherplus:soul_scythe"
+  }
+}

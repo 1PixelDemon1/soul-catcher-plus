@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "soulcatcherplus:soul_capacity",
+    "soulcatcherplus:soul_harvester",
+    "soulcatcherplus:soul_slot"
+  ]
+}

@@ -19,7 +19,7 @@ public interface SoulAdapter {
             || mob.getType().getCategory() == net.minecraft.world.entity.MobCategory.MONSTER
             || mob.getTarget() == owner;
     }
-    default CompoundTag capture(Mob mob) { return mob.saveWithoutId(new CompoundTag()); }
+    default CompoundTag capture(Mob mob) { return dev.soulcatcherplus.data.SoulNbt.snapshot(mob); }
     /** Stable appearance identity, excluding health, UUID, equipment and transient state. */
     default CompoundTag variantData(CompoundTag snapshot) {
         return dev.soulcatcherplus.data.SoulVariants.identity(snapshot);
@@ -41,6 +41,8 @@ public interface SoulAdapter {
     default void configureCompanion(Mob mob) {
         dev.soulcatcherplus.companion.CompanionBrain.installStandardGoals(mob);
     }
+    /** Keep canonical ownership/recall validation, but delegate movement and targeting to custom AI. */
+    default boolean usesStandardBrain(Mob mob) { return true; }
     /** Optional support for nonstandard AI; called every five server ticks. */
     default void tick(Mob mob, ServerPlayer owner) {}
     /** Immediate creator, or null if unknown. Must not load chunks or guess from nearby mobs. */

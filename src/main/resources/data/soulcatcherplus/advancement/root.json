@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "id": "soulcatcherplus:soul_icon"
+    },
+    "title": {
+      "translate": "advancements.soulcatcherplus.root.title"
+    },
+    "description": {
+      "translate": "advancements.soulcatcherplus.root.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/stone.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "join": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "requirements": [
+    [
+      "join"
+    ]
+  ]
+}

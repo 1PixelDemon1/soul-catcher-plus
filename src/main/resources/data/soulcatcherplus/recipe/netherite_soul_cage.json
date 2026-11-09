@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": "minecraft:netherite_upgrade_smithing_template",
+  "base": "soulcatcherplus:diamond_soul_cage",
+  "addition": "minecraft:netherite_ingot",
+  "result": {
+    "id": "soulcatcherplus:netherite_soul_cage"
+  }
+}

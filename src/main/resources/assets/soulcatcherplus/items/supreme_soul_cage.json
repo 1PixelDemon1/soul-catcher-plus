@@ -1,0 +1,28 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "soulcatcherplus:item/supreme_soul_cage"
+    },
+    "cases": [
+      {
+        "when": [
+          "firstperson_lefthand",
+          "firstperson_righthand",
+          "thirdperson_lefthand",
+          "thirdperson_righthand"
+        ],
+        "model": {
+          "type": "minecraft:special",
+          "base": "soulcatcherplus:item/soul_cage_held",
+          "model": {
+            "type": "soulcatcherplus:soul_cage",
+            "material": "supreme"
+          }
+        }
+      }
+    ]
+  }
+}
