@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.client;
 
+import net.minecraft.client.gui.GuiGraphics;
+
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import org.joml.Quaternionf;
+import org.joml.Matrix4f;
 import dev.soulcatcherplus.network.SoulNetwork;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 
 /** Detached visual entities: never inserted into a level and never AI-ticked. */
 final class SoulPreview {
+    private final boolean spectral;
     private final Map<UUID, Mob> cache = new LinkedHashMap<>();
     private final Set<UUID> failed = new HashSet<>();
     private UUID requested;
@@ -25,6 +27,9 @@ final class SoulPreview {
     private float rotation = 155;
     private float zoom = 1;
     private boolean manuallyRotated;
+
+    SoulPreview() { this(false); }
+    SoulPreview(boolean spectral) { this.spectral = spectral; }
 
     void request(UUID entry, int tick) {
         if (entry == null || cache.containsKey(entry) || failed.contains(entry)) return;
@@ -42,6 +47,9 @@ final class SoulPreview {
                 failed.add(packet.entry()); return;
             }
             mob.load(packet.appearance().copy());
+            // A detached preview never joins a level or runs entity ticks. The marker
+            // lets it use the exact same dispatcher tint/provider as a summoned soul.
+            if (spectral) mob.getPersistentData().putUUID(dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0, 0));
             mob.setNoAi(true);
             mob.setHealth(mob.getMaxHealth());
             mob.setPos(0, 0, 0);
@@ -53,7 +61,7 @@ final class SoulPreview {
             while (cache.size() > 12) cache.remove(cache.keySet().iterator().next());
         } catch (RuntimeException error) {
             failed.add(packet.entry());
-            com.mojang.logging.LogUtils.getLogger().warn("Unable to create soul preview: {}", packet.entityType(), error);
+            org.apache.logging.log4j.LogManager.getLogger().warn("Unable to create soul preview: {}", packet.entityType(), error);
         }
     }
     void tick() {
@@ -75,7 +83,7 @@ final class SoulPreview {
         var dispatcher = client.getEntityRenderDispatcher();
         Quaternionf previousCamera = new Quaternionf(dispatcher.cameraOrientation());
         PoseStack pose = new PoseStack();
-        pose.last().pose().set(graphics.pose().last().pose());
+        pose.last().pose().mul(graphics.pose().last().pose());
         pose.last().normal().set(graphics.pose().last().normal());
         // Reserve visible space around the model, including protruding weapons and horns.
         // Width/depth jointly bound the footprint while it rotates.
@@ -85,7 +93,7 @@ final class SoulPreview {
         float scale = Math.min(usableWidth / footprint, usableHeight / Math.max(0.75f, mob.getBbHeight()));
         scale = Math.max(0.5f, Math.min(58, scale)) * zoom;
         pose.translate(centerX, baseline, 60);
-        pose.mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
+        pose.scale(scale, scale, -scale);
         pose.mulPose(Axis.ZP.rotationDegrees(180));
         pose.mulPose(Axis.YP.rotationDegrees(rotation));
         Lighting.setupForEntityInInventory();
@@ -93,11 +101,11 @@ final class SoulPreview {
         dispatcher.overrideCameraOrientation(new Quaternionf());
         try {
             RenderSystem.runAsFancy(() -> dispatcher.render(mob, 0, 0, 0, 0, partialTick,
-                pose, graphics.bufferSource(), LightTexture.FULL_BRIGHT));
+                pose, graphics.bufferSource(), 15728880));
             graphics.flush();
         } catch (RuntimeException error) {
             failed.add(entry);
-            com.mojang.logging.LogUtils.getLogger().warn("Unable to render soul preview: {}", mob.getType(), error);
+            org.apache.logging.log4j.LogManager.getLogger().warn("Unable to render soul preview: {}", mob.getType(), error);
         } finally {
             dispatcher.overrideCameraOrientation(previousCamera);
             dispatcher.setRenderShadow(true);

@@ -1,0 +1,28 @@
+{
+  "name": "guide.soulcatcherplus.forgotten.shaman.name",
+  "category": "soulcatcherplus:forgotten",
+  "icon": "minecraft:soul_torch",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.shaman.name",
+      "text": "guide.soulcatcherplus.forgotten.shaman.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.shaman.name",
+      "text": "guide.soulcatcherplus.forgotten.shaman.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.shaman.name",
+      "text": "guide.soulcatcherplus.forgotten.shaman.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.shaman.name",
+      "text": "guide.soulcatcherplus.forgotten.shaman.page3"
+    }
+  ]
+}

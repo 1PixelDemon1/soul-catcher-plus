@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus;
 
-import dev.soulcatcherplus.entity.SoulRemnant;
+import dev.soulcatcherplus.entity.*;
+import dev.soulcatcherplus.api.SoulAdapters;
+import dev.soulcatcherplus.item.SoulScroll;
+import dev.soulcatcherplus.item.ForgottenSoulScroll;
+import dev.soulcatcherplus.loot.ForgottenSoulLoot;
+import dev.soulcatcherplus.config.SoulClientConfig;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.item.SoulScythe;
 import dev.soulcatcherplus.item.SoulCage;
@@ -37,6 +42,10 @@ public final class SoulCatcherPlus {
     public static final RegistryObject<Item> DIAMOND_CAGE = ITEMS.register("diamond_soul_cage", () -> new SoulCage(400, new Item.Properties()));
     public static final RegistryObject<Item> NETHERITE_CAGE = ITEMS.register("netherite_soul_cage", () -> new SoulCage(1000, new Item.Properties().fireResistant()));
     public static final RegistryObject<Item> SUPREME_CAGE = ITEMS.register("supreme_soul_cage", () -> new SoulCage(2000, new Item.Properties()));
+    public static final RegistryObject<Item> SOUL_SCROLL = ITEMS.register("soul_scroll", SoulScroll::new);
+    public static final RegistryObject<Item> BOSS_SOUL_SCROLL = ITEMS.register("boss_soul_scroll", () -> new SoulScroll(() -> EntityType.WITHER, net.minecraft.world.item.Rarity.EPIC));
+    public static final RegistryObject<ForgottenSoulScroll> FORGOTTEN_SOUL_SCROLL = ITEMS.register("forgotten_soul_scroll", ForgottenSoulScroll::new);
+    public static final RegistryObject<Item> COURIER_SOUL_SCROLL = ITEMS.register("courier_soul_scroll", () -> new SoulScroll(SoulCatcherPlus.SOUL_COURIER, new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     /** Display-only item for the tab icon; omitted from the tab's obtainable equipment. */
     public static final RegistryObject<Item> SOUL_ICON = ITEMS.register("soul_icon", () -> new Item(new Item.Properties()));
     /** Compatibility alias for the original iron scythe. */
@@ -48,6 +57,8 @@ public final class SoulCatcherPlus {
             .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
             .displayItems((parameters, output) -> {
                 output.accept(IRON_SCYTHE.get()); output.accept(DIAMOND_SCYTHE.get()); output.accept(NETHERITE_SCYTHE.get()); output.accept(SUPREME_SCYTHE.get());
+                output.accept(SOUL_SCROLL.get()); output.accept(BOSS_SOUL_SCROLL.get());
+                for (ItemStack scroll : FORGOTTEN_SOUL_SCROLL.get().creativeVariants()) output.accept(scroll);
                 output.accept(IRON_CAGE.get()); output.accept(DIAMOND_CAGE.get()); output.accept(NETHERITE_CAGE.get()); output.accept(SUPREME_CAGE.get());
             }).build());
     public static final RegistryObject<EntityType<SoulRemnant>> REMNANT = ENTITIES.register("soul_remnant",
@@ -55,8 +66,23 @@ public final class SoulCatcherPlus {
             .sized(0.6f, 0.8f).clientTrackingRange(8).updateInterval(10)
             .build(ID + ":soul_remnant"));
 
+    public static final RegistryObject<EntityType<SoulRavenEntity>> SOUL_RAVEN = ENTITIES.register("soul_raven", () -> EntityType.Builder.<SoulRavenEntity>of(SoulRavenEntity::new, MobCategory.MISC).sized(.45f,.65f).clientTrackingRange(8).updateInterval(3).build(ID+":soul_raven"));
+    public static final RegistryObject<EntityType<SoulCourierEntity>> SOUL_COURIER = ENTITIES.register("soul_courier", () -> EntityType.Builder.<SoulCourierEntity>of(SoulCourierEntity::new, MobCategory.MISC).sized(.875f,1.4875f).clientTrackingRange(8).updateInterval(3).build(ID+":soul_courier"));
+    public static final RegistryObject<EntityType<SoulShamanEntity>> SOUL_SHAMAN = ENTITIES.register("soul_shaman", () -> EntityType.Builder.<SoulShamanEntity>of(SoulShamanEntity::new, MobCategory.MISC).sized(.62f,1.22f).clientTrackingRange(8).updateInterval(3).build(ID+":soul_shaman"));
     public SoulCatcherPlus(FMLJavaModLoadingContext context) {
+        net.minecraftforge.fml.ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.CLIENT, SoulClientConfig.SPEC);
         IEventBus bus = context.getModEventBus();
+        bus.addListener((net.minecraftforge.event.entity.EntityAttributeCreationEvent event) -> {
+            event.put(SOUL_RAVEN.get(), SoulRavenEntity.createAttributes());
+            event.put(SOUL_COURIER.get(), SoulCourierEntity.createAttributes());
+            event.put(SOUL_SHAMAN.get(), SoulShamanEntity.createAttributes());
+        });
+        bus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
+            SoulAdapters.register(SOUL_RAVEN.getId(), new SoulRavenAdapter());
+            SoulAdapters.register(SOUL_COURIER.getId(), new SoulCourierAdapter());
+            SoulAdapters.register(SOUL_SHAMAN.getId(), new SoulShamanAdapter());
+        }));
+        ForgottenSoulLoot.SERIALIZERS.register(bus);
         ITEMS.register(bus);
         ENTITIES.register(bus);
         CREATIVE_TABS.register(bus);

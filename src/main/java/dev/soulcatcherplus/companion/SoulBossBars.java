@@ -25,13 +25,13 @@ public final class SoulBossBars {
                 for (Field field : type.getDeclaredFields()) {
                     if (Modifier.isStatic(field.getModifiers()) || !BossEvent.class.isAssignableFrom(field.getType())) continue;
                     try {
-                        if (field.trySetAccessible()) fields.add(field);
+                        field.setAccessible(true); fields.add(field);
                     } catch (RuntimeException error) {
-                        com.mojang.logging.LogUtils.getLogger().debug("Cannot inspect companion boss-event field {}", field, error);
+                        org.apache.logging.log4j.LogManager.getLogger().debug("Cannot inspect companion boss-event field {}", field, error);
                     }
                 }
             }
-            return List.copyOf(fields);
+            return com.google.common.collect.ImmutableList.copyOf(fields);
         }
     };
 
@@ -45,7 +45,7 @@ public final class SoulBossBars {
             try {
                 if (field.get(mob) instanceof ServerBossEvent event) events.add(event);
             } catch (IllegalAccessException error) {
-                com.mojang.logging.LogUtils.getLogger().debug("Cannot read companion boss-event field {}", field, error);
+                org.apache.logging.log4j.LogManager.getLogger().debug("Cannot read companion boss-event field {}", field, error);
             }
         }
         return events;

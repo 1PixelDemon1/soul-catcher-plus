@@ -20,7 +20,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /** Short client-only echoes. No combat entity survives a recall for the animation. */
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID, value = Dist.CLIENT)
@@ -93,11 +93,11 @@ public final class SoulDissolves {
     }
 
     @SubscribeEvent public static void render(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         var client = Minecraft.getInstance();
         if (client.level == null || ECHOES.isEmpty()) return;
         var dispatcher = client.getEntityRenderDispatcher();
-        Vec3 camera = event.getCamera().getPosition();
+        Vec3 camera = client.gameRenderer.getMainCamera().getPosition();
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         var pose = event.getPoseStack();
         var buffers = client.renderBuffers().bufferSource();
         for (Echo echo : ECHOES.values()) {
@@ -105,7 +105,7 @@ public final class SoulDissolves {
                     || camera.distanceToSqr(echo.position) > 96 * 96) continue;
             float partial = client.isPaused() ? 0 : event.getPartialTick();
             float progress = Mth.clamp((echo.age + partial) / DURATION, 0, 1);
-            float alpha = 0.42f * (1 - progress * progress);
+            float alpha = dev.soulcatcherplus.config.SoulClientConfig.opacity() * (1 - progress * progress);
             Mob mob = echo.mob;
             int deathTime = mob.deathTime, hurtTime = mob.hurtTime;
             pose.pushPose();
@@ -115,17 +115,20 @@ public final class SoulDissolves {
                 float shrink = 1 - progress * 0.07f;
                 pose.scale(shrink, shrink, shrink);
                 // Invert only the root transform, retaining native model-part coordinates.
-                Matrix4f inverse = new Matrix4f(pose.last().pose()).invert();
-                Vector3f sample = new Vector3f();
+                Matrix4f inverse = new Matrix4f(pose.last().pose());
+                if (Math.abs(inverse.determinant()) < 1.0e-8f) continue;
+                inverse.invert();
+                Vector4f sample = new Vector4f();
                 float feather = Math.max(0.12f, echo.height * 0.14f);
                 float cutoff = progress * (echo.height + feather) - feather;
                 SoulVisuals.VertexFade fade = (x, y, z) -> {
-                    inverse.transformPosition((float)x, (float)y, (float)z, sample);
+                    sample.set((float)x, (float)y, (float)z, 1);
+                    sample.mul(inverse);
                     // A stable cell pattern breaks the travelling burn edge into fragments.
-                    int cell = (int)Math.floor(sample.x * 9) * 734287
-                        ^ (int)Math.floor(sample.y * 9) * 912931 ^ (int)Math.floor(sample.z * 9) * 438289;
+                    int cell = (int)Math.floor(sample.x() * 9) * 734287
+                        ^ (int)Math.floor(sample.y() * 9) * 912931 ^ (int)Math.floor(sample.z() * 9) * 438289;
                     float noise = (cell & 255) / 255f;
-                    return (sample.y - cutoff + (noise - 0.5f) * feather) / feather;
+                    return (sample.y() - cutoff + (noise - 0.5f) * feather) / feather;
                 };
                 var renderer = dispatcher.getRenderer(mob);
                 var texture = renderer.getTextureLocation(mob);
@@ -134,12 +137,12 @@ public final class SoulDissolves {
                     SoulVisuals.remap(type, texture, renderType)), alpha, fade);
                 mob.deathTime = mob.hurtTime = 0;
                 renderingEcho = true;
-                dispatcher.render(mob, 0, 0, 0, mob.getYRot(), partial, pose, spectral, LightTexture.FULL_BRIGHT);
+                dispatcher.render(mob, 0, 0, 0, mob.getYRot(), partial, pose, spectral, 15728880);
                 buffers.endBatch();
             } catch (RuntimeException error) {
                 // Keep the particle animation even when a third-party renderer cannot draw an echo.
                 echo.renderFailed = true;
-                com.mojang.logging.LogUtils.getLogger().warn("Unable to draw departing soul {}", mob.getType(), error);
+                org.apache.logging.log4j.LogManager.getLogger().warn("Unable to draw departing soul {}", mob.getType(), error);
             } finally {
                 renderingEcho = false;
                 mob.deathTime = deathTime;

@@ -16,5 +16,15 @@ public final class ClientRegistration {
     }
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(SoulCatcherPlus.REMNANT.get(), SoulRemnantRenderer::new);
+        event.registerEntityRenderer(SoulCatcherPlus.SOUL_RAVEN.get(), SoulRavenRenderer::new);
+        event.registerEntityRenderer(SoulCatcherPlus.SOUL_COURIER.get(), SoulCourierRenderer::new);
+        event.registerEntityRenderer(SoulCatcherPlus.SOUL_SHAMAN.get(), SoulShamanRenderer::new);
+    }
+    @SubscribeEvent public static void bakeModels(net.minecraftforge.client.event.ModelEvent.ModifyBakingResult event) {
+        for (var item : java.util.List.of(SoulCatcherPlus.IRON_CAGE, SoulCatcherPlus.DIAMOND_CAGE, SoulCatcherPlus.NETHERITE_CAGE, SoulCatcherPlus.SUPREME_CAGE)) {
+            var key = new net.minecraft.client.resources.model.ModelResourceLocation(item.getId(), "inventory");
+            var sprite = event.getModels().get(key);
+            if (sprite != null) event.getModels().put(key, new SoulCageBakedModel(sprite));
+        }
     }
 }

@@ -5,6 +5,13 @@ import net.minecraft.client.gui.GuiGraphics;
 
 /** Code-drawn ink, aged brass and soul-light surfaces; no vanilla button atlas. */
 final class SoulTheme {
+    static void horizontalGradient(GuiGraphics g, int x1, int y1, int x2, int y2, int left, int right) {
+        g.pose().pushPose();
+        g.pose().translate(x2, y1, 0);
+        g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(90));
+        g.fillGradient(0, 0, y2-y1, x2-x1, right, left);
+        g.pose().popPose();
+    }
     static final int INK = 0xFF0B131C, PANEL = 0xFF101E28, BORDER = 0xFF2B454B;
     static final int LIGHT = 0xFFE4F0E9, MUTED = 0xFF89A5A4, TEAL = 0xFF7BE2C9;
     static final int GOLD = 0xFFC6AA76, RED = 0xFFD58F82;
@@ -13,6 +20,8 @@ final class SoulTheme {
         "....#....", "...###...", "...###...", "#########", ".#######.",
         "..#####..", "..#####..", ".###.###.", ".##...##."
     };
+    private static final String[] PALETTE = { "..######....", ".#########..", "###########.", "############",
+        "############", "########..##", ".#######..#.", "..########..", "....####...." };
 
     static void panel(GuiGraphics g, int x, int y, int w, int h) {
         g.fillGradient(x, y, x + w, y + h, PANEL, INK);
@@ -39,6 +48,15 @@ final class SoulTheme {
                     || !starPixel(column, row - 1) || !starPixel(column, row + 1))
                 g.fill(left + column, top + row, left + column + 1, top + row + 1, color);
         }
+    }
+    static void palette(GuiGraphics g, int x, int y) {
+        for (int row = 0; row < PALETTE.length; row++) for (int column = 0; column < PALETTE[row].length(); column++)
+            if (PALETTE[row].charAt(column) == '#')
+                g.fill(x - 6 + column, y - 4 + row, x - 5 + column, y - 3 + row, SoulTheme.LIGHT);
+        g.fill(x - 3, y - 3, x - 1, y - 1, 0xFFE37D84);
+        g.fill(x + 1, y - 2, x + 3, y, 0xFFEBC56C);
+        g.fill(x - 5, y, x - 3, y + 2, 0xFF769FEB);
+        g.fill(x - 2, y + 2, x, y + 4, SoulTheme.TEAL);
     }
     private static boolean starPixel(int x, int y) {
         return y >= 0 && y < STAR.length && x >= 0 && x < STAR[y].length() && STAR[y].charAt(x) == '#';
