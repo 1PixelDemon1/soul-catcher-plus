@@ -17,6 +17,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /** Detached visual entities: never inserted into a level and never AI-ticked. */
 final class SoulPreview {
+    private final boolean spectral;
+    SoulPreview() { this(false); }
+    SoulPreview(boolean spectral) { this.spectral=spectral; }
     private final Map<UUID, Mob> cache = new LinkedHashMap<>();
     private final Set<UUID> failed = new HashSet<>();
     private UUID requested;
@@ -41,6 +44,7 @@ final class SoulPreview {
                 failed.add(packet.entry()); return;
             }
             mob.load(packet.appearance().copy());
+            if (spectral) mob.getPersistentData().putUUID(dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0,0));
             mob.setNoAi(true);
             mob.setHealth(mob.getMaxHealth());
             mob.setPos(0, 0, 0);

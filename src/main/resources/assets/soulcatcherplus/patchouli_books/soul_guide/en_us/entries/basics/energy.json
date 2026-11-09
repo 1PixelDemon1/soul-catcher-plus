@@ -1,0 +1,38 @@
+{
+  "name": "guide.soulcatcherplus.basics.energy.name",
+  "category": "soulcatcherplus:basics",
+  "icon": "soulcatcherplus:iron_soul_cage",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page4"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.energy.name",
+      "text": "guide.soulcatcherplus.basics.energy.page5"
+    }
+  ]
+}

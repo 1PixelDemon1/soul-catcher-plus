@@ -4,6 +4,57 @@
 
 No changes yet.
 
+## 1.2.0 — 2026-11-10
+
+Release core builds for Minecraft 1.16.5 / Forge 36.2.42 / Java 8, Minecraft 1.19.2 / Forge 43.5.0 / Java 17, Minecraft 1.20.1 / Forge 47.4.28 / Java 17, and Minecraft 26.3 / Forge 66.1.5 / Java 25. Each has a separate matching 1.2.0 Compat build.
+
+- Add Soul Shaman, a passive 8-HP Forgotten Soul. When near its owner, its cast grants Strength I and Regeneration I for eight seconds to the owner and eligible active souls within six blocks of the owner. Casts begin at seven-second intervals; native effect merging/immunities remain in force.
+- Add Shaman to Forgotten Scroll creative presets and the existing 2% root-chest loot roll, sharing successful drops equally with Raven and Courier. Shaman unlocks through scrolls rather than ordinary scythe capture.
+- Give Forgotten Soul models shared amulet artwork and synchronized Shaman casting, with editable model sources and export tooling.
+- Add an optional English/Russian Patchouli guide, first-login delivery, conditional book-plus-soul-sand recipe, and creative availability. Paginate translations independently with reserved title/footer space and escaped percent signs; recipe pages reference real recipe IDs. Baselines are 53.3/77/85 for 1.16.5/1.19.2/1.20.1. No matching Forge 26.3 Patchouli build was identified for this release, so guide availability is not claimed there.
+- Adopt the supplied transparent branding: lettered presentation banner, 256-pixel mod icon, and 32-pixel creative icon, preserving original PNGs.
+- Bring the older maintained ports forward from 1.0.0, including the 1.1.0 Forgotten Souls, scrolls, cage models, appearance settings, offline persistence, and Teleport/return behavior. Keep generic extension APIs in the core and mod-specific corrections in the standalone Compat project.
+- Add a native 26.3 port using queued rendering, SDL input, item-component NBT, dynamic enchantments, current recipe formats, and a legacy flat-ledger fallback. This data fallback does not establish universal cross-Minecraft world migration.
+- Use Forge 43.5.0 as the new 1.19.2 build target/minimum and retain Forge 47.4.28 for 1.20.1. Existing released artifacts/notes keep their historical baselines. All four core builds use protocol 12; matching protocol values do not allow cross-Minecraft connections.
+
+All four core JARs built successfully. Three existing persistence JUnit checks passed on each of 1.19.2 and 1.20.1, and three adapted checks passed on 26.3; legacy automated tests were not run on 1.16.5. All four core clients reached title/resource reload. Patchouli startup and the 15-entry bilingual guide (38 JSON resources) passed resource loading on the older three versions. All four dedicated core servers reached the startup marker in isolated new worlds without players and saved/stopped normally.
+
+These are build, persistence-unit, and startup checks. They do not establish in-game loot, buffs, combat, multiplayer, every renderer, or universal world migration. Compat's 26.3 startup used only the core; Mowzie/Aquamirae/Patchouli Forge 26.3 releases were not identified in the release lookup, and an official Twilight Forest Forge 26 build was not verified. See [release notes](docs/releases/1.2.0.md).
+
+## 1.1.0+1.16.5 — 2026-11-08
+
+Local release for **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**. This milestone updates the core only; the 1.19.2/1.20.1 ports and external integration addon have no new release here.
+
+### Forgotten Souls and scrolls
+
+- Add rare Forgotten Soul Scrolls to root loot tables whose path begins with `chests/`, in any namespace. Each table generation gets one 2% chance to append one scroll, with equal Raven/Courier selection. The additive Forge global loot modifier is datapack-configurable; generated chests and nonstandard chest paths are not rerolled or automatically covered.
+- Add Soul Raven, a passive 4-HP collector with its own AI. It fetches eligible real dropped items and owner-bound soul remnants within 20 blocks, carries up to eight entities, delivers to the owner, and perches on their shoulder when idle. Soul delivery requires an eligible cage, but no held scythe. Preserve actual cargo and ordinary pickup rules; inventory overflow remains in the world rather than being copied or discarded.
+- Add Soul Courier, a passive 8-HP porter whose chest opens each visitor's own 27-slot Ender Chest. Animate its chest and pause walking while it is open. Both Forgotten Souls unlock through scrolls rather than ordinary combat capture.
+- Add consumable Soul, Boss, and Forgotten Scroll families with distinct 16×16 sprites and explicit Forgotten creative variants. Ordinary scrolls default to Pig; Boss Scrolls default to Wither. Successful use adds a fresh collection identity without energy and consumes one scroll even in creative mode; known forms, invalid data, and full collections keep the item. Retain the old courier-scroll ID outside the creative tab.
+
+### Companion behavior and presentation
+
+- Preserve active companions, minions, native saved state, and carried entities across logout/world reload. Pause valid owned entities' native ticks while their owner is offline; resume loaded entities when the owner returns. Player death and dimension changes retain their recall behavior.
+- Replace the old 24-block forced teleport with a standard-brain Follow/Aggressive return policy: abandon combat beyond 40 blocks, path back until within four blocks, and attempt a safe teleport beyond 64 blocks or after 100 ticks without progress. Failed searches retry at most once per 20 ticks.
+- Add manual Teleport in the collection and wheel for one recipient or the group, requiring a held scythe and loaded companions in the current dimension. Preserve HP, energy, identity, and behavior mode; clear targets and move Guard anchors to the destination without loading chunks.
+- Lock wheel recipients until the pointer returns to the center, preserving selection through roster changes and preventing paging from switching a locked recipient. Highlight the current collection order, including group scope only when all active entries share it.
+- Add a local soul color/opacity editor with live previews, HSV/HEX controls, reset, and 10–100% opacity (42% default). Save per-client settings without synchronizing them to other players.
+- Synchronize names as `PlayerName's CreatureName`, preserving captured names and exposing ownership through normal entity metadata while hiding floating soul nameplates.
+- Render all four cages as animated 3D meshes in first/third-person hands, with glass, chain grips, orbiting souls, and material-specific details. Retain inventory sprites and add editable Blockbench/model/sprite sources and export scripts.
+
+### Core isolation and upgrade
+
+- Move mod-specific integration sources/resources into an external project. Routine core builds, development launches, and playtest packaging no longer include the addon; generic public APIs remain in the core, including `SoulAdapter.usesStandardBrain` for custom behavior with canonical ownership/lifecycle checks.
+- Register creative-scroll use through the common `SoulEvents` handler instead of subscribing the item class, avoiding dedicated-server event-bus reflection over its client tooltip signature. This correction was checked in source/bytecode; a dedicated server was not launched.
+- Use protocol **12** for Teleport support; clients and servers must update together from 1.0.0/protocol 11. Retain ledger schema 3 and compatible 1.16.5 collection/cage data. Normalize the old 20-HP Courier prototype to 8 HP without replacing its identity.
+- Do not assume a 1.0.0 integration addon accepts this core: earlier addon metadata requires an exact core version, and addon compatibility is outside this release's validation.
+
+### Validation
+
+Final release packaging succeeded in 18 seconds with `.\scripts\gradle.ps1 build -x test --offline` using no QA or playtest flags. Read-only artifact inspection passed: 146 Java 8 runtime classes, 46 parsed JSON documents, correct version/dependencies, five advancements, resource format 6, scroll/model/loot resources, and no QA/test helpers, Jabel, embedded JARs, addon classes, or Java 17 record-runtime leaks. Final source review found no further blocking issues after the creative-scroll registration fix.
+
+The development client compiled and reached sound-engine/texture-atlas startup with the manual QA sources, Twilight Forest, and Aquamirae enabled, without the compatibility addon; it was left open for the user. Existing Twilight resource and unauthenticated-development Realms warnings remain, with no fatal Soul Catcher error observed during startup. The QA command was not executed. No automated tests, GameTests, UI automation, dedicated-server launch, multiplayer checks, or in-game chest-loot verification were performed. Earlier development/prototype results do not validate this final release. See [1.1.0 release notes](docs/releases/1.1.0.md) for artifacts, checksums, and validation limits.
+
 ## 1.0.0+1.19.2 — 2026-10-31
 
 Add a Forge **1.19.2 / 43.5.2 / Java 17** release of the 1.0.0 core and separate combined integration addon, identified as `v1.0.0+1.19.2`. This is an additive platform release; the original `v1.0.0` tag and its 1.16.5/1.20.1 release history remain unchanged.

@@ -13,7 +13,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public final class SoulProfiles extends SimpleJsonResourceReloadListener {
     public record Profile(boolean enabled, int cost, int energy) {}
-    private static Map<ResourceLocation, Boolean> enabledTypes = Map.of();
+    private static Map<ResourceLocation, Boolean> enabledTypes = com.google.common.collect.ImmutableMap.of();
     public SoulProfiles() { super(new Gson(), "soul_profiles"); }
     public static Profile get(Mob mob) {
         ResourceLocation type = ForgeRegistries.ENTITY_TYPES.getKey(mob.getType());
@@ -27,6 +27,6 @@ public final class SoulProfiles extends SimpleJsonResourceReloadListener {
             ResourceLocation type = new ResourceLocation(obj.get("entity").getAsString());
             loaded.put(type, !obj.has("enabled") || obj.get("enabled").getAsBoolean());
         });
-        enabledTypes = Map.copyOf(loaded);
+        enabledTypes = com.google.common.collect.ImmutableMap.copyOf(loaded);
     }
 }

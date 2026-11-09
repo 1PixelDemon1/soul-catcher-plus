@@ -17,7 +17,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 
-
 /** Descendants share a root reservation, never a separate collection entry or refund. */
 public final class SoulMinions {
     public static final String ROOT = "scp_minion_root";
@@ -75,6 +74,7 @@ public final class SoulMinions {
         tag.putUUID(CompanionBrain.ENTRY, bond.entry());
         tag.putUUID(ROOT, bond.root());
         if (CompanionBrain.activeEntry(child) == null) { child.discard(); return false; }
+        SoulNames.update(child);
         if (child.isAddedToWorld()) {
             SoulNetwork.ghost(child);
         }
@@ -116,6 +116,7 @@ public final class SoulMinions {
             dismissOne(minion); return false;
         }
         configure(minion);
+        if (minion.tickCount % 20 == 0) SoulNames.update(minion);
         var adapter = SoulAdapters.get(minion);
         adapter.restoreSummoner(minion, root);
         if (minion.tickCount % 5 == 0) {

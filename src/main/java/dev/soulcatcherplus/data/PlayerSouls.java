@@ -61,7 +61,7 @@ public final class PlayerSouls {
             data.entries.put(entry.id, entry);
             ownedTypes.add(entry.entityType);
         }
-        for (Tag raw : tag.getList("Favorites", Tag.TAG_STRING))
+        for (Tag raw : tag.getList("Favorites", net.minecraft.nbt.Tag.TAG_STRING))
             if (ownedTypes.contains(raw.getAsString())) data.favoriteTypes.add(raw.getAsString());
         return data;
     }

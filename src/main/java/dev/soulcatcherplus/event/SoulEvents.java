@@ -8,11 +8,14 @@ import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.network.SoulNetwork;
+import dev.soulcatcherplus.item.SoulScroll;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.entity.EntityEvent;
@@ -20,11 +23,19 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.*;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
 public final class SoulEvents {
+    /** Handle creative use before vanilla restores the old stack count after Item.use. */
+    @SubscribeEvent public static void creativeScrollUse(PlayerInteractEvent.RightClickItem event) {
+        if (!event.getEntity().isCreative() || !(event.getItemStack().getItem() instanceof SoulScroll scroll)) return;
+        event.setCancellationResult(scroll.use(event.getLevel(), event.getEntity(), event.getHand()).getResult());
+        event.setCanceled(true);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
         if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return;
@@ -72,7 +83,7 @@ public final class SoulEvents {
                 player.getLevel().addFreshEntity(remnant);
             }
         } catch (RuntimeException error) {
-            com.mojang.logging.LogUtils.getLogger().error("Failed soul capture: {}", mob.getType(), error);
+            org.apache.logging.log4j.LogManager.getLogger().error("Failed soul capture: {}", mob.getType(), error);
             SoulService.message(player, "unsupported");
         }
     }
@@ -94,17 +105,22 @@ public final class SoulEvents {
         if (!(event.getEntity() instanceof Mob mob) || event.getLevel().isClientSide) return;
         SoulMinions.inheritOnJoin(mob, event.loadedFromDisk());
         if (!CompanionBrain.isSoul(mob)) return;
-        if (CompanionBrain.activeEntry(mob) == null) { event.setCanceled(true); return; }
+        if (CompanionBrain.activeEntry(mob) == null) {
+            // Register a stale loaded raven's native passengers before the brain discards it.
+            // Its normal remove path then releases the real cargo instead of losing saved loot.
+            if (!(mob instanceof dev.soulcatcherplus.entity.SoulRavenEntity) || mob.getPassengers().isEmpty())
+                event.setCanceled(true);
+            return;
+        }
         if (SoulMinions.isMinion(mob)) SoulMinions.configure(mob);
         else if (event.loadedFromDisk()) SoulAdapters.get(mob).configureCompanion(mob);
+        SoulNames.update(mob);
         SoulBossBars.suppress(mob);
     }
     @SubscribeEvent public static void leave(EntityLeaveLevelEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || event.getLevel().isClientSide
                 || !CompanionBrain.isSoul(mob) || SoulMinions.isMinion(mob)) return;
-        Entity.RemovalReason reason = mob.getRemovalReason();
-        // Chunk unload and dimension transfer do not prove that a creator has died.
-        if (reason != null && reason.shouldDestroy()) endCompanion(mob);
+        if (SoulSpawnContext.wasDestroyed(mob)) endCompanion(mob);
     }
     private static void endCompanion(Mob mob) {
         SoulEntry entry = CompanionBrain.activeEntry(mob);
@@ -118,9 +134,6 @@ public final class SoulEvents {
         if (event.getTarget() instanceof Mob mob && !mob.level.isClientSide) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof ServerPlayer player && CompanionBrain.isSoul(event.getTarget()))
             SoulNetwork.ghost(player, event.getTarget());
-    }
-    @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) SoulService.recallAll(player);
     }
     @SubscribeEvent public static void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) SoulService.recallAll(player);
@@ -151,7 +164,7 @@ public final class SoulEvents {
         if (CompanionBrain.isSoul(event.getEntity())) event.setCanceled(true);
     }
     @SubscribeEvent public static void target(LivingChangeTargetEvent event) {
-        if (event.getEntity().level.isClientSide) return;
+        if (event.getNewTarget() == null || event.getEntity().level.isClientSide) return;
         if (event.getEntity() instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getNewTarget() instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof Mob mob && CompanionBrain.isSoul(mob)

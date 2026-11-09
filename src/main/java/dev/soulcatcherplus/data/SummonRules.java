@@ -21,7 +21,7 @@ public final class SummonRules {
             if (entry.activeEntity != null) activeTypes.add(entry.entityType);
         });
         return new Context(collection.activeCount(), limit, energy, cageCapacity, gameTime,
-            Map.copyOf(recovery), Set.copyOf(activeTypes));
+            com.google.common.collect.ImmutableMap.copyOf(recovery), com.google.common.collect.ImmutableSet.copyOf(activeTypes));
     }
     public static Availability inspect(Context context, SoulEntry entry) {
         long recovery = Math.max(0, (context.readyAt().getOrDefault(entry.entityType, 0L) - context.gameTime() + 19) / 20);

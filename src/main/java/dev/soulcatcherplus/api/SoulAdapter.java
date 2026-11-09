@@ -41,6 +41,8 @@ public interface SoulAdapter {
     default void configureCompanion(Mob mob) {
         dev.soulcatcherplus.companion.CompanionBrain.installStandardGoals(mob);
     }
+    /** Keep canonical ownership/recall validation, but delegate movement and targeting to custom AI. */
+    default boolean usesStandardBrain(Mob mob) { return true; }
     /** Optional support for nonstandard AI; called every five server ticks. */
     default void tick(Mob mob, ServerPlayer owner) {}
     /** Immediate creator, or null if unknown. Must not load chunks or guess from nearby mobs. */

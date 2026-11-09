@@ -37,7 +37,14 @@ public final class SoulCage extends Item {
         return stored;
     }
     @Override public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity(stack)));
+        tooltip.add(net.minecraft.network.chat.Component.translatable("item.soulcatcherplus.soul_cage.energy", energy(stack), capacity(stack)));
+    }
+    @Override public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(new net.minecraftforge.client.extensions.common.IClientItemExtensions() {
+            @Override public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return dev.soulcatcherplus.client.SoulCageItemRenderer.getInstance();
+            }
+        });
     }
     @Override public boolean isEnchantable(ItemStack stack) { return stack.getCount() == 1; }
     @Override public int getEnchantmentValue() { return 10; }

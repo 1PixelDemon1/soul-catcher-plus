@@ -1,0 +1,28 @@
+{
+  "name": "guide.soulcatcherplus.forgotten.courier.name",
+  "category": "soulcatcherplus:forgotten",
+  "icon": "minecraft:ender_chest",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.courier.name",
+      "text": "guide.soulcatcherplus.forgotten.courier.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.courier.name",
+      "text": "guide.soulcatcherplus.forgotten.courier.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.courier.name",
+      "text": "guide.soulcatcherplus.forgotten.courier.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.courier.name",
+      "text": "guide.soulcatcherplus.forgotten.courier.page3"
+    }
+  ]
+}

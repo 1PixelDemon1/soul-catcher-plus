@@ -1,15 +1,9 @@
 {
   "parent": "soulcatcherplus:first_soul",
   "display": {
-    "icon": {
-      "item": "soulcatcherplus:supreme_soul_cage"
-    },
-    "title": {
-      "translate": "advancements.soulcatcherplus.supreme_equipment.title"
-    },
-    "description": {
-      "translate": "advancements.soulcatcherplus.supreme_equipment.description"
-    },
+    "icon": {"item": "soulcatcherplus:supreme_soul_cage"},
+    "title": {"translate": "advancements.soulcatcherplus.supreme_equipment.title"},
+    "description": {"translate": "advancements.soulcatcherplus.supreme_equipment.description"},
     "frame": "goal",
     "show_toast": true,
     "announce_to_chat": true,
@@ -18,35 +12,12 @@
   "criteria": {
     "cage": {
       "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "soulcatcherplus:supreme_soul_cage"
-            ]
-          }
-        ]
-      }
+      "conditions": {"items": [{"items": ["soulcatcherplus:supreme_soul_cage"]}]}
     },
     "scythe": {
       "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "soulcatcherplus:supreme_soul_scythe"
-            ]
-          }
-        ]
-      }
+      "conditions": {"items": [{"items": ["soulcatcherplus:supreme_soul_scythe"]}]}
     }
   },
-  "requirements": [
-    [
-      "cage"
-    ],
-    [
-      "scythe"
-    ]
-  ]
+  "requirements": [["cage"], ["scythe"]]
 }

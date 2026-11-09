@@ -2,15 +2,16 @@
 package dev.soulcatcherplus.client;
 
 import net.minecraft.client.Minecraft;
+import dev.soulcatcherplus.client.SoulGui;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 
 final class SoulButton extends AbstractButton {
-    enum Style { PRIMARY, SUBTLE, DANGER, CARD, FAVORITE }
+    enum Style { PRIMARY, SUBTLE, DANGER, CARD, FAVORITE, PALETTE }
     private final Runnable action;
     private final Style style;
-    private Component subtitle = Component.literal("");
-    private Component hint = Component.literal("");
+    private Component subtitle = net.minecraft.network.chat.Component.literal("");
+    private Component hint = net.minecraft.network.chat.Component.literal("");
     private boolean selected;
     private boolean lit;
     private boolean boss;
@@ -26,12 +27,12 @@ final class SoulButton extends AbstractButton {
     SoulButton lit(boolean value) { lit = value; return this; }
     SoulButton boss(boolean value) { boss = value; return this; }
     Component hint() { return hint; }
-    @Override public void updateNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) { defaultButtonNarrationText(output); }
     @Override public void onPress() { action.run(); }
     @Override public void renderButton(com.mojang.blaze3d.vertex.PoseStack pose, int mouseX, int mouseY, float partialTick) {
-        SoulGui g = new SoulGui(pose);
+            SoulGui g = new SoulGui(pose);
+        int x = this.x, y = this.y;
         var font = Minecraft.getInstance().font;
-        boolean hover = isHoveredOrFocused();
+        boolean hover = isHovered() || isFocused();
         int accent = style == Style.FAVORITE ? SoulTheme.GOLD : style == Style.DANGER ? SoulTheme.RED
             : boss ? SoulTheme.BOSS_PURPLE : SoulTheme.TEAL;
         int border = active && (hover || selected || boss) ? accent : SoulTheme.BORDER;
@@ -51,12 +52,19 @@ final class SoulButton extends AbstractButton {
         } else if (style == Style.FAVORITE) {
             SoulTheme.star(g, x + width / 2, y + height / 2,
                 selected ? SoulTheme.GOLD : hover ? SoulTheme.LIGHT : SoulTheme.MUTED, selected);
+        } else if (style == Style.PALETTE) {
+            SoulTheme.palette(g, x + width / 2, y + height / 2);
         } else {
-            g.drawCenteredString(font, Component.literal(fit(getMessage().getString(), width - 10)),
+            g.drawCenteredString(font, net.minecraft.network.chat.Component.literal(fit(getMessage().getString(), width - 10)),
                 x + width / 2, y + (height - 8) / 2, color);
         }
         if (isFocused()) g.renderOutline(x + 2, y + 2, width - 4, height - 4, 0x6683DBC8);
     }
+    @Override public void updateNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) { defaultButtonNarrationText(output); }
+    boolean isHovered() { return isHovered; }
+    int getX() { return x; }
+    int getY() { return y; }
+    void setY(int value) { y = value; }
     private static String fit(String text, int width) {
         var font = Minecraft.getInstance().font;
         return font.width(text) <= width ? text : font.plainSubstrByWidth(text, Math.max(0, width - font.width("…"))) + "…";

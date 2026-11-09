@@ -21,11 +21,11 @@ public final class SoulCommands {
                         var player = context.getSource().getPlayerOrException();
                         SoulCages.Active cage = SoulCages.active(player);
                         if (!cage.present()) {
-                            context.getSource().sendFailure(Component.translatable("message.soulcatcherplus.cage_needed"));
+                            context.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("message.soulcatcherplus.cage_needed"));
                             return 0;
                         }
                         int stored = SoulCages.set(player, IntegerArgumentType.getInteger(context, "amount"));
-                        context.getSource().sendSuccess(Component.translatable("command.soulcatcherplus.energy",
+                        context.getSource().sendSuccess( net.minecraft.network.chat.Component.translatable("command.soulcatcherplus.energy",
                             SoulCages.location(cage.slot()), stored, cage.capacity()), false);
                         return 1;
                     }))));

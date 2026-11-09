@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "11";
+    private static final String VERSION = "12";
     // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
     public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
@@ -79,14 +79,14 @@ public final class SoulNetwork {
             b.writeUUID(snapshot); b.writeVarInt(offset); b.writeVarInt(total); state.write(b);
         }
     }
-    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM }
+    public enum Action { SELECT, SUMMON, RECALL, RECALL_ALL, FOLLOW, WAIT, GUARD, TOGGLE_MODE, TOGGLE_GROUP, REFRESH, OPEN, TOGGLE_FAVORITE, AGGRESSIVE, FORGET_FORM, TELEPORT }
     public record Request(Action action, UUID entry) {
         static Request read(FriendlyByteBuf b) {
             return new Request(b.readEnum(Action.class), b.readBoolean() ? b.readUUID() : null);
         }
         void write(FriendlyByteBuf b) { b.writeEnum(action); b.writeBoolean(entry != null); if (entry != null) b.writeUUID(entry); }
     }
-    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL, AGGRESSIVE }
+    public enum WheelAction { OPEN, REFRESH, FOLLOW, WAIT, GUARD, RECALL, AGGRESSIVE, TELEPORT }
     public record WheelRequest(WheelAction action, UUID entry, boolean group) {
         public WheelRequest(WheelAction action, UUID entry) { this(action, entry, false); }
         static WheelRequest read(FriendlyByteBuf b) {
@@ -229,6 +229,7 @@ public final class SoulNetwork {
                 case WAIT -> SoulService.command(player, CompanionBrain.Mode.WAIT);
                 case GUARD -> SoulService.command(player, CompanionBrain.Mode.GUARD);
                 case AGGRESSIVE -> SoulService.command(player, CompanionBrain.Mode.AGGRESSIVE);
+                case TELEPORT -> SoulService.teleport(player);
                 case TOGGLE_MODE -> data.commandMode = !data.commandMode;
                 case TOGGLE_GROUP -> data.commandGroup = !data.commandGroup;
                 case TOGGLE_FAVORITE -> data.toggleFavorite(packet.entry);
@@ -277,6 +278,9 @@ public final class SoulNetwork {
                 if (packet.action == WheelAction.RECALL) {
                     if (packet.group) SoulService.recallAll(player);
                     else SoulService.recall(player.server, entry);
+                } else if (packet.action == WheelAction.TELEPORT) {
+                    if (packet.group) SoulService.teleportAll(player);
+                    else SoulService.teleportOne(player, entry.id);
                 } else {
                     CompanionBrain.Mode mode = switch (packet.action) {
                         case FOLLOW -> CompanionBrain.Mode.FOLLOW;

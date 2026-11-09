@@ -12,8 +12,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.*;
-import net.minecraft.world.entity.*;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,7 +27,7 @@ public final class SoulService {
     public static PlayerSouls data(ServerPlayer player) { return SoulLedger.get(player.server).player(player.getUUID()); }
     public static void changed(ServerPlayer player) { SoulLedger.get(player.server).setDirty(); }
     public static void message(ServerPlayer player, String key, Object... args) {
-        player.displayClientMessage(Component.translatable("message.soulcatcherplus." + key, args), true);
+        player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.soulcatcherplus." + key, args), true);
     }
     public static boolean holdsScythe(ServerPlayer player) {
         return SoulScythe.heldBy(player) != null;
@@ -65,6 +69,7 @@ public final class SoulService {
         boolean completed = false;
         try {
             mob.load(SoulSnapshots.sanitize(entry.snapshot()));
+            SoulSpawnContext.markFresh(mob);
             mob.setUUID(UUID.randomUUID());
             mob.setHealth(mob.getMaxHealth()); mob.deathTime = 0;
             mob.setPersistenceRequired(); mob.setCanPickUpLoot(false);
@@ -76,6 +81,7 @@ public final class SoulService {
             SoulBossBars.suppress(mob);
             if (!place(mob, player)) { message(player, "no_space"); return; }
             if (MinecraftForge.EVENT_BUS.post(new SoulEvent.Summon(player, mob))) return;
+            SoulNames.update(mob, player);
             // Charge only after integrations approve, before join callbacks can use the companion.
             SoulCages.Active cage = SoulCages.active(player);
             if (!SoulCages.spend(player, entry.cost)) {
@@ -98,7 +104,7 @@ public final class SoulService {
             entry.activeEntity = null; entry.dimension = "";
             if (created.isAddedToWorld()) created.discard();
             SoulMinions.dismiss(player.server, created.getUUID());
-            com.mojang.logging.LogUtils.getLogger().error("Unable to summon {}", entry.entityType, error);
+            org.apache.logging.log4j.LogManager.getLogger().error("Unable to summon {}", entry.entityType, error);
             message(player, "unsupported");
         } finally {
             if (!completed && !paidCage.isEmpty()) {
@@ -147,7 +153,7 @@ public final class SoulService {
             try {
                 if (owner != null) SoulAdapters.get(mob).onRecall(mob, owner);
             } catch (RuntimeException error) {
-                com.mojang.logging.LogUtils.getLogger().warn("Failed soul recall cleanup: {}", entry.entityType, error);
+                org.apache.logging.log4j.LogManager.getLogger().warn("Failed soul recall cleanup: {}", entry.entityType, error);
             }
             SoulNetwork.dissolve(mob);
             mob.discard();
@@ -188,6 +194,34 @@ public final class SoulService {
         SoulEntry entry = data(player).entries.get(id);
         if (entry != null && applyCommand(player, entry, mode)) changed(player);
     }
+    /** Collection orders follow the selected-species / whole-group scope. */
+    public static void teleport(ServerPlayer player) {
+        PlayerSouls collection = data(player);
+        teleportEntries(player, entry -> receivesCommand(collection, entry));
+    }
+    /** Wheel orders never alter the saved collection selection or scope. */
+    public static void teleportAll(ServerPlayer player) {
+        teleportEntries(player, entry -> true);
+    }
+    public static void teleportOne(ServerPlayer player, UUID id) {
+        teleportEntries(player, entry -> entry.id.equals(id));
+    }
+    private static void teleportEntries(ServerPlayer player, java.util.function.Predicate<SoulEntry> selected) {
+        if (!holdsScythe(player)) { message(player, "teleport_scythe_needed"); return; }
+        int moved = 0, failed = 0;
+        for (SoulEntry entry : data(player).entries.values()) {
+            if (entry.activeEntity == null || !selected.test(entry)) continue;
+            Mob mob = activeMob(player, entry);
+            if (mob == null || !CompanionBrain.teleportToOwner(mob, player)) { failed++; continue; }
+            mob.setTarget(null);
+            mob.getNavigation().stop();
+            if (CompanionBrain.mode(mob) == CompanionBrain.Mode.GUARD)
+                mob.getPersistentData().putLong("scp_guard", mob.blockPosition().asLong());
+            moved++;
+        }
+        if (failed > 0) message(player, "teleport_partial", moved, failed);
+        else if (moved > 0) message(player, "teleported", moved);
+    }
     /** Resolve canonical ownership without loading a chunk for a menu request. */
     public static Mob activeMob(ServerPlayer player, SoulEntry entry) {
         Entity entity = entry.activeEntity == null ? null : player.getLevel().getEntity(entry.activeEntity);
@@ -200,6 +234,8 @@ public final class SoulService {
     private static boolean applyCommand(ServerPlayer player, SoulEntry entry, CompanionBrain.Mode mode) {
         Mob mob = activeMob(player, entry);
         if (mob == null) return false;
+        if (!SoulAdapters.get(mob).usesStandardBrain(mob)) return false;
+        CompanionBrain.resetReturn(mob);
         mob.setTarget(null);
         mob.getPersistentData().putString(CompanionBrain.MODE, mode.name());
         mob.getPersistentData().putLong("scp_guard", player.blockPosition().asLong());

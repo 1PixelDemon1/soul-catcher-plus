@@ -11,7 +11,7 @@ description='''Mark enemies with a scythe, collect their souls, and summon spect
 [[dependencies.soulcatcherplus]]
 modId="forge"
 mandatory=true
-versionRange="[43.5.2,44)"
+versionRange="[43.5.0,44)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.soulcatcherplus]]
@@ -19,4 +19,11 @@ modId="minecraft"
 mandatory=true
 versionRange="[1.19.2]"
 ordering="NONE"
+side="BOTH"
+
+[[dependencies.soulcatcherplus]]
+modId="patchouli"
+mandatory=false
+versionRange="[1.19.2-77,)"
+ordering="AFTER"
 side="BOTH"

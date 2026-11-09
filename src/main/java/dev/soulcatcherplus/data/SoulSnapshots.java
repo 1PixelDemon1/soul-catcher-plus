@@ -15,7 +15,7 @@ public final class SoulSnapshots {
                 "FallDistance", "PortalCooldown", "SleepingX", "SleepingY", "SleepingZ"})
             tag.remove(key);
         CompoundTag forge = tag.getCompound("ForgeData");
-        forge.getAllKeys().stream().filter(k -> k.startsWith("scp_")).toList().forEach(forge::remove);
+        forge.getAllKeys().stream().filter(k -> k.startsWith("scp_")).collect(com.google.common.collect.ImmutableList.toImmutableList()).forEach(forge::remove);
         if (!forge.isEmpty()) tag.put("ForgeData", forge);
         tag.putBoolean("PersistenceRequired", true);
         tag.putBoolean("CanPickUpLoot", false);

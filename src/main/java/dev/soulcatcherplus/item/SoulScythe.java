@@ -2,18 +2,23 @@
 package dev.soulcatcherplus.item;
 
 import dev.soulcatcherplus.SoulCatcherPlus;
-
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.*;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Tiers;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.Level;
 
 /** Inherits vanilla sword enchantment eligibility and material enchantability. */
@@ -21,7 +26,7 @@ public final class SoulScythe extends SwordItem {
     private final ScytheTier scytheTier;
     public SoulScythe(ScytheTier tier) {
         super(tier.material, tier.damageModifier, tier.speedModifier,
-            tier.material == Tiers.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB));
+            tier.material == Tiers.NETHERITE ? new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).tab(SoulCatcherPlus.SOUL_TAB).fireResistant() : new Item.Properties().tab(SoulCatcherPlus.SOUL_TAB).tab(SoulCatcherPlus.SOUL_TAB));
         this.scytheTier = tier;
     }
     public int summonLimit() { return scytheTier.summonLimit; }
@@ -34,6 +39,8 @@ public final class SoulScythe extends SwordItem {
         return player.getOffhandItem().getItem() instanceof SoulScythe scythe ? scythe : null;
     }
     @Override public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+        // The porter's native interaction must remain usable while holding a command scythe.
+        if (target instanceof dev.soulcatcherplus.entity.SoulCourierEntity) return InteractionResult.PASS;
         if (!(target instanceof Mob mob)) return InteractionResult.PASS;
         if (player instanceof ServerPlayer server) {
             SoulMinions.tryInherit(mob);
@@ -70,6 +77,6 @@ public final class SoulScythe extends SwordItem {
         return InteractionResult.sidedSuccess(player.level.isClientSide);
     }
     @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));
+        tooltip.add(net.minecraft.network.chat.Component.translatable("item.soulcatcherplus.scythe_limit", summonLimit()));
     }
 }

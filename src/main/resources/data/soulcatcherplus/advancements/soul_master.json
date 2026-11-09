@@ -1,28 +1,14 @@
 {
   "parent": "soulcatcherplus:supreme_equipment",
   "display": {
-    "icon": {
-      "item": "minecraft:enchanted_book"
-    },
-    "title": {
-      "translate": "advancements.soulcatcherplus.soul_master.title"
-    },
-    "description": {
-      "translate": "advancements.soulcatcherplus.soul_master.description"
-    },
+    "icon": {"item": "minecraft:enchanted_book"},
+    "title": {"translate": "advancements.soulcatcherplus.soul_master.title"},
+    "description": {"translate": "advancements.soulcatcherplus.soul_master.description"},
     "frame": "challenge",
     "show_toast": true,
     "announce_to_chat": true,
     "hidden": false
   },
-  "criteria": {
-    "complete": {
-      "trigger": "minecraft:impossible"
-    }
-  },
-  "requirements": [
-    [
-      "complete"
-    ]
-  ]
+  "criteria": {"complete": {"trigger": "minecraft:impossible"}},
+  "requirements": [["complete"]]
 }

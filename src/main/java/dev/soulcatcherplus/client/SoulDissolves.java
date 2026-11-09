@@ -105,7 +105,7 @@ public final class SoulDissolves {
                     || camera.distanceToSqr(echo.position) > 96 * 96) continue;
             float partial = client.isPaused() ? 0 : event.getPartialTick();
             float progress = Mth.clamp((echo.age + partial) / DURATION, 0, 1);
-            float alpha = 0.42f * (1 - progress * progress);
+            float alpha = dev.soulcatcherplus.config.SoulClientConfig.opacity() * (1 - progress * progress);
             Mob mob = echo.mob;
             int deathTime = mob.deathTime, hurtTime = mob.hurtTime;
             pose.pushPose();
