@@ -4,6 +4,23 @@
 
 No changes yet.
 
+## 1.2.0 — 2026-11-10
+
+Release core builds for Minecraft 1.16.5 / Forge 36.2.42 / Java 8, Minecraft 1.19.2 / Forge 43.5.0 / Java 17, Minecraft 1.20.1 / Forge 47.4.28 / Java 17, and Minecraft 26.3 / Forge 66.1.5 / Java 25. Each has a separate matching 1.2.0 Compat build.
+
+- Add Soul Shaman, a passive 8-HP Forgotten Soul. When near its owner, its cast grants Strength I and Regeneration I for eight seconds to the owner and eligible active souls within six blocks of the owner. Casts begin at seven-second intervals; native effect merging/immunities remain in force.
+- Add Shaman to Forgotten Scroll creative presets and the existing 2% root-chest loot roll, sharing successful drops equally with Raven and Courier. Shaman unlocks through scrolls rather than ordinary scythe capture.
+- Give Forgotten Soul models shared amulet artwork and synchronized Shaman casting, with editable model sources and export tooling.
+- Add an optional English/Russian Patchouli guide, first-login delivery, conditional book-plus-soul-sand recipe, and creative availability. Paginate translations independently with reserved title/footer space and escaped percent signs; recipe pages reference real recipe IDs. Baselines are 53.3/77/85 for 1.16.5/1.19.2/1.20.1. No matching Forge 26.3 Patchouli build was identified for this release, so guide availability is not claimed there.
+- Adopt the supplied transparent branding: lettered presentation banner, 256-pixel mod icon, and 32-pixel creative icon, preserving original PNGs.
+- Bring the older maintained ports forward from 1.0.0, including the 1.1.0 Forgotten Souls, scrolls, cage models, appearance settings, offline persistence, and Teleport/return behavior. Keep generic extension APIs in the core and mod-specific corrections in the standalone Compat project.
+- Add a native 26.3 port using queued rendering, SDL input, item-component NBT, dynamic enchantments, current recipe formats, and a legacy flat-ledger fallback. This data fallback does not establish universal cross-Minecraft world migration.
+- Use Forge 43.5.0 as the new 1.19.2 build target/minimum and retain Forge 47.4.28 for 1.20.1. Existing released artifacts/notes keep their historical baselines. All four core builds use protocol 12; matching protocol values do not allow cross-Minecraft connections.
+
+All four core JARs built successfully. Three existing persistence JUnit checks passed on each of 1.19.2 and 1.20.1, and three adapted checks passed on 26.3; legacy automated tests were not run on 1.16.5. All four core clients reached title/resource reload. Patchouli startup and the 15-entry bilingual guide (38 JSON resources) passed resource loading on the older three versions. All four dedicated core servers reached the startup marker in isolated new worlds without players and saved/stopped normally.
+
+These are build, persistence-unit, and startup checks. They do not establish in-game loot, buffs, combat, multiplayer, every renderer, or universal world migration. Compat's 26.3 startup used only the core; Mowzie/Aquamirae/Patchouli Forge 26.3 releases were not identified in the release lookup, and an official Twilight Forest Forge 26 build was not verified. See [release notes](docs/releases/1.2.0.md).
+
 ## 1.1.0+1.16.5 — 2026-11-08
 
 Local release for **Minecraft 1.16.5 / Forge 36.2.42 / Java 8**. This milestone updates the core only; the 1.19.2/1.20.1 ports and external integration addon have no new release here.

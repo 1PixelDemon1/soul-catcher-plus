@@ -2558,22 +2558,182 @@
       }
     },
     {
-      "name": "amulet_cord",
-      "uuid": "2523bd72-b5ad-5381-b7be-a329f435ac92",
+      "name": "amulet_cord_left",
+      "uuid": "b1dd7acf-4fe3-54b6-9f42-3cb3f593ceb2",
       "from": [
-        -0.053261,
-        8.369565,
-        -1.255435
+        -0.384239,
+        7.53338,
+        -1.301087
       ],
       "to": [
-        0.053261,
-        8.978261,
-        -1.141304
+        -0.292935,
+        9.015533,
+        -1.209783
+      ],
+      "origin": [
+        -0.338587,
+        8.274457,
+        -1.255435
+      ],
+      "rotation": [
+        0,
+        0,
+        18.24892421841447
+      ],
+      "faces": {
+        "north": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "amulet_cord_right",
+      "uuid": "4a0344e1-7c94-5bb2-916f-ad189285662c",
+      "from": [
+        0.292935,
+        7.53338,
+        -1.301087
+      ],
+      "to": [
+        0.384239,
+        9.015533,
+        -1.209783
+      ],
+      "origin": [
+        0.338587,
+        8.274457,
+        -1.255435
+      ],
+      "rotation": [
+        0,
+        0,
+        -18.24892421841447
+      ],
+      "faces": {
+        "north": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": 5,
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "amulet_frame",
+      "uuid": "710dd0fb-971a-57b4-93fe-f9b634a80570",
+      "from": [
+        -0.418478,
+        6.581522,
+        -1.384783
+      ],
+      "to": [
+        0.418478,
+        7.570652,
+        -1.126087
       ],
       "origin": [
         0.0,
-        8.673913,
-        -1.19837
+        7.076087,
+        -1.255435
       ],
       "rotation": [
         0,
@@ -2638,22 +2798,22 @@
       }
     },
     {
-      "name": "cloak_clasp",
-      "uuid": "d4a57481-49e4-589d-b80e-346152d0d306",
+      "name": "amulet_stone",
+      "uuid": "16eb9bad-3b16-51b0-b413-d54dd4bba66c",
       "from": [
-        -0.228261,
-        7.798913,
-        -1.369565
+        -0.266304,
+        6.733696,
+        -1.430435
       ],
       "to": [
-        0.228261,
-        8.369565,
-        -1.179348
+        0.266304,
+        7.418478,
+        -1.377174
       ],
       "origin": [
         0.0,
-        8.084239,
-        -1.274457
+        7.076087,
+        -1.403804
       ],
       "rotation": [
         0,
@@ -3005,9 +3165,7 @@
         "right_mantle",
         "right_strap_front",
         "right_strap_top",
-        "right_strap_back",
-        "amulet_cord",
-        "cloak_clasp"
+        "right_strap_back"
       ]
     },
     {
@@ -3056,6 +3214,21 @@
       ],
       "children": [
         "skeleton_right_leg"
+      ]
+    },
+    {
+      "name": "amulet",
+      "uuid": "08dbbc71-1046-5e0c-bb39-4928587ae16c",
+      "origin": [
+        0.0,
+        8.978261,
+        -1.255435
+      ],
+      "children": [
+        "amulet_cord_left",
+        "amulet_cord_right",
+        "amulet_frame",
+        "amulet_stone"
       ]
     },
     {
@@ -3139,7 +3312,8 @@
       "right_arm",
       "left_cape",
       "right_cape",
-      "backpack"
+      "backpack",
+      "amulet"
     ],
     "backpack": [
       "chest_lid",
@@ -3149,6 +3323,11 @@
   "pose": {
     "body": [
       -20,
+      0,
+      0
+    ],
+    "amulet": [
+      20,
       0,
       0
     ],

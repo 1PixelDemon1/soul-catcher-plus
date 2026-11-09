@@ -35,10 +35,6 @@ final class SoulCourierGeometry {
         body.cube(Material.STRAP, -1.217391f, 4.717392f, -0.913043f, -0.98913f, 4.869566f, 1.255435f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
         // right_strap_back
         body.cube(Material.STRAP, -1.217391f, 1.217392f, 1.11087f, -0.98913f, 4.717392f, 1.331522f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
-        // amulet_cord
-        body.cube(Material.STRAP, -0.053261f, 3.804348f, -1.255435f, 0.053261f, 4.413044f, -1.141304f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
-        // cloak_clasp
-        body.cube(Material.SOUL, -0.228261f, 3.233696f, -1.369565f, 0.228261f, 3.804348f, -1.179348f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
         Part head = new Part(0f, 4.565218f, -0.9625f, 0f, 0f, 0f);
         body.children.add(head);
         parts.put("head", head);
@@ -129,6 +125,21 @@ final class SoulCourierGeometry {
         parts.put("chest_lock", chest_lock);
         // chest_lock
         chest_lock.cube(Material.CHEST, -1f, -1f, 15f, 1f, 3f, 16f, new float[] {0.015625f, 0.078125f, 0.046875f, 0.015625f, 0.0625f, 0.078125f, 0.09375f, 0.015625f, 0f, 0.078125f, 0.015625f, 0.015625f, 0.046875f, 0.078125f, 0.0625f, 0.015625f, 0.015625f, 0f, 0.046875f, 0.015625f, 0.046875f, 0.015625f, 0.078125f, 0f});
+        Part amulet = new Part(0f, 4.413044f, -1.255435f, 20f, 0f, 0f);
+        body.children.add(amulet);
+        parts.put("amulet", amulet);
+        Part cube_amulet_cord_left = new Part(-0.338587f, -0.703804f, 0f, 0f, 0f, 18.248924f);
+        amulet.children.add(cube_amulet_cord_left);
+        // amulet_cord_left
+        cube_amulet_cord_left.cube(Material.STRAP, -0.045652f, -0.741077f, -0.045652f, 0.045652f, 0.741076f, 0.045652f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
+        Part cube_amulet_cord_right = new Part(0.338587f, -0.703804f, 0f, 0f, 0f, -18.248924f);
+        amulet.children.add(cube_amulet_cord_right);
+        // amulet_cord_right
+        cube_amulet_cord_right.cube(Material.STRAP, -0.045652f, -0.741077f, -0.045652f, 0.045652f, 0.741076f, 0.045652f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
+        // amulet_frame
+        amulet.cube(Material.STRAP, -0.418478f, -2.396739f, -0.129348f, 0.418478f, -1.407609f, 0.129348f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
+        // amulet_stone
+        amulet.cube(Material.SOUL, -0.266304f, -2.244565f, -0.175f, 0.266304f, -1.559783f, -0.121739f, new float[] {0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 1f, 1f});
         Part left_leg = new Part(0.76087f, 4.565217f, 0f, 0f, 0f, 0f);
         root.children.add(left_leg);
         parts.put("left_leg", left_leg);

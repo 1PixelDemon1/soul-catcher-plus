@@ -194,6 +194,358 @@
       "uuid": "3ed02d0d-3db3-5659-b8bc-acd7ceaa8ef6"
     },
     {
+      "name": "amulet_cord_left",
+      "box_uv": false,
+      "rescale": false,
+      "locked": false,
+      "render_order": "default",
+      "allow_mirror_modeling": true,
+      "from": [
+        -0.5,
+        6.62,
+        -1.79
+      ],
+      "to": [
+        -0.36,
+        7.48,
+        -1.71
+      ],
+      "autouv": 0,
+      "color": 0,
+      "origin": [
+        -0.43,
+        7.05,
+        -1.75
+      ],
+      "rotation": [
+        0,
+        0,
+        35
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        }
+      },
+      "type": "cube",
+      "uuid": "267b8a94-0c40-5177-9aa6-ed8685ea49eb"
+    },
+    {
+      "name": "amulet_cord_right",
+      "box_uv": false,
+      "rescale": false,
+      "locked": false,
+      "render_order": "default",
+      "allow_mirror_modeling": true,
+      "from": [
+        0.36,
+        6.62,
+        -1.79
+      ],
+      "to": [
+        0.5,
+        7.48,
+        -1.71
+      ],
+      "autouv": 0,
+      "color": 0,
+      "origin": [
+        0.43,
+        7.05,
+        -1.75
+      ],
+      "rotation": [
+        0,
+        0,
+        -35
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "74dd3d51-ff4c-5055-bca3-4a0357225e9b"
+        }
+      },
+      "type": "cube",
+      "uuid": "2610b8b4-b4df-5807-98e4-2db2fa6621fa"
+    },
+    {
+      "name": "amulet_frame",
+      "box_uv": false,
+      "rescale": false,
+      "locked": false,
+      "render_order": "default",
+      "allow_mirror_modeling": true,
+      "from": [
+        -0.6,
+        5.65,
+        -1.98
+      ],
+      "to": [
+        0.6,
+        6.9,
+        -1.68
+      ],
+      "autouv": 0,
+      "color": 0,
+      "origin": [
+        0,
+        6.275,
+        -1.83
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "9bbe1226-701a-57e8-9dd6-3246dee627f3"
+        }
+      },
+      "type": "cube",
+      "uuid": "c08d9bdf-58af-571b-9fb1-03a66567c8f9"
+    },
+    {
+      "name": "amulet_stone",
+      "box_uv": false,
+      "rescale": false,
+      "locked": false,
+      "render_order": "default",
+      "allow_mirror_modeling": true,
+      "from": [
+        -0.38,
+        5.84,
+        -2.035
+      ],
+      "to": [
+        0.38,
+        6.71,
+        -1.975
+      ],
+      "autouv": 0,
+      "color": 0,
+      "origin": [
+        0,
+        6.275,
+        -2.005
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "a41e8528-5280-54ed-a975-2d4e166afe2f"
+        }
+      },
+      "type": "cube",
+      "uuid": "eb633c23-18a3-5861-b967-9b5a9437a9b2"
+    },
+    {
       "name": "skull",
       "box_uv": false,
       "rescale": false,
@@ -2388,6 +2740,10 @@
               "isOpen": false,
               "children": [
                 "3ed02d0d-3db3-5659-b8bc-acd7ceaa8ef6",
+                "267b8a94-0c40-5177-9aa6-ed8685ea49eb",
+                "2610b8b4-b4df-5807-98e4-2db2fa6621fa",
+                "c08d9bdf-58af-571b-9fb1-03a66567c8f9",
+                "eb633c23-18a3-5861-b967-9b5a9437a9b2",
                 {
                   "uuid": "ffbdd431-b478-569e-b3ec-676021ffb947",
                   "isOpen": false,
@@ -2570,10 +2926,10 @@
       "height": 8
     },
     {
-      "path": "textures/eye_glint.png",
-      "relative_path": "textures/eye_glint.png",
-      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGP4v3kpVsQwtCQAma6VwUyvrDUAAAAASUVORK5CYII=",
-      "name": "eye_glint",
+      "path": "textures/amulet.png",
+      "relative_path": "textures/amulet.png",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGPIvP8UK2IYWhIASfKLQXOaL7EAAAAASUVORK5CYII=",
+      "name": "amulet",
       "folder": "",
       "namespace": "",
       "id": "6",
@@ -2582,7 +2938,7 @@
       "visible": true,
       "mode": "bitmap",
       "saved": true,
-      "uuid": "27b955be-1daf-5218-8976-cdbc8f22e5b1",
+      "uuid": "a41e8528-5280-54ed-a975-2d4e166afe2f",
       "uv_width": 8,
       "uv_height": 8,
       "width": 8,

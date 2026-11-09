@@ -25,7 +25,7 @@ The earlier stylized skeleton and hand-built chest have been replaced.
   client JAR and embedded in the model for a portable preview. Their paths and
   SHA-256 hashes are recorded in `vanilla-sources.json`. These two textures are
   Mojang Studios assets, not original MIT-licensed artwork.
-- The cloak, open hood, shoulder straps and small cyan clasp are separate
+- The cloak, open hood, shoulder straps and hanging cyan amulet are separate
   original cuboids. The cloak uses an original 16x16 coarse runic cloth atlas; straps
   and the emissive amulet keep separate materials. The cloak does not alter the
   underlying skeleton texture or proportions.
@@ -62,10 +62,14 @@ cover 0.35 units at each temple. The eyes and mouth stay visible. The skull itse
 is unchanged. Rim boxes meet at their boundaries to avoid overlapping flat faces.
 
 The amulet's separate `soul` material uses Blockbench's native `render_mode:
-emissive`. Only `cloak_clasp` uses this material, so the cloak and skeleton keep
+emissive`. Only `amulet_stone` uses this material, so the cloak and skeleton keep
 normal shading.
-The pendant sits slightly lower on the chest so the leaned-forward skull does
-not hide it; a short dark cord joins it to the collar.
+The pendant hangs vertically below the neck on two dark cords forming a V
+from the sides of the neck to its framed cyan stone. A dedicated `amulet` child bone
+counter-rotates the body's fixed 20-degree forward lean. Its attachment follows
+the neck position, but the pendant points straight down in world space instead
+of following the torso's slope. Head turns and walking legs do not
+rotate this bone. The chest, hands and carrying pose are unchanged.
 The Minecraft renderer exports this material as a separate full-bright pass.
 It remains visible in darkness without casting dynamic world lighting.
 

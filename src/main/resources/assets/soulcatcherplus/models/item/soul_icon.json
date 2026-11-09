@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "soulcatcherplus:entity/soul_remnant/medium"
+    "layer0": "soulcatcherplus:item/soul_icon"
   }
 }

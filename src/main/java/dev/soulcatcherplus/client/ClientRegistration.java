@@ -32,6 +32,7 @@ public final class ClientRegistration {
         RenderingRegistry.registerEntityRenderingHandler(SoulCatcherPlus.REMNANT.get(), SoulRemnantRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(SoulCatcherPlus.SOUL_RAVEN.get(), SoulRavenRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(SoulCatcherPlus.SOUL_COURIER.get(), SoulCourierRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(SoulCatcherPlus.SOUL_SHAMAN.get(), SoulShamanRenderer::new);
         event.enqueueWork(() -> {
             ClientRegistry.registerKeyBinding(ClientControls.COLLECTION);
             ClientRegistry.registerKeyBinding(ClientControls.COMMAND_WHEEL);

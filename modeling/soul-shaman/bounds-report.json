@@ -1,0 +1,22 @@
+{
+  "cuboids": 66,
+  "quads": 396,
+  "triangles": 792,
+  "static_min": [
+    -6.05,
+    0.35,
+    -3.14
+  ],
+  "static_max": [
+    8.75,
+    24.5,
+    1.8
+  ],
+  "staff_height_units": 24,
+  "staff_height_blocks": 1.5,
+  "idle_body_lift_units": 0.25,
+  "emissive_materials": [
+    "soul_blue",
+    "soul_light"
+  ]
+}

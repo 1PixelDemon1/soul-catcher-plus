@@ -1,0 +1,23 @@
+{
+  "name": "guide.soulcatcherplus.forgotten.raven.name",
+  "category": "soulcatcherplus:forgotten",
+  "icon": "soulcatcherplus:forgotten_soul_scroll",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.raven.name",
+      "text": "guide.soulcatcherplus.forgotten.raven.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.raven.name",
+      "text": "guide.soulcatcherplus.forgotten.raven.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.raven.name",
+      "text": "guide.soulcatcherplus.forgotten.raven.page2"
+    }
+  ]
+}

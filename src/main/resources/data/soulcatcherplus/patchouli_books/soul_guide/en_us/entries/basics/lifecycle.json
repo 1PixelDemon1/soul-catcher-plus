@@ -1,0 +1,28 @@
+{
+  "name": "guide.soulcatcherplus.basics.lifecycle.name",
+  "category": "soulcatcherplus:basics",
+  "icon": "minecraft:clock",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.lifecycle.name",
+      "text": "guide.soulcatcherplus.basics.lifecycle.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.lifecycle.name",
+      "text": "guide.soulcatcherplus.basics.lifecycle.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.lifecycle.name",
+      "text": "guide.soulcatcherplus.basics.lifecycle.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.lifecycle.name",
+      "text": "guide.soulcatcherplus.basics.lifecycle.page3"
+    }
+  ]
+}

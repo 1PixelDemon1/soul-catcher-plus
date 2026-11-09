@@ -8,11 +8,26 @@ with `--release 8`. Jabel is compile-only and must never be bundled into the mod
 Use `develop` for ongoing 1.16.5 work. `forge/1.19.2` and `forge/1.20.1`
 maintain their version-specific ports. `archive/neoforge-1.20.4` is a preserved
 experimental port, outside the current release.
+The next Minecraft 1.19.2 release must target Forge **43.5.0**, as requested by
+the user. When preparing that port, align its Gradle dependency and minimum
+Forge metadata with 43.5.0; do not reuse the former 43.5.2 baseline. Existing
+1.0.0 release artifacts and historical release notes remain unchanged.
+For the next Minecraft 1.20.1 release, retain Forge **47.4.28** as the build
+target and minimum Forge version in mod metadata, as requested by the user.
 `main` retains release history and the public project overview. Update it for
 requested releases or explicitly requested publication/documentation preparation.
 Verify old APIs against the actual 1.16.5 mapped JAR and Forge sources. The class
 names are legacy MCP names with official member mappings; modern examples differ.
 Follow the installed `minecraft-modding` skill when changing mod code.
+
+## Branding for the next release
+
+Use the user-provided PNGs in `art/branding` starting with the next release
+after 1.1.0, including future version-specific ports. `logo-banner.png` includes
+lettering and is for GitHub presentation and other banner placements.
+`logo-icon.png` has no lettering and is for all other branding/icon placements.
+Preserve the original files and transparency; create correctly sized derived
+copies when integrating them. See `art/branding/README.md`.
 
 ## Git branches
 
@@ -133,3 +148,18 @@ integration projects. Do not load compatibility addon sources, build scripts or
 JARs during routine core development. Test external integrations separately only
 when the user requests it. Generic public extension APIs remain in the core;
 do not embed mod-specific behavior corrections here.
+
+## Forge 26.3 port
+
+`forge/26.3` targets Minecraft 26.3, Forge 66.1.5 and Java 25 with the official
+ForgeGradle 7 / Gradle 9.7.1 layout. The game is unobfuscated: do not add legacy
+mappings, Jabel, fg.deobf or reobfJar on that branch. Use its Java 25 bootstrap and
+Gradle scripts. Build output is `build/26.3`; keep its profiles separate from other
+ports. The client uses queued render-state submission and SDL input. Verify those
+APIs against the actual Forge 66.1.5 sources rather than copying 1.20.1 callbacks.
+Published Forge Patchouli and creature-integration builds have not been verified
+for 26.3. Do not claim their compatibility based only on core/addon startup.
+
+Authored model sources are maintained on develop. Port their generated geometry
+with the platform-specific renderer API; legacy exporters are not a substitute
+for reviewing a newer branch's native rendering code.

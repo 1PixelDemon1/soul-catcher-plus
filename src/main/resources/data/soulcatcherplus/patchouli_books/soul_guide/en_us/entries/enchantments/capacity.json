@@ -1,0 +1,18 @@
+{
+  "name": "guide.soulcatcherplus.enchantments.capacity.name",
+  "category": "soulcatcherplus:enchantments",
+  "icon": "soulcatcherplus:diamond_soul_cage",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.enchantments.capacity.name",
+      "text": "guide.soulcatcherplus.enchantments.capacity.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.enchantments.capacity.name",
+      "text": "guide.soulcatcherplus.enchantments.capacity.page1"
+    }
+  ]
+}
