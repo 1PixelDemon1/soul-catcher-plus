@@ -6,6 +6,8 @@ import dev.soulcatcherplus.entity.SoulRavenEntity;
 import dev.soulcatcherplus.entity.SoulRavenAdapter;
 import dev.soulcatcherplus.entity.SoulCourierEntity;
 import dev.soulcatcherplus.entity.SoulCourierAdapter;
+import dev.soulcatcherplus.entity.SoulShamanEntity;
+import dev.soulcatcherplus.entity.SoulShamanAdapter;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.item.SoulScythe;
@@ -74,6 +76,10 @@ public final class SoulCatcherPlus {
         () -> EntityType.Builder.<SoulCourierEntity>of(SoulCourierEntity::new, EntityClassification.MISC)
             .sized(0.875f, 1.4875f).clientTrackingRange(8).updateInterval(3)
             .build(ID + ":soul_courier"));
+    public static final RegistryObject<EntityType<SoulShamanEntity>> SOUL_SHAMAN = ENTITIES.register("soul_shaman",
+        () -> EntityType.Builder.<SoulShamanEntity>of(SoulShamanEntity::new, EntityClassification.MISC)
+            .sized(0.62f, 1.22f).clientTrackingRange(8).updateInterval(3)
+            .build(ID + ":soul_shaman"));
 
     public SoulCatcherPlus() {
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
@@ -91,12 +97,14 @@ public final class SoulCatcherPlus {
     private static void registerEntityAttributes(EntityAttributeCreationEvent event) {
         event.put(SOUL_RAVEN.get(), SoulRavenEntity.createAttributes());
         event.put(SOUL_COURIER.get(), SoulCourierEntity.createAttributes());
+        event.put(SOUL_SHAMAN.get(), SoulShamanEntity.createAttributes());
     }
 
     private static void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             SoulAdapters.register(SOUL_RAVEN.getId(), new SoulRavenAdapter());
             SoulAdapters.register(SOUL_COURIER.getId(), new SoulCourierAdapter());
+            SoulAdapters.register(SOUL_SHAMAN.getId(), new SoulShamanAdapter());
         });
     }
 }

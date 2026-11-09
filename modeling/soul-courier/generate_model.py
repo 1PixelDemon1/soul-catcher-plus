@@ -196,8 +196,20 @@ for side, sign in (('left', 1), ('right', -1)):
     cube(side+'_strap_front', [x-.15, 8.5, -1.27], [x+.15, 12.25, -1.18], 'body', 'strap')
     cube(side+'_strap_top', [x-.15, 12.2, -1.2], [x+.15, 12.4, 1.65], 'body', 'strap')
     cube(side+'_strap_back', [x-.15, 7.6, 1.46], [x+.15, 12.2, 1.75], 'body', 'strap')
-cube('amulet_cord', [-.07, 11.0, -1.65], [.07, 11.8, -1.5], 'body', 'strap')
-cube('cloak_clasp', [-.3, 10.25, -1.8], [.3, 11.0, -1.55], 'body', 'soul')
+# Hang from the neck rather than lying against the forward-leaning torso.
+# The amulet bone cancels the fixed spine lean while retaining its neck anchor.
+pivots['amulet'] = [0, 11.8, -1.65]
+for side,sign in (('left',-1),('right',1)):
+    # A pair of straight cords forms a V from the neck sides to the pendant.
+    lower,upper=[sign*.14,9.95],[sign*.75,11.8]
+    center=[(lower[0]+upper[0])/2,(lower[1]+upper[1])/2,-1.65]
+    half_length=math.dist(lower,upper)/2
+    angle=-math.degrees(math.atan2(upper[0]-lower[0],upper[1]-lower[1]))
+    cube('amulet_cord_'+side,[center[0]-.06,center[1]-half_length,-1.71],
+         [center[0]+.06,center[1]+half_length,-1.59],'amulet','strap',
+         rotation=[0,0,angle],origin=center)
+cube('amulet_frame', [-.55, 8.65, -1.82], [.55, 9.95, -1.48], 'amulet', 'strap')
+cube('amulet_stone', [-.35, 8.85, -1.88], [.35, 9.75, -1.81], 'amulet', 'soul')
 
 # A slight forward neck posture keeps the hood clear of the tilted chest.
 for element in cubes:
@@ -227,7 +239,7 @@ pivots.update({'left_cape': [0, 11.5, 1.3], 'right_cape': [0, 11.5, 1.3],
                'backpack': chest_point([8, 0, 0]), 'chest_lid': chest_point([8, 9, 1]),
                'chest_lock': chest_point([8, 8, 0])})
 hierarchy = {'root': ['body', 'left_leg', 'right_leg'],
-             'body': ['head', 'left_arm', 'right_arm', 'left_cape', 'right_cape', 'backpack'],
+             'body': ['head', 'left_arm', 'right_arm', 'left_cape', 'right_cape', 'backpack', 'amulet'],
              'backpack': ['chest_lid', 'chest_lock']}
 # The chest follows the spine's lean; its floor and the straight arms stay aligned.
 # Preserve the carrying pose, then shrink the whole model to vanilla chest width.
@@ -236,7 +248,7 @@ for element in cubes:
         element[field] = [round(value*FIT*MODEL_SCALE, 6) for value in element[field]]
 pivots = {name: [round(value*FIT*MODEL_SCALE, 6) for value in pivot] for name, pivot in pivots.items()}
 
-pose = {'body': [LEAN, 0, 0]}
+pose = {'body': [LEAN, 0, 0], 'amulet': [-LEAN, 0, 0]}
 for side in ('left', 'right'):
     pose[side+'_arm'] = [ARM_ANGLE, 0, 0]
 
@@ -345,7 +357,7 @@ def bounds_report():
     high = [max(point[axis] for point in vertices) for axis in range(3)]
     assert abs(low[1]) < 1e-5 and high[1] <= 36*MODEL_SCALE, 'Pose must remain above the ground and inside its height envelope'
     assert high[0]-low[0] <= 16*MODEL_SCALE+.0001 and high[2]-low[2] <= 32*MODEL_SCALE, 'Pose exceeds its footprint envelope'
-    return {'min': low, 'max': high, 'emissive_cubes': ['cloak_clasp']}
+    return {'min': low, 'max': high, 'emissive_cubes': ['amulet_stone']}
 
 
 reports = {'soul_courier.bbmodel': bounds_report()}

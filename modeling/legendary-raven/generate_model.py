@@ -8,7 +8,7 @@ NAMESPACE = uuid.UUID('425a4539-140a-4731-8b74-0a2018a68b24')
 def uid(name): return str(uuid.uuid5(NAMESPACE, name))
 def dump(path, value): path.write_text(json.dumps(value, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
 # Flat material samples, not painted surface art. UVs deliberately use the same solid swatch.
-materials = [('plumage','#242e3b'),('mantle','#253d43'),('wing','#1d2631'),('beak','#171d25'),('feet','#444a52'),('eye','#ef253e'),('eye_glint','#ffb3a5'),('soul_accent','#2dbcd7')]
+materials = [('plumage','#242e3b'),('mantle','#253d43'),('wing','#1d2631'),('beak','#171d25'),('feet','#444a52'),('eye','#ef253e'),('amulet','#69dfe5'),('soul_accent','#2dbcd7')]
 def flat_png(hex_color):
     rgb=bytes.fromhex(hex_color.lstrip('#')); size=8
     def chunk(tag,data): return struct.pack('>I',len(data))+tag+data+struct.pack('>I',zlib.crc32(tag+data)&0xffffffff)
@@ -29,6 +29,15 @@ def cube(name,lo,hi,bone,material='plumage',rotation=None,origin=None):
 # Front is -Z. A deep upright chest supports a smaller, low rectangular skull.
 cube('torso',[-1.65,1.9,-.6],[1.65,6.6,2.8],'body',origin=[0,4.2,1.1],rotation=[-12,0,0])
 cube('neck',[-1.15,5.7,-1.7],[1.15,7.9,.65],'neck','mantle')
+# The Forgotten Souls share a small framed cyan pendant. Attach it to the neck,
+# not the head, so looking around does not turn the necklace with the beak.
+for sign,side in [(-1,'left'),(1,'right')]:
+    center=[sign*.43,7.05,-1.75]
+    cube('amulet_cord_'+side,[center[0]-.07,6.62,-1.79],
+         [center[0]+.07,7.48,-1.71],'neck','beak',
+         rotation=[0,0,-sign*35],origin=center)
+cube('amulet_frame',[-.6,5.65,-1.98],[.6,6.9,-1.68],'neck','feet')
+cube('amulet_stone',[-.38,5.84,-2.035],[.38,6.71,-1.975],'neck','amulet')
 cube('skull',[-1.35,7.2,-3.2],[1.35,9.2,-.55],'head')
 cube('beak_base',[-.67,7.55,-5.1],[.67,8.45,-3.05],'head','beak')
 cube('beak_tip',[-.48,7.55,-5.85],[.48,8.12,-4.95],'head','beak')

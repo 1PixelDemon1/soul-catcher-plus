@@ -1,0 +1,48 @@
+{
+  "name": "guide.soulcatcherplus.basics.orders.name",
+  "category": "soulcatcherplus:basics",
+  "icon": "soulcatcherplus:diamond_soul_scythe",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page4"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page5"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page6"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.orders.name",
+      "text": "guide.soulcatcherplus.basics.orders.page7"
+    }
+  ]
+}

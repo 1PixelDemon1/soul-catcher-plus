@@ -21,6 +21,14 @@ final class SoulRavenGeometry {
         body.addChild(neck);
         // neck
         cube(model, neck, 32, 0, 0f, -0.3f, 0.075f, -1.15f, -1.1f, -1.175f, 2.3f, 2.2f, 2.35f, -0f, 0f, -0f);
+        // amulet_cord_left
+        cube(model, neck, 96, 0, -0.43f, -0.55f, -1.15f, -0.07f, -0.43f, -0.04f, 0.14f, 0.86f, 0.08f, -0f, 0f, -0.610865f);
+        // amulet_cord_right
+        cube(model, neck, 96, 0, 0.43f, -0.55f, -1.15f, -0.07f, -0.43f, -0.04f, 0.14f, 0.86f, 0.08f, -0f, 0f, 0.610865f);
+        // amulet_frame
+        cube(model, neck, 0, 32, 0f, 0.225f, -1.23f, -0.6f, -0.625f, -0.15f, 1.2f, 1.25f, 0.3f, -0f, 0f, -0f);
+        // amulet_stone
+        cube(model, neck, 64, 32, 0f, 0.225f, -1.405f, -0.38f, -0.435f, -0.03f, 0.76f, 0.87f, 0.06f, -0f, 0f, -0f);
         ModelRenderer head = bone(model, bones, "head", 0f, -1f, -0.8f);
         neck.addChild(head);
         // skull

@@ -1,0 +1,28 @@
+{
+  "name": "guide.soulcatcherplus.forgotten.scrolls.name",
+  "category": "soulcatcherplus:forgotten",
+  "icon": "soulcatcherplus:forgotten_soul_scroll",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.scrolls.name",
+      "text": "guide.soulcatcherplus.forgotten.scrolls.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.scrolls.name",
+      "text": "guide.soulcatcherplus.forgotten.scrolls.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.scrolls.name",
+      "text": "guide.soulcatcherplus.forgotten.scrolls.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.scrolls.name",
+      "text": "guide.soulcatcherplus.forgotten.scrolls.page3"
+    }
+  ]
+}

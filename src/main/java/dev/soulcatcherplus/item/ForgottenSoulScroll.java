@@ -14,7 +14,8 @@ public final class ForgottenSoulScroll extends SoulScroll {
     public ForgottenSoulScroll() { super(SoulCatcherPlus.SOUL_RAVEN, Rarity.RARE); }
 
     private static EntityType<?>[] souls() {
-        return new EntityType<?>[] {SoulCatcherPlus.SOUL_RAVEN.get(), SoulCatcherPlus.SOUL_COURIER.get()};
+        return new EntityType<?>[] {SoulCatcherPlus.SOUL_RAVEN.get(), SoulCatcherPlus.SOUL_COURIER.get(),
+            SoulCatcherPlus.SOUL_SHAMAN.get()};
     }
 
     static boolean contains(String type) {
@@ -23,8 +24,8 @@ public final class ForgottenSoulScroll extends SoulScroll {
     }
 
     public ItemStack randomPreset(Random random) {
-        EntityType<?>[] choices = souls();
-        return preset(choices[random.nextInt(choices.length)]);
+        EntityType<?>[] available = souls();
+        return preset(available[random.nextInt(available.length)]);
     }
 
     @Override public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {

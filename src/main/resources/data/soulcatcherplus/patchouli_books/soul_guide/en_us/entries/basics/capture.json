@@ -1,0 +1,33 @@
+{
+  "name": "guide.soulcatcherplus.basics.capture.name",
+  "category": "soulcatcherplus:basics",
+  "icon": "soulcatcherplus:soul_scythe",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.capture.name",
+      "text": "guide.soulcatcherplus.basics.capture.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.capture.name",
+      "text": "guide.soulcatcherplus.basics.capture.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.capture.name",
+      "text": "guide.soulcatcherplus.basics.capture.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.capture.name",
+      "text": "guide.soulcatcherplus.basics.capture.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.basics.capture.name",
+      "text": "guide.soulcatcherplus.basics.capture.page4"
+    }
+  ]
+}
