@@ -20,6 +20,7 @@ public final class SoulEntry {
         this.snapshot = snapshot.copy(); this.maxHealth = SoulBalance.health(maxHealth);
         this.cost = SoulBalance.summonCost(this.maxHealth);
     }
+    public boolean hasCustomName() { return snapshot.contains("CustomName"); }
     public CompoundTag snapshot() { return snapshot.copy(); }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
