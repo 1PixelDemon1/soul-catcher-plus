@@ -24,7 +24,7 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "12";
+    private static final String VERSION = "13";
     // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
     public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
@@ -97,21 +97,21 @@ public final class SoulNetwork {
             b.writeBoolean(group);
         }
     }
-    public record Companion(UUID entry, String name, float health, float maxHealth, String command, boolean loaded) {}
+    public record Companion(UUID entry, String name, boolean localizedName, float health, float maxHealth, String command, boolean loaded) {}
     /** Active-only snapshot: health is live server data; unloaded companions have explicitly unknown HP. */
     public record WheelState(int energy, int cageCapacity, int cageSlot, List<Companion> companions) {
         static WheelState read(FriendlyByteBuf b) {
             int energy = b.readVarInt(), cageCapacity = b.readVarInt(), cageSlot = b.readInt(), size = b.readVarInt();
             if (size < 0 || size > PlayerSouls.MAX_ENTRIES) throw new IllegalArgumentException("Invalid companion count");
             List<Companion> companions = new ArrayList<>();
-            for (int i = 0; i < size; i++) companions.add(new Companion(b.readUUID(), b.readUtf(256),
+            for (int i = 0; i < size; i++) companions.add(new Companion(b.readUUID(), b.readUtf(256), b.readBoolean(),
                 b.readFloat(), b.readFloat(), b.readUtf(16), b.readBoolean()));
             return new WheelState(energy, cageCapacity, cageSlot, com.google.common.collect.ImmutableList.copyOf(companions));
         }
         void write(FriendlyByteBuf b) {
             b.writeVarInt(energy); b.writeVarInt(cageCapacity); b.writeInt(cageSlot); b.writeVarInt(companions.size());
             for (Companion companion : companions) {
-                b.writeUUID(companion.entry); b.writeUtf(companion.name, 256);
+                b.writeUUID(companion.entry); b.writeUtf(companion.name, 256); b.writeBoolean(companion.localizedName);
                 b.writeFloat(companion.health); b.writeFloat(companion.maxHealth);
                 b.writeUtf(companion.command, 16); b.writeBoolean(companion.loaded);
             }
@@ -172,8 +172,8 @@ public final class SoulNetwork {
         SoulCages.Active cage = SoulCages.active(player);
         SummonRules.Context availabilityContext = SoulService.summonContext(player);
         List<Row> rows = data.entries.values().stream().map(e -> {
-            Entity active = e.activeEntity == null ? null : player.getLevel().getEntity(e.activeEntity);
-            String command = active == null ? "" : active.getPersistentData().getString(CompanionBrain.MODE);
+            Mob active = SoulService.activeMob(player, e);
+            String command = currentCommand(active);
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
             return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
                 availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
@@ -254,8 +254,10 @@ public final class SoulNetwork {
         List<Companion> companions = data.entries.values().stream().filter(e -> e.activeEntity != null).map(entry -> {
             Mob mob = SoulService.activeMob(player, entry);
             boolean loaded = mob != null && Float.isFinite(mob.getHealth()) && Float.isFinite(mob.getMaxHealth());
-            return new Companion(entry.id, abbreviate(entry.name), loaded ? Math.max(0, mob.getHealth()) : 0,
-                loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? CompanionBrain.mode(mob).name() : "", loaded);
+            boolean localizedName = entry.entityType.startsWith(SoulCatcherPlus.ID + ":") && !entry.hasCustomName();
+            String name = localizedName ? "entity." + entry.entityType.replace(':', '.') : abbreviate(entry.name);
+            return new Companion(entry.id, name, localizedName, loaded ? Math.max(0, mob.getHealth()) : 0,
+                loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? currentCommand(mob) : "", loaded);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new WheelState(cage.energy(), cage.capacity(), cage.slot(), companions));
     }
@@ -349,6 +351,10 @@ public final class SoulNetwork {
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
             () -> () -> dev.soulcatcherplus.client.ClientPackets.dissolve(packet)));
         context.setPacketHandled(true);
+    }
+    private static String currentCommand(Mob mob) {
+        return mob != null && SoulAdapters.get(mob).usesStandardBrain(mob)
+            ? CompanionBrain.mode(mob).name() : "";
     }
     private static String abbreviate(String name) { return name.length() <= 256 ? name : name.substring(0, 256); }
     private SoulNetwork() {}

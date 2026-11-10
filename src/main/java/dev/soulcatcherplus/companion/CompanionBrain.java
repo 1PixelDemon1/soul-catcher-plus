@@ -94,6 +94,8 @@ public final class CompanionBrain {
         mob.setPersistenceRequired();
     }
     private static boolean followsOwner(Mode mode) { return mode == Mode.FOLLOW || mode == Mode.AGGRESSIVE; }
+    /** Custom flight reaches the inner follow radius before resuming its idle orbit. */
+    public static boolean isReturning(Mob mob) { return RETURNS.containsKey(mob); }
     static void resetReturn(Mob mob) { RETURNS.remove(mob); }
 
     /** This watchdog runs even if a native goal prevents our return goal from starting. */

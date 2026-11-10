@@ -21,18 +21,16 @@ companions in battle.
 
 ## Supported versions
 
-**1.2.0** provides separate core and Compat builds for all four targets below.
-All eight runtime JARs built successfully, and all four core clients reached the
-title screen/resource reload. See [release notes](docs/releases/1.2.0.md) for the
-exact unit/startup checks and their limits. Creature-mod integration availability
-on 26.3 is limited; its addon was started with the core and no creature mods.
+**1.2.1** provides a core build for each of the four targets below.
+The separate Compat addon has its own release cycle.
+See the [release notes](docs/releases/1.2.1.md) for dependencies and validation.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
 | 1.16.5 | Forge 36.2.42 | 8 |
 | 1.19.2 | Forge 43.5.0 | 17 |
 | 1.20.1 | Forge 47.4.28 | 17 |
-| 26.3 | Forge 66.1.5 | 25 |
+| 26.3 | Forge 66.1.0 | 25 |
 
 Each Minecraft version has its own JAR. Install the matching core mod in the
 `mods` folder on both client and server. The core does not require any creature
@@ -52,10 +50,6 @@ mark an enemy with the scythe, defeat it, and collect its soul.
 
 With a scythe in either hand, press **O** to open the collection or hold **R**
 to open the command wheel. Both keys can be changed in Controls.
-
-Forgotten chest loot chooses among Raven, Courier, and Shaman equally after a
-successful 2% roll. Unlocking a scroll is free; summoning still uses normal cage
-energy and slot rules.
 
 Patchouli is optional: guide baselines are **53.3** for 1.16.5, **77** for 1.19.2,
 and **85** for 1.20.1. With it installed, receive a guide on first eligible login
@@ -77,6 +71,10 @@ In this 1.16.5 example, `-PgameTests` enables the manual QA command; launching d
 not execute tests. Integrations are developed separately in Compat. Use the
 matching branch/toolchain on other platforms: Java 17 for 1.19.2/1.20.1 and Java 25
 for 26.3. The 26.3 port uses native current APIs rather than loading an older JAR.
+
+See the [extension API](docs/API.md) and [asset authoring guide](docs/ASSETS.md)
+for development details. Generated previews and local reports are ignored;
+approved model sources and editable pixel maps are kept in the repository.
 
 ## Repository branches
 

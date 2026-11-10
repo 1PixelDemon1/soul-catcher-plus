@@ -1,0 +1,37 @@
+{
+  "parent": "soulcatcherplus:root",
+  "display": {
+    "icon": {
+      "item": "soulcatcherplus:forgotten_soul_scroll"
+    },
+    "title": {
+      "translate": "advancements.soulcatcherplus.forgotten_soul.title"
+    },
+    "description": {
+      "translate": "advancements.soulcatcherplus.forgotten_soul.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "scroll": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "soulcatcherplus:forgotten_soul_scroll"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "scroll"
+    ]
+  ]
+}

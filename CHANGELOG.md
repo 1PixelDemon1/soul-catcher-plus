@@ -4,6 +4,23 @@
 
 No changes yet.
 
+## 1.2.1 — 2026-11-10
+
+Core-only release for Minecraft 1.16.5 / Forge 36.2.42 / Java 8, 1.19.2 / Forge 43.5.0 / Java 17, 1.20.1 / Forge 47.4.28 / Java 17, and 26.3 / Forge 66.1.0 / Java 25. The 26.3 target/minimum changes from 66.1.5; historical releases keep their original requirements. Compat is not updated or released, and its compatibility with core 1.2.1 was not verified.
+
+- Add built-in vanilla Wither and Ender Dragon companion adapters/controllers on all four platforms, retaining native entities and shared commands, ownership, targeting, return, recall, and recovery rules. Direct Wither heads at approved targets without random idle shots or spawn/terrain effects; replace Dragon encounter flight paths with owner/guard/attack movement.
+- Scope boss protection changes to owned vanilla companions: filter allied explosion/contact/breath effects and terrain damage, detach soul dragons from End-fight adoption/completion, prevent crystal healing/encounter rewards, and validate persisted breath ownership. Native enemy attacks and multipart bodies remain; gameplay correctness is not established by startup checks.
+- Add production `/soulcatcher scroll <namespace:entity|namespace@entity> [player]`, permission level 2, for a registered mob type's default form. Validate an unspawned sample, use shared scroll classification, and refuse inventory overflow. Retain production energy commands; neither requires QA sources.
+- Add an inventory-triggered Forgotten Soul advancement for obtaining a Forgotten Soul Scroll.
+- Revise Russian names and translate unnamed built-in companions in the wheel per client's language while preserving custom names. Use protocol 13; client and server must run the matching release for the same Minecraft version.
+- Fix collection group-order highlighting/mode availability to ignore unloaded and custom-brain recipients such as Raven while keeping Recall/Teleport as separate actions.
+- Expand the optional English/Russian guide to 18 entries and five categories per language (46 localized content JSON files plus the book definition), with production command examples and four recipe-only pages showing four recipes per spread. Use real recipe IDs and keep prose outside recipe spreads. No working Forge Patchouli integration is claimed for 26.3.
+- Remove obsolete/generated asset intermediates and unsupported legacy 1.16.5 test sources/dependency. Retain approved authoring/runtime inputs and consolidate workflows in `docs/ASSETS.md`.
+
+All four fresh `build -x test` runs and JAR audits passed, including ZIP/class-major 52/61/61/69, metadata/JSON, guide pagination/recipe references, and exclusion of QA/JUnit/Jabel/addon content. All four dedicated servers reached Done in isolated playerless worlds and saved/stopped with exit 0, including the fresh 26.3 repeat after final breath-Mixin corrections. The 1.16.5 development client loaded Patchouli/resources, sound, and atlases with Twilight Forest/Aquamirae present and was left open for the user; no fresh other-platform client result is claimed. Known external Twilight resource and development Realms warnings remain.
+
+No automated tests, GameTests, or UI automation ran. These are build/archive/startup checks, not gameplay, multiplayer, boss/terrain/friendly-fire, or exhaustive visual checks. Earlier release results are not reused as fresh evidence. See [1.2.1 release notes](docs/releases/1.2.1.md) for frozen runtime hashes and limits.
+
 ## 1.2.0 — 2026-11-10
 
 Release core builds for Minecraft 1.16.5 / Forge 36.2.42 / Java 8, Minecraft 1.19.2 / Forge 43.5.0 / Java 17, Minecraft 1.20.1 / Forge 47.4.28 / Java 17, and Minecraft 26.3 / Forge 66.1.5 / Java 25. Each has a separate matching 1.2.0 Compat build.

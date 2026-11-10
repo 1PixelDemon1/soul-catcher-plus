@@ -6,7 +6,12 @@
   "mixins": [
     "CompanionBossBarMixin",
     "SoulSpawnContextMixin",
-    "RavenDeliveredItemMixin"
+    "RavenDeliveredItemMixin",
+    "CompanionWitherMixin",
+    "CompanionDragonMixin",
+    "CompanionDragonPhaseMixin",
+    "CompanionDragonBreathMixin",
+    "CompanionDragonFightMixin"
   ],
   "client": [
     "client.SoulEntityRenderMixin",
