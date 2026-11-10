@@ -27,7 +27,7 @@ after 1.1.0, including future version-specific ports. `logo-banner.png` includes
 lettering and is for GitHub presentation and other banner placements.
 `logo-icon.png` has no lettering and is for all other branding/icon placements.
 Preserve the original files and transparency; create correctly sized derived
-copies when integrating them. See `art/branding/README.md`.
+copies when integrating them. See `docs/ASSETS.md`.
 
 ## Git branches
 
@@ -131,9 +131,9 @@ changes do not require another Minecraft build.
 - Prepare the private playtest archive: `.\scripts\gradle.ps1 playtestZip -PwithTwilightForest -PwithAquamirae`
 
 Minecraft 1.16.5 has no supported GameTest task here. `-PgameTests` is retained as
-a compatibility flag for the manual QA command from `src/qa/java` only. The old
-`src/gametest`/`src/test` sources belong to the newer branch and are not validated
-for this port. Do not enable or run them without a separate port/testing request.
+a compatibility flag for the manual QA command from `src/qa/java` only. Unsupported
+legacy automated-test sources and their JUnit dependency have been removed from
+this branch. Add or port automated tests only for a separate testing request.
 Build output uses `build/1.16.5`; worlds use `run-client/1.16.5` and `run/1.16.5`.
 Archive original SRG dependencies from `playtestMods`, never the remapped dev JARs.
 Do not delete artifacts or open worlds belonging to the other version branches.
@@ -151,12 +151,12 @@ do not embed mod-specific behavior corrections here.
 
 ## Forge 26.3 port
 
-`forge/26.3` targets Minecraft 26.3, Forge 66.1.5 and Java 25 with the official
+`forge/26.3` targets Minecraft 26.3, Forge 66.1.0 and Java 25 with the official
 ForgeGradle 7 / Gradle 9.7.1 layout. The game is unobfuscated: do not add legacy
 mappings, Jabel, fg.deobf or reobfJar on that branch. Use its Java 25 bootstrap and
 Gradle scripts. Build output is `build/26.3`; keep its profiles separate from other
 ports. The client uses queued render-state submission and SDL input. Verify those
-APIs against the actual Forge 66.1.5 sources rather than copying 1.20.1 callbacks.
+APIs against the actual Forge 66.1.0 sources rather than copying 1.20.1 callbacks.
 Published Forge Patchouli and creature-integration builds have not been verified
 for 26.3. Do not claim their compatibility based only on core/addon startup.
 

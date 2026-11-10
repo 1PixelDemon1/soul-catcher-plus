@@ -1,0 +1,38 @@
+{
+  "name": "guide.soulcatcherplus.commands.scroll.name",
+  "category": "soulcatcherplus:commands",
+  "icon": "soulcatcherplus:soul_scroll",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page4"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.scroll.name",
+      "text": "guide.soulcatcherplus.commands.scroll.page5"
+    }
+  ]
+}

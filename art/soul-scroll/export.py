@@ -29,9 +29,9 @@ def export(spec, zoom, name):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--variant', default='')
+    parser.add_argument('--variant', choices=('v2', 'boss', 'forgotten'), default='v2')
     args = parser.parse_args()
-    suffix = '-' + args.variant if args.variant else ''
+    suffix = '-' + args.variant
     spec = json.loads((HERE / f'sprite{suffix}.json').read_text(encoding='utf-8'))
     export(spec, 1, f'soul_scroll{suffix}.png')
     export(spec, 32, f'preview{suffix}.png')

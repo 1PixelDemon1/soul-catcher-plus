@@ -1,4 +1,0 @@
-Tool: built-in imagegen
-Reference: reference.png
-
-Create a production TEXTURE MATERIAL TILE for a Minecraft Blockbench 3D model matching the DARK TEAL FABRIC of the attached Soul Shaman reference. This is ONLY a seamless flat square fabric texture, NOT a picture of the character, NOT a model render. Fill the entire image edge to edge with a coarse pixel-art 16 by 16 texel pattern of low-contrast irregular square dark teal patches. Palette around #102329 #142B32 #19343B #1E3B43. Muted very dark blue-green. Pixelated hard square edges, no fine grain, no weave, no gradients, no light source, no outlines, no turquoise runes or trim, no words, no objects, no border. The texture is a quiet mottled dark teal cloth swatch seen straight on, intended to be downsampled to 16x16 with nearest-neighbor. Match the subtle pixel patchwork of the hood and robe in the attached reference. Only the material swatch fills the image.

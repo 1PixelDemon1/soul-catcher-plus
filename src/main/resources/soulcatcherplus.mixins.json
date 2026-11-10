@@ -8,7 +8,12 @@
     "SoulSpawnContextMixin",
     "SoulEntityLifecycleMixin",
     "RavenDeliveredItemMixin",
-    "LegacyGoalSelectorMixin"
+    "LegacyGoalSelectorMixin",
+    "CompanionWitherMixin",
+    "CompanionDragonMixin",
+    "CompanionDragonPhaseMixin",
+    "CompanionDragonBreathMixin",
+    "CompanionDragonFightMixin"
   ],
   "client": [
     "client.SoulEntityRenderMixin",
