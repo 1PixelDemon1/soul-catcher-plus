@@ -1,7 +1,7 @@
 {
   "name": "guide.soulcatcherplus.basics.capture.name",
   "category": "soulcatcherplus:basics",
-  "icon": "soulcatcherplus:soul_scythe",
+  "icon": "soulcatcherplus:textures/entity/soul_remnant/small.png",
   "sortnum": 0,
   "pages": [
     {

@@ -15,17 +15,14 @@
       "text": "guide.soulcatcherplus.equipment.scythes.page1"
     },
     {
-      "type": "crafting",
-      "recipe": "soulcatcherplus:soul_scythe",
-      "recipe2": "soulcatcherplus:diamond_soul_scythe"
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.scythes.name",
+      "text": "guide.soulcatcherplus.equipment.scythes.page2"
     },
     {
-      "type": "smithing",
-      "recipe": "soulcatcherplus:netherite_soul_scythe"
-    },
-    {
-      "type": "crafting",
-      "recipe": "soulcatcherplus:supreme_soul_scythe"
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.scythes.name",
+      "text": "guide.soulcatcherplus.equipment.scythes.page3"
     }
   ]
 }

@@ -105,6 +105,8 @@ public final class SoulCatcherPlus {
             SoulAdapters.register(SOUL_RAVEN.getId(), new SoulRavenAdapter());
             SoulAdapters.register(SOUL_COURIER.getId(), new SoulCourierAdapter());
             SoulAdapters.register(SOUL_SHAMAN.getId(), new SoulShamanAdapter());
+            SoulAdapters.register(EntityType.WITHER.getRegistryName(), new dev.soulcatcherplus.companion.WitherSoulAdapter());
+            SoulAdapters.register(EntityType.ENDER_DRAGON.getRegistryName(), new dev.soulcatcherplus.companion.DragonSoulAdapter());
         });
     }
 }

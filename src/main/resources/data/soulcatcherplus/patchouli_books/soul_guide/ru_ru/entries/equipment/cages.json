@@ -15,17 +15,14 @@
       "text": "guide.soulcatcherplus.equipment.cages.page1"
     },
     {
-      "type": "crafting",
-      "recipe": "soulcatcherplus:iron_soul_cage",
-      "recipe2": "soulcatcherplus:diamond_soul_cage"
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.cages.name",
+      "text": "guide.soulcatcherplus.equipment.cages.page2"
     },
     {
-      "type": "smithing",
-      "recipe": "soulcatcherplus:netherite_soul_cage"
-    },
-    {
-      "type": "crafting",
-      "recipe": "soulcatcherplus:supreme_soul_cage"
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.cages.name",
+      "text": "guide.soulcatcherplus.equipment.cages.page3"
     }
   ]
 }

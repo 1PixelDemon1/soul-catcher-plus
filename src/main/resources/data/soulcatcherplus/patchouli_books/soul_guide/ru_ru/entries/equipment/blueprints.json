@@ -1,0 +1,28 @@
+{
+  "name": "guide.soulcatcherplus.equipment.blueprints.name",
+  "category": "soulcatcherplus:equipment",
+  "icon": "minecraft:crafting_table",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_scythe",
+      "recipe2": "soulcatcherplus:diamond_soul_scythe"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:iron_soul_cage",
+      "recipe2": "soulcatcherplus:diamond_soul_cage"
+    },
+    {
+      "type": "smithing",
+      "recipe": "soulcatcherplus:netherite_soul_scythe",
+      "recipe2": "soulcatcherplus:netherite_soul_cage"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:supreme_soul_scythe",
+      "recipe2": "soulcatcherplus:supreme_soul_cage"
+    }
+  ]
+}

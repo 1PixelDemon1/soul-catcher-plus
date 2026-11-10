@@ -314,7 +314,7 @@ public final class SoulScreen extends Screen {
         // Group highlighting reflects a shared order, never the selected species alone.
         String common = null;
         for (SoulNetwork.Row companion : state.rows()) {
-            if (!companion.active()) continue;
+            if (!companion.active() || companion.command().isEmpty()) continue;
             if (common == null) common = companion.command();
             else if (!common.equals(companion.command())) return "";
         }
@@ -330,8 +330,11 @@ public final class SoulScreen extends Screen {
         primary.active = active != null || (row != null && row.status() == SummonRules.Status.READY);
         previousForm.active = nextForm.active = group != null && group.forms().size() > 1;
         forget.active = group != null;
-        boolean hasCommands = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
-        follow.active = wait.active = guard.active = aggressive.active = teleport.active = hasCommands;
+        boolean hasCommands = state.group()
+            ? state.rows().stream().anyMatch(r -> r.active() && !r.command().isEmpty())
+            : active != null && !active.command().isEmpty();
+        follow.active = wait.active = guard.active = aggressive.active = hasCommands;
+        teleport.active = state.group() ? state.rows().stream().anyMatch(SoulNetwork.Row::active) : active != null;
         teleport.setMessage(text(state.group() ? "teleport_all" : "teleport"));
         String command = displayedCommand(active);
         follow.selected(command.equals("FOLLOW"));

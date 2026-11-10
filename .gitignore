@@ -14,3 +14,11 @@ __pycache__/
 *.py[cod]
 
 local.properties
+
+# Regenerated asset previews and model reports; authoritative sources remain tracked.
+art/scythes/*preview*.png
+art/soul-cages/animated/*.png
+art/soul-scroll/*.png
+modeling/**/preview*.png
+modeling/**/*.gif
+modeling/**/bounds-report.json

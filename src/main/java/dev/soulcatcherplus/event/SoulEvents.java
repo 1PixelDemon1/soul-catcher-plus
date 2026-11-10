@@ -40,7 +40,9 @@ public final class SoulEvents {
     public static void interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
         if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return;
         net.minecraft.util.ActionResultType result;
-        if (event.getTarget() instanceof LivingEntity living) {
+        Entity target = event.getTarget();
+        if (target instanceof net.minecraft.entity.boss.dragon.EnderDragonPartEntity part) target = part.parentMob;
+        if (target instanceof LivingEntity living) {
             result = scythe.interactLivingEntity(event.getItemStack(), event.getPlayer(), living, event.getHand());
         } else return;
         if (result != net.minecraft.util.ActionResultType.PASS) {

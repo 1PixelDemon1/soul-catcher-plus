@@ -1,0 +1,33 @@
+{
+  "name": "guide.soulcatcherplus.commands.energy.name",
+  "category": "soulcatcherplus:commands",
+  "icon": "soulcatcherplus:iron_soul_cage",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.energy.name",
+      "text": "guide.soulcatcherplus.commands.energy.page0"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.energy.name",
+      "text": "guide.soulcatcherplus.commands.energy.page1"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.energy.name",
+      "text": "guide.soulcatcherplus.commands.energy.page2"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.energy.name",
+      "text": "guide.soulcatcherplus.commands.energy.page3"
+    },
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.commands.energy.name",
+      "text": "guide.soulcatcherplus.commands.energy.page4"
+    }
+  ]
+}
