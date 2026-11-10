@@ -130,12 +130,12 @@ Keep build output, downloaded tools, Gradle caches, logs, and local worlds ignor
 
 ## Forge 26.3 port
 
-`forge/26.3` targets Minecraft 26.3, Forge 66.1.5 and Java 25 with the official
+`forge/26.3` targets Minecraft 26.3, Forge 66.1.0 and Java 25 with the official
 ForgeGradle 7 / Gradle 9.7.1 layout. The game is unobfuscated: do not add legacy
 mappings, Jabel, fg.deobf or reobfJar on that branch. Use its Java 25 bootstrap and
 Gradle scripts. Build output is `build/26.3`; keep its profiles separate from other
 ports. The client uses queued render-state submission and SDL input. Verify those
-APIs against the actual Forge 66.1.5 sources rather than copying 1.20.1 callbacks.
+APIs against the actual Forge 66.1.0 sources rather than copying 1.20.1 callbacks.
 Published Forge Patchouli and creature-integration builds have not been verified
 for 26.3. Do not claim their compatibility based only on core/addon startup.
 

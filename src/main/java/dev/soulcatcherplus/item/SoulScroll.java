@@ -47,25 +47,37 @@ public class SoulScroll extends Item {
 
     /** Predefined creative variants need only a type, not a world or a constructed mob. */
     protected ItemStack preset(EntityType<?> type) {
-        ItemStack stack = new ItemStack(this);
+        return typeStack(this, type);
+    }
+
+    private static ItemStack typeStack(Item item, EntityType<?> type) {
+        ItemStack stack = new ItemStack(item);
         CompoundTag payload = new CompoundTag();
         payload.putString("Type", ForgeRegistries.ENTITY_TYPES.getKey(type).toString());
-        dev.soulcatcherplus.data.SoulItemData.update(stack, tag -> tag.put(SOUL,payload));
+        dev.soulcatcherplus.data.SoulItemData.update(stack, tag -> tag.put(SOUL, payload));
         return stack;
     }
 
     /** Copies a captured form, never its collection identity, active summon or recovery timer. */
     public static ItemStack containing(SoulEntry soul) {
-        Item item = SoulCatcherPlus.SOUL_SCROLL.get();
-        if (ForgottenSoulScroll.contains(soul.entityType)) item = SoulCatcherPlus.FORGOTTEN_SOUL_SCROLL.get();
-        else if (SoulBalance.isBossSoul(soul.maxHealth)) item = SoulCatcherPlus.BOSS_SOUL_SCROLL.get();
-        ItemStack stack = new ItemStack(item);
+        ItemStack stack = new ItemStack(scrollItem(soul.entityType, soul.maxHealth));
         CompoundTag payload = new CompoundTag();
         payload.putString("Type", soul.entityType);
         payload.putString("Name", soul.name);
         payload.put("Snapshot", SoulSnapshots.sanitize(soul.snapshot()));
-        dev.soulcatcherplus.data.SoulItemData.update(stack, tag -> tag.put(SOUL,payload));
+        dev.soulcatcherplus.data.SoulItemData.update(stack, tag -> tag.put(SOUL, payload));
         return stack;
+    }
+
+    /** A registered type's default form without a snapshot or literal name; tooltips remain localized. */
+    public static ItemStack forType(EntityType<?> type, double maxHealth) {
+        String id = ForgeRegistries.ENTITY_TYPES.getKey(type).toString();
+        return typeStack(scrollItem(id, maxHealth), type);
+    }
+
+    private static Item scrollItem(String type, double maxHealth) {
+        if (ForgottenSoulScroll.contains(type)) return SoulCatcherPlus.FORGOTTEN_SOUL_SCROLL.get();
+        return SoulBalance.isBossSoul(maxHealth) ? SoulCatcherPlus.BOSS_SOUL_SCROLL.get() : SoulCatcherPlus.SOUL_SCROLL.get();
     }
 
     private CompoundTag payload(ItemStack stack) {
@@ -116,8 +128,9 @@ public class SoulScroll extends Item {
         data.entries.put(soul.id, soul);
         data.selected = soul.id;
         SoulService.changed(player);
+        var name = soulName(payload(stack), type(payload(stack)));
         stack.shrink(1);
-        SoulService.message(player, "captured", soul.name);
+        SoulService.message(player, "captured", name);
         return InteractionResult.SUCCESS_SERVER;
     }
 
@@ -132,6 +145,7 @@ public class SoulScroll extends Item {
             sample = type.create(player.level(), net.minecraft.world.entity.EntitySpawnReason.LOAD);
             if (!(sample instanceof Mob mob)) return null;
             if (payload.contains("Snapshot")) dev.soulcatcherplus.data.SoulNbt.restore(mob,SoulSnapshots.sanitize(payload.getCompoundOrEmpty("Snapshot")));
+            if (!mob.hasCustomName() && !payload.getStringOr("Name", "").isEmpty()) mob.setCustomName(soulName(payload, type));
             return new SoulEntry(UUID.randomUUID(), ForgeRegistries.ENTITY_TYPES.getKey(type).toString(),
                 soulName(payload, type).getString(), SoulSnapshots.sanitize(dev.soulcatcherplus.data.SoulNbt.snapshot(mob)),
                 mob.getMaxHealth());

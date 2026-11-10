@@ -24,14 +24,14 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 minecraft {
     runs {
         configureEach {
-            workingDir = layout.projectDirectory.dir('run')
+            workingDir = layout.projectDirectory.dir('run/26.3')
 
             systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
             args '--mixin', 'soulcatcherplus.mixins.json'
             systemProperty 'forge.enabledGameTestNamespaces', mod_id
         }
 
-        register('client')
+        register('client') { workingDir = layout.projectDirectory.dir('run-client/26.3') }
 
         register('server') {
             args '--nogui'
@@ -40,7 +40,7 @@ minecraft {
         register('gameTestServer')
 
         register('data') {
-            workingDir = layout.projectDirectory.dir('run-data')
+            workingDir = layout.projectDirectory.dir('run-data/26.3')
 
             args '--mod', mod_id, '--all', '--output', layout.projectDirectory.dir('src/generated/resources'), '--existing', layout.projectDirectory.dir('src/main/resources')
         }
@@ -55,7 +55,7 @@ repositories {
 }
 
 dependencies {
-    implementation minecraft.dependency('net.minecraftforge:forge:26.3-66.1.5')
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'

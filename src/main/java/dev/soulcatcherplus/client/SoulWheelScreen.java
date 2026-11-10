@@ -216,7 +216,8 @@ public final class SoulWheelScreen extends Screen {
                 continue;
             }
             SoulNetwork.Companion companion = companions.get(i - 1);
-            g.centeredText(font, fit(companion.name(), 96), tx, ty - 12, SoulTheme.LIGHT);
+            String name = companion.localizedName() ? net.minecraft.network.chat.Component.translatable(companion.name()).getString() : companion.name();
+            g.centeredText(font, fit(name, 96), tx, ty - 12, SoulTheme.LIGHT);
             Component health = companion.loaded() ? text("health", hp(companion.health()), hp(companion.maxHealth())) : text("unloaded");
             g.centeredText(font, health, tx, ty + 1, companion.loaded() ? SoulTheme.TEAL : SoulTheme.MUTED);
             if (companion.loaded()) g.centeredText(font, commandName(companion.command()), tx, ty + 13, SoulTheme.GOLD);

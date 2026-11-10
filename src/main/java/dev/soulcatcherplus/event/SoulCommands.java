@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
 public final class SoulCommands {
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("soulcatcher")
+        event.getDispatcher().register(Commands.literal("soulcatcher").then(SoulScrollCommand.branch())
             .then(Commands.literal("energy").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(0, 1000000))
                     .executes(context -> {
