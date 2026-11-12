@@ -42,6 +42,7 @@ repositories {
 configurations { playtestMods { transitive = false } }
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     if (project.hasProperty('withPatchouli')) runtimeOnly fg.deobf('maven.modrinth:patchouli:1.20.1-85-forge')
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     if (project.hasProperty('withTwilightForest')) runtimeOnly fg.deobf('curse.maven:the-twilight-forest-227639:5468648')
@@ -61,6 +62,20 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 17
     options.compilerArgs += ['-Xmaxerrs', '500']
 }
+
+// Warden's anger field is package-private. Mixin cannot resolve it through an
+// alias, so carry the annotation processor's field mapping into the runtime JAR.
+def mixinMappings = layout.buildDirectory.file('generated/mixin/mappings.tsrg')
+tasks.named('compileJava', JavaCompile).configure {
+    dependsOn 'createMcpToSrg'
+    options.compilerArgs += [
+        '-AmappingTypes=tsrg',
+        "-AreobfTsrgFile=${layout.buildDirectory.file('createMcpToSrg/output.tsrg').get().asFile}",
+        "-AoutTsrgFile=${mixinMappings.get().asFile}"
+    ]
+    outputs.file(mixinMappings)
+}
+tasks.matching { it.name == 'reobfJar' }.configureEach { extraMappings.from(mixinMappings) }
 tasks.matching { it.name in ['runClient', 'runServer'] }.configureEach {
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
 }

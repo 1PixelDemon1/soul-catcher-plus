@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-No changes yet.
+- Fix production startup on Minecraft 1.20.1 by reobfuscating the Warden anger-management shadow field instead of aliasing its package-private runtime name.
 
 ## 1.2.2 — 2026-11-12
 

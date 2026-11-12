@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Warden.class, remap = false)
 public abstract class CompanionWardenMixin extends Monster {
-    @Shadow(aliases = "f_219319_", remap = false) private AngerManagement angerManagement;
+    @Shadow(remap = true) private AngerManagement angerManagement;
     @Shadow(aliases = "m_219451_", remap = false)
     private void syncClientAngerLevel() { throw new AssertionError(); }
     @Unique private boolean soulcatcherplus$angerInitialized;
