@@ -6,6 +6,8 @@ Capture the souls of defeated creatures and summon them as spectral companions.
 Build your own collection, store soul energy in portable cages, and command your
 companions in battle.
 
+> **1.20.1 startup hotfix:** [Download hotfix 1](https://github.com/1PixelDemon1/soul-catcher-plus/releases/download/v1.2.2/soulcatcherplus-1.2.2%2B1.20.1-hotfix.1.jar) for Forge 47.4.28. It replaces the original 1.20.1 core JAR and fixes the Warden Mixin startup crash. See the [updated release notes](docs/releases/1.2.2.md).
+
 ## Features
 
 - Mark enemies with a soul scythe and capture their souls after defeating them.
