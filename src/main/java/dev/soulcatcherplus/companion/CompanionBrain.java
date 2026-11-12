@@ -2,6 +2,7 @@
 package dev.soulcatcherplus.companion;
 
 import dev.soulcatcherplus.api.SoulAdapters;
+import dev.soulcatcherplus.api.SoulAdapter;
 import dev.soulcatcherplus.data.*;
 import java.util.EnumSet;
 import java.util.Map;
@@ -21,7 +22,7 @@ import net.minecraft.world.entity.player.Player;
 
 public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";
-    private static final int AGGRESSIVE_RANGE = 16, COMBAT_RADIUS = 40, HARD_TELEPORT_RADIUS = 64;
+    private static final int AGGRESSIVE_RANGE = 16, HARD_TELEPORT_RADIUS = 64;
     private static final int FOLLOW_DISTANCE = 4, STUCK_TICKS = 100, TELEPORT_RETRY_TICKS = 20;
     private static final int TELEPORT_ATTEMPTS = 12, MAX_TELEPORT_RADIUS = 16;
     // Server-thread-only transient state; values hold positions, never a strong reference to the mob.
@@ -98,6 +99,12 @@ public final class CompanionBrain {
     public static boolean isReturning(Mob mob) { return RETURNS.containsKey(mob); }
     static void resetReturn(Mob mob) { RETURNS.remove(mob); }
 
+    private static double followRange(Mob mob) {
+        double range = SoulAdapters.get(mob).followRange(mob);
+        return Double.isFinite(range) && range >= FOLLOW_DISTANCE ? range : SoulAdapter.DEFAULT_FOLLOW_RANGE;
+    }
+
+
     /** This watchdog runs even if a native goal prevents our return goal from starting. */
     private static boolean updateReturn(Mob mob, ServerPlayer player, Mode mode) {
         double distance = mob.distanceToSqr(player);
@@ -107,15 +114,17 @@ public final class CompanionBrain {
         }
         ReturnProgress progress = RETURNS.get(mob);
         long now = mob.level.getGameTime();
+        double range = followRange(mob);
         if (progress == null) {
-            if (distance <= COMBAT_RADIUS * COMBAT_RADIUS) return false;
+            if (distance <= range * range) return false;
             progress = new ReturnProgress(mob.position(), now);
             RETURNS.put(mob, progress);
             mob.getNavigation().stop(); // Abandon the old attack path only when return begins.
         }
         mob.setTarget(null);
         boolean stalled = progress.stalled(mob.position(), player.position(), now);
-        if ((distance > HARD_TELEPORT_RADIUS * HARD_TELEPORT_RADIUS || stalled) && now >= progress.nextTeleportAt) {
+        double teleportRange = Math.max(HARD_TELEPORT_RADIUS, range);
+        if ((distance > teleportRange * teleportRange || stalled) && now >= progress.nextTeleportAt) {
             progress.nextTeleportAt = now + TELEPORT_RETRY_TICKS;
             teleportToOwner(mob, player);
         }
@@ -138,7 +147,7 @@ public final class CompanionBrain {
         }
     }
     private static void updateCombat(Mob mob, ServerPlayer player, Mode mode) {
-        if (followsOwner(mode) && mob.getTarget() != null && !insideCombatArea(mob.getTarget(), player))
+        if (followsOwner(mode) && mob.getTarget() != null && !insideCombatArea(mob, mob.getTarget(), player))
             mob.setTarget(null);
         if (mode == Mode.WAIT) mob.setTarget(null);
         else if (mode == Mode.GUARD) {
@@ -152,15 +161,16 @@ public final class CompanionBrain {
             LivingEntity attacker = player.getLastHurtByMob();
             LivingEntity victim = player.getLastHurtMob();
             if (attacker != null && player.tickCount - player.getLastHurtByMobTimestamp() < 200
-                    && mob.distanceToSqr(attacker) < 32 * 32 && insideCombatArea(attacker, player)
+                    && mob.distanceToSqr(attacker) < 32 * 32 && insideCombatArea(mob, attacker, player)
                     && canAttack(mob, attacker)) mob.setTarget(attacker);
             else if (victim != null && player.tickCount - player.getLastHurtMobTimestamp() < 200
-                    && mob.distanceToSqr(victim) < 32 * 32 && insideCombatArea(victim, player)
+                    && mob.distanceToSqr(victim) < 32 * 32 && insideCombatArea(mob, victim, player)
                     && canAttack(mob, victim)) mob.setTarget(victim);
         }
     }
-    private static boolean insideCombatArea(LivingEntity target, ServerPlayer player) {
-        return target.distanceToSqr(player) <= COMBAT_RADIUS * COMBAT_RADIUS;
+    private static boolean insideCombatArea(Mob mob, LivingEntity target, ServerPlayer player) {
+        double range = followRange(mob);
+        return target.distanceToSqr(player) <= range * range;
     }
     /** Try loaded positions near the owner without recreating the mob or changing its orders. */
     public static boolean teleportToOwner(Mob mob, ServerPlayer player) {
@@ -198,7 +208,7 @@ public final class CompanionBrain {
     private static void findHostile(Mob mob, ServerPlayer owner) {
         mob.level.getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(AGGRESSIVE_RANGE),
             target -> canAttack(mob, target) && mob.distanceToSqr(target) <= AGGRESSIVE_RANGE * AGGRESSIVE_RANGE
-                && insideCombatArea(target, owner)
+                && insideCombatArea(mob, target, owner)
                 && mob.getSensing().hasLineOfSight(target) && SoulAdapters.get(target).isHostile(target, owner))
             .stream().min(java.util.Comparator.comparingDouble(mob::distanceToSqr)).ifPresent(mob::setTarget);
     }

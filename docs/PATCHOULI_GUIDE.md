@@ -1,5 +1,11 @@
 # Optional Patchouli guide
 
+Current development accepts any Patchouli version that its own metadata allows
+on this Minecraft/Forge platform. There is no hard minimum Patchouli build:
+the integration uses data and item lookup, not linked Patchouli Java classes.
+The versions below are development baselines, not installation requirements.
+This does not establish Forge Patchouli availability or compatibility on 26.3.
+
 Install the matching Forge Patchouli build alongside the core mod on the
 relevant game sides: 1.16.4-53.3-forge for Minecraft 1.16.5, 1.19.2-77-forge for
 1.19.2, or 1.20.1-85-forge for 1.20.1. It is not bundled and is not required to

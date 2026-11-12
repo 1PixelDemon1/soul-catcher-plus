@@ -44,6 +44,7 @@ final class SoulPreview {
                 failed.add(packet.entry()); return;
             }
             mob.load(packet.appearance().copy());
+            dev.soulcatcherplus.api.client.SoulPreviews.mark(mob);
             if (spectral) mob.getPersistentData().putUUID(dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0,0));
             mob.setNoAi(true);
             mob.setHealth(mob.getMaxHealth());
