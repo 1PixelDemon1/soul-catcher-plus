@@ -4,6 +4,14 @@
 
 No changes yet.
 
+## 1.2.2 — Minecraft 1.20.1 hotfix 1 — 2026-11-12
+
+- Fix the installed Forge 47.4.28 client's `Non-private field cannot be aliased` Warden Mixin crash through generated field reobfuscation mappings.
+- Add supplemental `hotfix.1` runtime/sources JARs, audit and checksums to the existing release; retain original tags/artifacts and label the original 1.20.1 files as superseded. Runtime version remains `1.2.2+1.20.1`, with no AI/API change.
+- Reproduce the original failure and confirm startup with the corrected installed client. Ordinary-client startup also passes for the unchanged published 1.19.2/Forge 43.5.0 and 26.3/Forge 66.1.0 builds. No automated tests, GameTests, UI automation or gameplay verification ran.
+
+See the [updated 1.2.2 notes](docs/releases/1.2.2.md) for downloads and source references.
+
 ## 1.2.2 — 2026-11-12
 
 Core/Compat targets: Minecraft 1.16.5 / Forge 36.2.42 / Java 8, 1.19.2 / Forge 43.5.0 / Java 17, 1.20.1 / Forge 47.4.28 / Java 17, and 26.3 / Forge 66.1.0 / Java 25.
