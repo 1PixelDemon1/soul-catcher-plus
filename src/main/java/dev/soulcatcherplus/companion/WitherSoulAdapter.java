@@ -28,7 +28,7 @@ public final class WitherSoulAdapter implements SoulAdapter {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
         }
         @Override public boolean canUse() {
-            return mob.getTarget() == null || CompanionBrain.mode(mob) == CompanionBrain.Mode.WAIT || CompanionBrain.isReturning(mob);
+            return WitherSoulMoveControl.holdsPosition(mob);
         }
         @Override public void start() { mob.getNavigation().stop(); }
         @Override public void tick() { mob.getNavigation().stop(); }

@@ -34,7 +34,7 @@ public final class SoulRavenModel {
         rightWing.zRot = wingAngle;
         leftLeg.xRot = rightLeg.xRot = 75.0f * RADIANS * flight;
         head.xRot = (Mth.clamp(headPitch, -30.0f, 30.0f) + 6.0f * flight) * RADIANS;
-        head.yRot = Mth.clamp(headYaw, -55.0f, 55.0f) * RADIANS;
+        head.yRot = Mth.clamp(Mth.wrapDegrees(headYaw), -55.0f, 55.0f) * RADIANS;
         // The longer hanging tail lifts behind the body when the wings open.
         tail.xRot = (54.0f + 2.0f * flap) * RADIANS * flight
             - (1.0f - flight) * RADIANS * (1.0f + Mth.sin(age * 0.105f));

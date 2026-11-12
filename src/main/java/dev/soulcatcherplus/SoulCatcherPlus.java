@@ -82,6 +82,7 @@ public final class SoulCatcherPlus {
             SoulAdapters.register(SOUL_COURIER.getId(), new SoulCourierAdapter());
             SoulAdapters.register(SOUL_SHAMAN.getId(), new SoulShamanAdapter());
             SoulAdapters.register(ForgeRegistries.ENTITY_TYPES.getKey(net.minecraft.world.entity.EntityTypes.WITHER), new dev.soulcatcherplus.companion.WitherSoulAdapter());
+            SoulAdapters.register(ForgeRegistries.ENTITY_TYPES.getKey(net.minecraft.world.entity.EntityTypes.WARDEN), new dev.soulcatcherplus.companion.WardenSoulAdapter());
             SoulAdapters.register(ForgeRegistries.ENTITY_TYPES.getKey(net.minecraft.world.entity.EntityTypes.ENDER_DRAGON), new dev.soulcatcherplus.companion.DragonSoulAdapter());
         }));
         ForgottenSoulLoot.SERIALIZERS.register(bus);

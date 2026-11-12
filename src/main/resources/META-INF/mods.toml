@@ -20,3 +20,10 @@ mandatory=true
 versionRange="[26.3]"
 ordering="NONE"
 side="BOTH"
+
+[[dependencies.soulcatcherplus]]
+modId="patchouli"
+mandatory=false
+versionRange="[0,)"
+ordering="AFTER"
+side="BOTH"

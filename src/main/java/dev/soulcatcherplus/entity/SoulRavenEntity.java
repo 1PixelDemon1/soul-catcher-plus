@@ -211,9 +211,13 @@ public final class SoulRavenEntity extends PathfinderMob {
                 Vec3 shoulder = shoulderPosition(owner, 1);
                 setPos(shoulder.x, shoulder.y, shoulder.z);
                 setDeltaMovement(Vec3.ZERO);
+                // Perched birds use the owner's two samples, not a stale network head turn.
                 setYRot(yBodyRot = owner.yBodyRot);
+                yRotO = yBodyRotO = owner.yBodyRotO;
                 yHeadRot = owner.yHeadRot;
+                yHeadRotO = owner.yHeadRotO;
                 setXRot(0);
+                xRotO = 0;
             }
         }
         if (level().isClientSide()) {
