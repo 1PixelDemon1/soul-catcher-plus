@@ -57,6 +57,13 @@ Default follow/wait/guard behavior lives in `CompanionBrain`; read `CompanionBra
 from a custom controller. A dedicated `CompanionController` interface is not needed in
 this initial API: adapters own that lifecycle directly.
 
+`followRange(mob)` defaults to 40 blocks. It controls the owner-centered combat
+radius and when Follow/Aggressive forces a return, regardless of the active target.
+The hard teleport threshold is the larger of 64 blocks and this range. For example,
+returning 100 permits combat/flight through 100 blocks and teleports beyond 100.
+Return a finite value of at least four blocks; invalid values use the default.
+Guard/Wait, target acquisition distances and stuck-return recovery are unchanged.
+
 Only one form of a species can be active at a time. Defeat cooldowns are shared
 across its forms. Selected-species commands target the active form even when the
 player is inspecting another captured appearance. Original snapshots supply the
@@ -136,6 +143,11 @@ Preview mobs are detached client entities: they are never added to the level or
 AI-ticked. Their renderer and visible equipment are reused. Third-party renderers
 that require live-world ticking or special synchronized data can need further
 integration; a failed preview shows a placeholder without removing the soul.
+
+Client renderer integrations can use `api.client.SoulPreviews.isPreview(entity)`
+to restrict GUI-only pose changes to these detached models. The core marks each
+preview after loading its appearance. This does not identify live companions or
+dissolve echoes; never mark a world entity or tick it to initialize a GUI model.
 Release 1.0.0 uses protocol **11**. Collection snapshots are sent as ordered
 `StatePart` packets of at most 32 rows, identified by a snapshot UUID, offset and
 total. The client replaces collection state only after reassembling the complete

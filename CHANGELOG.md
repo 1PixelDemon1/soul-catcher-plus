@@ -4,6 +4,18 @@
 
 No changes yet.
 
+## 1.2.2 — 2026-11-12
+
+Core/Compat targets: Minecraft 1.16.5 / Forge 36.2.42 / Java 8, 1.19.2 / Forge 43.5.0 / Java 17, 1.20.1 / Forge 47.4.28 / Java 17, and 26.3 / Forge 66.1.0 / Java 25.
+
+- Add adapter-level `followRange` and detached `SoulPreviews` APIs across ports. Keep ordinary 40/64-block defaults while allowing integrations to raise the owner range and hard-teleport ceiling.
+- On 1.19.2/1.20.1/26.3, correct perched Raven rotation sampling/yaw wrapping and owned Wither hover/return/head interpolation.
+- Add command-driven Warden melee/Sonic Boom and suppress autonomous encounter targeting/digging/darkness on those newer ports; no Warden is added to 1.16.5.
+- Remove the artificial Patchouli minimum while requiring a matching Minecraft/Forge artifact. Forge 26.3 Patchouli support remains unverified.
+- Retain standalone core/Compat isolation and historical release requirements.
+
+All four fresh core builds, archive audits, and dedicated-server startups passed; servers stopped normally with exit 0. The 1.16.5 core/Compat client completed resource/sound/atlas startup. Source/API review found no remaining actionable issues. No automated tests/GameTests/UI or gameplay/multiplayer tests ran. See [release notes](docs/releases/1.2.2.md) for profiles, frozen outputs, and known external diagnostics.
+
 ## 1.2.1 — 2026-11-10
 
 Core-only release for Minecraft 1.16.5 / Forge 36.2.42 / Java 8, 1.19.2 / Forge 43.5.0 / Java 17, 1.20.1 / Forge 47.4.28 / Java 17, and 26.3 / Forge 66.1.0 / Java 25. The 26.3 target/minimum changes from 66.1.5; historical releases keep their original requirements. Compat is not updated or released, and its compatibility with core 1.2.1 was not verified.
