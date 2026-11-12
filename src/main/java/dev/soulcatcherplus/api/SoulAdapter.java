@@ -12,7 +12,11 @@ import net.minecraft.world.entity.Entity;
  * All callbacks run on the server thread. Never mutate the stored snapshot.
  */
 public interface SoulAdapter {
+    double DEFAULT_FOLLOW_RANGE = 40;
+
     default boolean canCapture(Mob mob, ServerPlayer player) { return true; }
+    /** Owner radius for uninterrupted Follow/Aggressive combat; finite and at least four blocks. */
+    default double followRange(Mob mob) { return DEFAULT_FOLLOW_RANGE; }
     /** Whether this original mob is an automatic target for the owner's aggressive companions. */
     default boolean isHostile(Mob mob, ServerPlayer owner) {
         return mob instanceof net.minecraft.world.entity.monster.Enemy

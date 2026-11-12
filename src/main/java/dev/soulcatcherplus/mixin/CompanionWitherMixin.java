@@ -2,8 +2,12 @@
 package dev.soulcatcherplus.mixin;
 
 import dev.soulcatcherplus.companion.CompanionBrain;
+import dev.soulcatcherplus.companion.WitherSoulMoveControl;
 import dev.soulcatcherplus.event.VanillaBossEvents;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
@@ -17,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = WitherBoss.class, remap = false)
-public abstract class CompanionWitherMixin {
+public abstract class CompanionWitherMixin extends Monster {
     @Shadow(aliases = "f_31427_", remap = false) @Final private int[] nextHeadUpdate;
     @Shadow(aliases = "f_31428_", remap = false) @Final private int[] idleHeadUpdates;
     @Shadow(aliases = "f_31429_", remap = false) private int destroyBlocksTick;
@@ -25,10 +29,15 @@ public abstract class CompanionWitherMixin {
     @Shadow(aliases = "m_31457_", remap = false)
     private void performRangedAttack(int head, LivingEntity target) { throw new AssertionError(); }
 
+    protected CompanionWitherMixin(EntityType<? extends Monster> type, Level level) {
+        super(type, level);
+    }
+
     @Inject(method = {"customServerAiStep", "m_8024_"}, at = @At("HEAD"), cancellable = true, remap = false)
     private void soulcatcherplus$orderedHeads(CallbackInfo callback) {
         WitherBoss wither = (WitherBoss)(Object)this;
         if (!VanillaBossEvents.isSoulBoss(wither)) return;
+        if (!(moveControl instanceof WitherSoulMoveControl)) moveControl = new WitherSoulMoveControl(wither);
         wither.setInvulnerableTicks(0);
         destroyBlocksTick = 0;
         ServerPlayer owner = wither.getServer().getPlayerList().getPlayer(CompanionBrain.owner(wither));
@@ -53,8 +62,7 @@ public abstract class CompanionWitherMixin {
             else {
                 Vec3 destination = CompanionBrain.mode(wither) == CompanionBrain.Mode.GUARD
                     ? Vec3.atCenterOf(BlockPos.of(wither.getPersistentData().getLong("scp_guard"))).add(0, 3, 0)
-                    : owner.position().subtract(owner.getLookAngle().multiply(1, 0, 1).normalize().scale(5)).add(0, 3, 0);
-                if (CompanionBrain.isReturning(wither)) destination = owner.position().add(0, 2, 0);
+                    : WitherSoulMoveControl.followPosition(wither, owner, CompanionBrain.isReturning(wither));
                 Vec3 offset = destination.subtract(wither.position());
                 Vec3 desired = offset.lengthSqr() < 1 ? Vec3.ZERO : offset.normalize().scale(Math.min(0.6, offset.length() * 0.16));
                 wither.setDeltaMovement(wither.getDeltaMovement().scale(0.7).add(desired.scale(0.3)));

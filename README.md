@@ -21,9 +21,9 @@ companions in battle.
 
 ## Supported versions
 
-**1.2.1** provides a core build for each of the four targets below.
-The separate Compat addon has its own release cycle.
-See the [release notes](docs/releases/1.2.1.md) for dependencies and validation.
+**1.2.2** covers the core and Compat on all four targets below.
+The core adds adapter-range/preview APIs and newer-platform companion corrections.
+See the [release notes](docs/releases/1.2.2.md) for dependencies and validation.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
@@ -56,6 +56,10 @@ and **85** for 1.20.1. With it installed, receive a guide on first eligible logi
 or craft one from a book and soul sand. A compatible published Forge Patchouli
 build has not been identified for 26.3; guide availability is not claimed there.
 
+
+1.2.2 removes the core's artificial minimum Patchouli build. Install a build whose
+own metadata matches the selected Minecraft/Forge version. The 53.3/77/85 examples
+are historical development baselines, not hard minimums or fresh release results.
 ## Development
 
 Primary 1.16.5 development uses Java 17 for Gradle/javac with compile-only Jabel,
@@ -90,6 +94,13 @@ approved model sources and editable pixel maps are kept in the repository.
 See the [changelog](CHANGELOG.md) for release history and version-specific notes.
 Historical release artifacts and notes retain their original requirements.
 
+## Release validation
+
+All four fresh core builds, archive audits, and dedicated-server startups passed;
+servers saved/stopped normally with exit 0. The 1.16.5 core/Compat client completed
+resource/sound/atlas startup with IAF, Twilight Forest, and Aquamirae. These are
+build/load checks, not gameplay or multiplayer tests. No automated tests, GameTests,
+or UI automation ran. See release notes for profiles and known external diagnostics.
 ## License
 
 [MIT](LICENSE)

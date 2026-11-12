@@ -47,6 +47,7 @@ final class SoulPreview {
                 failed.add(packet.entry()); return;
             }
             mob.load(packet.appearance().copy());
+            dev.soulcatcherplus.api.client.SoulPreviews.mark(mob);
             // A detached preview never joins a level or runs entity ticks. The marker
             // lets it use the exact same dispatcher tint/provider as a summoned soul.
             if (spectral) mob.getPersistentData().putUUID(dev.soulcatcherplus.companion.CompanionBrain.OWNER, new UUID(0, 0));

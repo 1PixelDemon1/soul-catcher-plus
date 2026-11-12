@@ -8,6 +8,7 @@
     "SoulSpawnContextMixin",
     "RavenDeliveredItemMixin",
     "CompanionWitherMixin",
+    "CompanionWardenMixin",
     "CompanionDragonMixin",
     "CompanionDragonPhaseMixin",
     "CompanionDragonBreathMixin",
@@ -15,6 +16,8 @@
   ],
   "client": [
     "client.SoulEntityRenderMixin",
+    "client.WitherHeadInterpolationMixin",
+    "client.WitherHeadModelMixin",
     "client.SoulMusicContextMixin",
     "client.CompanionMusicMixin"
   ],
