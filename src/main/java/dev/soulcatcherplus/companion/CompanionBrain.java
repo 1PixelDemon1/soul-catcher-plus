@@ -24,7 +24,6 @@ public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";
     private static final int AGGRESSIVE_RANGE = 16, HARD_TELEPORT_RADIUS = 64;
     private static final int FOLLOW_DISTANCE = 4, STUCK_TICKS = 100, TELEPORT_RETRY_TICKS = 20;
-    private static final int TELEPORT_ATTEMPTS = 12, MAX_TELEPORT_RADIUS = 16;
     // Server-thread-only transient state; values hold positions, never a strong reference to the mob.
     private static final Map<Mob, ReturnProgress> RETURNS = new WeakHashMap<>();
     public enum Mode { FOLLOW, WAIT, GUARD, AGGRESSIVE }
@@ -115,15 +114,17 @@ public final class CompanionBrain {
         ReturnProgress progress = RETURNS.get(mob);
         long now = mob.level.getGameTime();
         double range = followRange(mob);
+        double teleportRange = Math.max(HARD_TELEPORT_RADIUS, range);
+        // Aggressive keeps a valid combat target until the hard teleport boundary.
+        double returnRange = mode == Mode.AGGRESSIVE && mob.getTarget() != null ? teleportRange : range;
         if (progress == null) {
-            if (distance <= range * range) return false;
+            if (distance <= returnRange * returnRange) return false;
             progress = new ReturnProgress(mob.position(), now);
             RETURNS.put(mob, progress);
             mob.getNavigation().stop(); // Abandon the old attack path only when return begins.
         }
         mob.setTarget(null);
         boolean stalled = progress.stalled(mob.position(), player.position(), now);
-        double teleportRange = Math.max(HARD_TELEPORT_RADIUS, range);
         if ((distance > teleportRange * teleportRange || stalled) && now >= progress.nextTeleportAt) {
             progress.nextTeleportAt = now + TELEPORT_RETRY_TICKS;
             teleportToOwner(mob, player);
@@ -147,7 +148,7 @@ public final class CompanionBrain {
         }
     }
     private static void updateCombat(Mob mob, ServerPlayer player, Mode mode) {
-        if (followsOwner(mode) && mob.getTarget() != null && !insideCombatArea(mob, mob.getTarget(), player))
+        if (mode == Mode.FOLLOW && mob.getTarget() != null && !insideCombatArea(mob, mob.getTarget(), player))
             mob.setTarget(null);
         if (mode == Mode.WAIT) mob.setTarget(null);
         else if (mode == Mode.GUARD) {
@@ -175,30 +176,17 @@ public final class CompanionBrain {
     /** Try loaded positions near the owner without recreating the mob or changing its orders. */
     public static boolean teleportToOwner(Mob mob, ServerPlayer player) {
         if (mob.level.isClientSide || mob.level != player.level) return false;
-        // Large companions need clearance from the owner; keep every candidate inside the follow leash.
-        int radius = Math.min(MAX_TELEPORT_RADIUS, Math.max(4, (int)Math.ceil(mob.getBbWidth() / 2) + 2));
-        for (int i = 0; i < TELEPORT_ATTEMPTS; i++) {
-            BlockPos pos = player.blockPosition().offset(mob.getRandom().nextInt(radius * 2 + 1) - radius,
-                0, mob.getRandom().nextInt(radius * 2 + 1) - radius);
-            var destination = mob.getBoundingBox().move(
-                pos.getX() + 0.5 - mob.getX(), pos.getY() - mob.getY(), pos.getZ() + 0.5 - mob.getZ());
-            if (mob.level.hasChunksAt(new BlockPos(destination.minX, destination.minY - 1, destination.minZ),
-                        new BlockPos(destination.maxX, destination.maxY, destination.maxZ))
-                    && mob.level.getBlockState(pos.below()).isSolidRender(mob.level, pos.below())
-                    && mob.level.getWorldBorder().isWithinBounds(destination)
-                    && !destination.intersects(player.getBoundingBox())
-                    && !mob.level.containsAnyLiquid(destination) && mob.level.noCollision(mob, destination)) {
-                mob.stopRiding();
-                if (mob.isPassenger()) return false; // A mod may veto dismounting through Forge.
-                mob.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
-                mob.setDeltaMovement(Vec3.ZERO);
-                mob.fallDistance = 0;
-                resetReturn(mob);
-                return true;
-            }
-        }
-        return false;
+        Vec3 destination = SoulPlacement.findNear(mob, player, player.position());
+        if (destination == null) return false;
+        mob.stopRiding();
+        if (mob.isPassenger()) return false; // A mod may veto dismounting through Forge.
+        mob.teleportTo(destination.x, destination.y, destination.z);
+        mob.setDeltaMovement(Vec3.ZERO);
+        mob.fallDistance = 0;
+        resetReturn(mob);
+        return true;
     }
+
     private static void findEnemy(Mob mob, BlockPos guard) {
         mob.level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(12),
             e -> e instanceof Enemy && canAttack(mob, e)
