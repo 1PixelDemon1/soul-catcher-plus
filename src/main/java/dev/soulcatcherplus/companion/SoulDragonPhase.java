@@ -43,8 +43,8 @@ public final class SoulDragonPhase extends Phase {
         else if (target == null) destination = anchor.add(orbit);
         else destination = dragon.tickCount % ATTACK_CYCLE < ATTACK_RUN_TICKS
             ? target.position().add(0, 2, 0) : target.position().add(orbit);
-        // An attack orbit must not continually cross the shared follow leash.
-        if (mode != CompanionBrain.Mode.GUARD) {
+        // Follow keeps its compact orbit; Aggressive combat uses the shared hard leash.
+        if (mode != CompanionBrain.Mode.GUARD && !(mode == CompanionBrain.Mode.AGGRESSIVE && target != null)) {
             Vector3d offset = destination.subtract(owner.position());
             if (offset.lengthSqr() > MAX_OWNER_DISTANCE * MAX_OWNER_DISTANCE)
                 destination = owner.position().add(offset.normalize().scale(MAX_OWNER_DISTANCE));
