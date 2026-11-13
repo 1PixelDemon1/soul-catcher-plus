@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Refresh the English/Russian guide's orders chapter for committed Aggressive combat, relaxed teleport placement, guard relocation, recall and scythe-directed attacks; regenerate bounded text pages.
 - Allow soul summoning and owner teleportation in air and water, falling back to overlapping blocks when no clear candidate is found. Share placement checks and protect owned souls/minions from in-wall suffocation damage.
 - Let Aggressive companions retain a valid combat target until the owner exceeds the hard teleport range. Idle following and Follow's combat range remain unchanged; aggressive Ender Dragon attack flight follows the same shared limit.
 
