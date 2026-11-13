@@ -6,8 +6,6 @@ Capture the souls of defeated creatures and summon them as spectral companions.
 Build your own collection, store soul energy in portable cages, and command your
 companions in battle.
 
-> **1.20.1 startup hotfix:** [Download hotfix 1](https://github.com/1PixelDemon1/soul-catcher-plus/releases/download/v1.2.2/soulcatcherplus-1.2.2%2B1.20.1-hotfix.1.jar) for Forge 47.4.28. It replaces the original 1.20.1 core JAR and fixes the Warden Mixin startup crash. See the [updated release notes](docs/releases/1.2.2.md).
-
 ## Features
 
 - Mark enemies with a soul scythe and capture their souls after defeating them.
@@ -23,9 +21,9 @@ companions in battle.
 
 ## Supported versions
 
-**1.2.2** covers the core and Compat on all four targets below.
-The core adds adapter-range/preview APIs and newer-platform companion corrections.
-See the [release notes](docs/releases/1.2.2.md) for dependencies and validation.
+**1.2.3** covers the core and Compat on all four targets below.
+The update improves Aggressive target commitment, shared placement, and companion orders.
+See the [release notes](docs/releases/1.2.3.md) for dependencies and validation.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
@@ -62,6 +60,11 @@ build has not been identified for 26.3; guide availability is not claimed there.
 1.2.2 removes the core's artificial minimum Patchouli build. Install a build whose
 own metadata matches the selected Minecraft/Forge version. The 53.3/77/85 examples
 are historical development baselines, not hard minimums or fresh release results.
+
+Aggressive companions keep an existing fight until the hard owner-distance limit;
+idle/new-target ranges remain unchanged. Summoning and Teleport prefer clear space
+but can use air/water or a bounded block-overlap fallback. Only in-wall suffocation
+is blocked for souls; fall/drowning behavior is unchanged.
 ## Development
 
 Primary 1.16.5 development uses Java 17 for Gradle/javac with compile-only Jabel,
@@ -98,11 +101,13 @@ Historical release artifacts and notes retain their original requirements.
 
 ## Release validation
 
-All four fresh core builds, archive audits, and dedicated-server startups passed;
-servers saved/stopped normally with exit 0. The 1.16.5 core/Compat client completed
-resource/sound/atlas startup with IAF, Twilight Forest, and Aquamirae. These are
-build/load checks, not gameplay or multiplayer tests. No automated tests, GameTests,
-or UI automation ran. See release notes for profiles and known external diagnostics.
+All four fresh core builds, archive audits, and ordinary installed-client startups
+passed before publication. Clients loaded sound/atlases and closed normally without
+entering worlds. Patchouli book resources loaded on the older three platforms;
+26.3 has no verified Forge Patchouli build. No automated tests, GameTests, gameplay,
+multiplayer, or fresh dedicated-server checks ran. See the
+[release notes](docs/releases/1.2.3.md) for profiles and known external warnings.
+
 ## License
 
 [MIT](LICENSE)
