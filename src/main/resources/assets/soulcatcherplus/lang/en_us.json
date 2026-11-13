@@ -49,7 +49,7 @@
   "screen.soulcatcherplus.follow_short": "Follow",
   "screen.soulcatcherplus.guard_short": "Guard",
   "screen.soulcatcherplus.aggressive_short": "Aggressive",
-  "screen.soulcatcherplus.aggressive_hint": "Follow and automatically attack nearby monsters. Return when the owner moves away.",
+  "screen.soulcatcherplus.aggressive_hint": "Follow and attack nearby monsters. Finish the current fight until the owner exceeds teleport range.",
   "screen.soulcatcherplus.follow_hint": "Follow and defend your summoner.",
   "screen.soulcatcherplus.wait_hint": "Remain at the current position.",
   "screen.soulcatcherplus.guard_hint": "Guard the area around your current position.",

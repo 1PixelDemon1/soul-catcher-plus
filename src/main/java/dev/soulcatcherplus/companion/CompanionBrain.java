@@ -114,15 +114,18 @@ public final class CompanionBrain {
         ReturnProgress progress = RETURNS.get(mob);
         long now = mob.level.getGameTime();
         double range = followRange(mob);
+        double teleportRange = Math.max(HARD_TELEPORT_RADIUS, range);
+        // Aggressive companions finish their current fight until the hard leash
+        // is crossed. An idle companion still returns at the ordinary follow range.
+        double returnRange = mode == Mode.AGGRESSIVE && mob.getTarget() != null ? teleportRange : range;
         if (progress == null) {
-            if (distance <= range * range) return false;
+            if (distance <= returnRange * returnRange) return false;
             progress = new ReturnProgress(mob.position(), now);
             RETURNS.put(mob, progress);
             mob.getNavigation().stop(); // Abandon the old attack path only when return begins.
         }
         mob.setTarget(null);
         boolean stalled = progress.stalled(mob.position(), player.position(), now);
-        double teleportRange = Math.max(HARD_TELEPORT_RADIUS, range);
         if ((distance > teleportRange * teleportRange || stalled) && now >= progress.nextTeleportAt) {
             progress.nextTeleportAt = now + TELEPORT_RETRY_TICKS;
             teleportToOwner(mob, player);
@@ -146,7 +149,7 @@ public final class CompanionBrain {
         }
     }
     private static void updateCombat(MobEntity mob, ServerPlayerEntity player, Mode mode) {
-        if (followsOwner(mode) && mob.getTarget() != null && !insideCombatArea(mob, mob.getTarget(), player))
+        if (mode == Mode.FOLLOW && mob.getTarget() != null && !insideCombatArea(mob, mob.getTarget(), player))
             mob.setTarget(null);
         if (mode == Mode.WAIT) mob.setTarget(null);
         else if (mode == Mode.GUARD) {

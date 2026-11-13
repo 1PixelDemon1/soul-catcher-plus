@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-No changes yet.
+- Let Aggressive companions retain a valid combat target until the owner exceeds the hard teleport range. Idle following and Follow's combat range remain unchanged; aggressive Ender Dragon attack flight follows the same shared limit.
 
 ## 1.2.2 — Minecraft 1.20.1 hotfix 1 — 2026-11-12
 

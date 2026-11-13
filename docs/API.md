@@ -58,8 +58,9 @@ from a custom controller. A dedicated `CompanionController` interface is not nee
 this initial API: adapters own that lifecycle directly.
 
 `followRange(mob)` defaults to 40 blocks. It controls the owner-centered combat
-radius and when Follow/Aggressive forces a return, regardless of the active target.
-The hard teleport threshold is the larger of 64 blocks and this range. For example,
+radius for Follow and the idle return range for Follow/Aggressive.
+Aggressive retains a valid combat target until the hard teleport threshold,
+the larger of 64 blocks and this range. For example,
 returning 100 permits combat/flight through 100 blocks and teleports beyond 100.
 Return a finite value of at least four blocks; invalid values use the default.
 Guard/Wait, target acquisition distances and stuck-return recovery are unchanged.
@@ -286,13 +287,15 @@ message reports success or partial failure due to unavailable entities or space.
 
 `CompanionBrain.Mode.AGGRESSIVE` uses normal owner following. Every five ticks,
 it may acquire the nearest visible, attackable hostile
-MobEntity within 16 blocks of itself and within 40 blocks of the owner. Both FOLLOW
-and AGGRESSIVE drop targets beyond the 40-block owner combat radius; FOLLOW's
-reactive target acquisition applies the same owner-radius check. WAIT and GUARD
+MobEntity within 16 blocks of itself and within the adapter's follow range of the owner
+(40 blocks by default). FOLLOW drops targets beyond that owner combat radius;
+AGGRESSIVE retains its current valid target until the companion itself exceeds
+the hard teleport range. FOLLOW's reactive acquisition applies the owner-radius check. WAIT and GUARD
 keep their stationary behavior.
 
-Beyond 40 blocks, standard-brain FOLLOW and AGGRESSIVE companions abandon combat
-and begin an ordinary return. This transient return stays active until the mob
+Beyond the follow range, FOLLOW companions and idle AGGRESSIVE companions begin
+an ordinary return. An AGGRESSIVE companion in combat only begins returning beyond
+the hard teleport range, where teleport is attempted immediately. This transient return stays active until the mob
 comes within four blocks of its owner or teleports successfully, preventing
 combat/return oscillation at the boundary. A return-only movement goal at priority
 0 shares pathing with the normal priority-2 follow goal. Native attack goals

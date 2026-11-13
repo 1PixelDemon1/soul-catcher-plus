@@ -49,7 +49,7 @@
   "screen.soulcatcherplus.follow_short": "За мной",
   "screen.soulcatcherplus.guard_short": "Охрана",
   "screen.soulcatcherplus.aggressive_short": "Агрессия",
-  "screen.soulcatcherplus.aggressive_hint": "Следовать и самостоятельно атаковать ближайших монстров. Возвращаться, если хозяин ушёл далеко.",
+  "screen.soulcatcherplus.aggressive_hint": "Следовать и атаковать ближайших монстров. Продолжать бой, пока хозяин не выйдет за предел телепортации.",
   "screen.soulcatcherplus.follow_hint": "Следовать за хозяином и защищать его.",
   "screen.soulcatcherplus.wait_hint": "Оставаться на текущем месте.",
   "screen.soulcatcherplus.guard_hint": "Охранять область вокруг тебя.",
