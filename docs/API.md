@@ -315,11 +315,13 @@ Return tracking is server-only weakly held runtime state and adds no saved NBT
 or network fields. Mode commands, goal reinstallation and successful manual or
 automatic teleports clear it. Adapters that opt out of the standard brain keep
 their own movement behavior.
-The shared automatic/manual search checks up to 12 positions at the owner's block
-Y. X/Z radius is at least four blocks, grows with companion width, and is capped
-at 16 to remain inside the follow leash. Candidates require loaded chunks over
-the entire bounding box, solid support, world-border clearance, no liquid, no
-overlap with the player and space for the companion. Successful relocation also
+Summoning and automatic/manual owner teleportation share a bounded placement search:
+16 directions across five height offsets, with radius growing with companion width
+and capped at 16 blocks. Candidates require loaded chunks over the entire bounding
+box, valid world height and world-border clearance. Air and water are allowed without
+support below. Clear positions without player overlap are preferred; the first legal
+candidate is used even inside blocks when none are clear. Owned souls and minions
+are immune to vanilla in-wall suffocation damage. Successful teleportation also
 clears velocity and fall distance. No chunks are loaded to find a destination.
 FOLLOW retains reactive combat inside the combat radius when not returning.
 

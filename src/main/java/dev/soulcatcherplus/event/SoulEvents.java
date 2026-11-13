@@ -146,9 +146,13 @@ public final class SoulEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void damage(LivingAttackEvent event) {
         if (event.getEntity().level.isClientSide) return;
+        if (event.getEntity() instanceof MobEntity soul) SoulMinions.tryInherit(soul);
+        if (CompanionBrain.isSoul(event.getEntity()) && event.getSource() == net.minecraft.util.DamageSource.IN_WALL) {
+            event.setCanceled(true);
+            return;
+        }
         Entity attacker = event.getSource().getEntity();
         if (attacker instanceof MobEntity mob) SoulMinions.tryInherit(mob);
-        if (event.getEntity() instanceof MobEntity mob) SoulMinions.tryInherit(mob);
         if (attacker instanceof MobEntity mob && CompanionBrain.isSoul(mob) && CompanionBrain.allied(mob, event.getEntity()))
             event.setCanceled(true);
         if (attacker != null && event.getEntity() instanceof MobEntity mob && CompanionBrain.isSoul(mob)
