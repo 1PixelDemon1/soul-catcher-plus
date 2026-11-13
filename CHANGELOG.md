@@ -4,6 +4,27 @@
 
 No changes yet.
 
+## 1.2.3 — 2026-11-13
+
+Matching core/Compat releases target Minecraft 1.16.5/1.19.2/1.20.1/26.3 with Forge 36.2.42/43.5.0/47.4.28/66.1.0 and game Java 8/17/17/25.
+
+- Retain valid Aggressive combat targets until the companion crosses the hard owner-distance threshold: 64 blocks by default, or a larger adapter range such as 100 for IAF dragons. Idle following, Follow combat, and new-target acquisition keep their existing ordinary ranges.
+- Remove the dragon's separate 32-block flight-destination clamp only during Aggressive combat with a target; retain idle/Follow orbit and fireball rules.
+- Share size-aware summon/teleport placement across 16 directions and five vertical offsets. Prefer clear space away from the owner; permit bounded block-overlap fallback, air, and water while retaining loaded bounding-box/world-border/build-height checks.
+- Protect owned souls/minions from in-wall suffocation only; fall and drowning damage remain unchanged.
+- Update English/Russian guide coverage of seven orders, guard relocation, recall, and manual scythe attacks switching recipients to Follow. Keep the orders chapter focused on commands.
+- Include the previously published 1.20.1 Warden shadow-field remapping hotfix in the new build; preserve earlier release tags/artifacts.
+
+All eight fresh core/Compat builds, archive audits, and ordinary installed-production-client startups passed before publication; clients closed normally without entering worlds. Final source/API review found no actionable issues. QA/test/processor code remains excluded from production archives. No automated tests, GameTests, UI automation, gameplay, multiplayer, manual combat, or fresh dedicated-server checks ran. See [release notes](docs/releases/1.2.3.md) for profiles, artifacts, and known external warnings.
+
+## 1.2.2 — Minecraft 1.20.1 hotfix 1 — 2026-11-12
+
+- Fix the installed Forge 47.4.28 client's `Non-private field cannot be aliased` Warden Mixin crash through generated field reobfuscation mappings.
+- Add supplemental `hotfix.1` runtime/sources JARs, audit and checksums to the existing release; retain original tags/artifacts and label the original 1.20.1 files as superseded. Runtime version remains `1.2.2+1.20.1`, with no AI/API change.
+- Reproduce the original failure and confirm startup with the corrected installed client. Ordinary-client startup also passes for the unchanged published 1.19.2/Forge 43.5.0 and 26.3/Forge 66.1.0 builds. No automated tests, GameTests, UI automation or gameplay verification ran.
+
+See the [updated 1.2.2 notes](docs/releases/1.2.2.md) for downloads and source references.
+
 ## 1.2.2 — 2026-11-12
 
 Core/Compat targets: Minecraft 1.16.5 / Forge 36.2.42 / Java 8, 1.19.2 / Forge 43.5.0 / Java 17, 1.20.1 / Forge 47.4.28 / Java 17, and 26.3 / Forge 66.1.0 / Java 25.

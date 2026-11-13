@@ -117,17 +117,12 @@ public final class SoulService {
     }
     private static boolean place(Mob mob, ServerPlayer player) {
         Vec3 ahead = player.position().add(player.getLookAngle().multiply(3, 0, 3));
-        for (int y = 0; y <= 2; y++) for (int i = 0; i < 16; i++) {
-            double angle = i * Math.PI / 8;
-            double x = ahead.x + Math.cos(angle) * 2, z = ahead.z + Math.sin(angle) * 2;
-            mob.snapTo(x, player.getY() + y, z, player.getYRot(), 0);
-            BlockPos pos = mob.blockPosition();
-            if (player.level().hasChunkAt(pos) && player.level().getWorldBorder().isWithinBounds(mob.getBoundingBox())
-                && player.level().noCollision(mob) && !player.level().containsAnyLiquid(mob.getBoundingBox())
-                && !player.level().getBlockState(pos.below()).getCollisionShape(player.level(), pos.below()).isEmpty()) return true;
-        }
-        return false;
+        Vec3 destination = SoulPlacement.findNear(mob, player, ahead);
+        if (destination == null) return false;
+        mob.snapTo(destination.x, destination.y, destination.z, player.getYRot(), 0);
+        return true;
     }
+
     public static void recall(MinecraftServer server, SoulEntry entry) {
         recall(server, entry, null);
     }

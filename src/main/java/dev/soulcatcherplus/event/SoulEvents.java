@@ -153,6 +153,9 @@ public final class SoulEvents {
         Entity attacker = event.getSource().getEntity();
         if (attacker instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (event.getEntity() instanceof Mob mob) SoulMinions.tryInherit(mob);
+        if (CompanionBrain.isSoul(event.getEntity()) && event.getSource().is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+            return true;
+        }
         if (attacker instanceof Mob mob && CompanionBrain.isSoul(mob) && CompanionBrain.allied(mob, event.getEntity()))
             return true;
         if (attacker != null && event.getEntity() instanceof Mob mob && CompanionBrain.isSoul(mob)
