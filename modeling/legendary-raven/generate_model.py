@@ -47,7 +47,7 @@ for sign,side in [(1,'left'),(-1,'right')]:
         return [-hi[0],lo[1],lo[2]],[-lo[0],hi[1],hi[2]]
     def mc(name,lo,hi,bone,material):
         a,b=mirrored(lo,hi);cube(side+'_'+name,a,b,bone,material)
-    mc('eye',[1.351,8.2,-2.5],[1.38,8.65,-2.05],'head','eye')
+    mc('eye',[1.34,8.2,-2.5],[1.38,8.65,-2.05],'head','eye')
     bone='wing_'+side
     # Three long slabs: shoulder, primaries and a squared-off tip.
     mc('wing_coverts',[1.55,2.6,.1],[2.2,6.5,2.8],bone,'wing')

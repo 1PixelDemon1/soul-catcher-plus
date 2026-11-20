@@ -39,22 +39,28 @@ public final class SoulCageItemRenderer extends ItemStackTileEntityRenderer {
             IRenderTypeBuffer buffers, int light, int overlay) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) return;
+        float seconds = ((minecraft.level.getGameTime() % 80) + minecraft.getFrameTime()) / 20;
+        pose.pushPose();
+        // Undo ItemRenderer's corner offset, then place the chain grip at the hand origin.
+        pose.translate(.5, .5 - GRIP_HEIGHT, .5);
+        renderFloating(stack, seconds, pose, buffers, light, overlay);
+        pose.popPose();
+    }
+
+    /** Render the same authored cage at its native origin, without any hand/camera transforms. */
+    public void renderFloating(ItemStack stack, float seconds, MatrixStack pose,
+            IRenderTypeBuffer buffers, int light, int overlay) {
         SoulCageModel model;
         if (stack.getItem() == SoulCatcherPlus.IRON_CAGE.get()) model = iron;
         else if (stack.getItem() == SoulCatcherPlus.DIAMOND_CAGE.get()) model = diamond;
         else if (stack.getItem() == SoulCatcherPlus.NETHERITE_CAGE.get()) model = netherite;
         else if (stack.getItem() == SoulCatcherPlus.SUPREME_CAGE.get()) model = supreme;
         else return;
-        float seconds = ((minecraft.level.getGameTime() % 80) + minecraft.getFrameTime()) / 20;
-        pose.pushPose();
-        // Undo ItemRenderer's corner offset, then place the chain grip at the hand origin.
-        pose.translate(.5, .5 - GRIP_HEIGHT, .5);
         model.render(SoulCageModel.Surface.FRAME, seconds, pose,
             ItemRenderer.getFoilBufferDirect(buffers, FRAME, false, stack.hasFoil()), light, overlay);
         model.render(SoulCageModel.Surface.SOUL, seconds, pose,
             buffers.getBuffer(FRAME), 0xF000F0, overlay);
         model.render(SoulCageModel.Surface.GLASS, seconds, pose,
             buffers.getBuffer(GLASS), light, overlay);
-        pose.popPose();
     }
 }

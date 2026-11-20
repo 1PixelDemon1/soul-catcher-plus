@@ -14,7 +14,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import org.lwjgl.glfw.GLFW;
 
-/** Local appearance editor. Changes are previewed live and saved once on exit. */
+/** Owner appearance editor: local live preview, published after saving on exit. */
 final class SoulAppearanceScreen extends Screen {
     private static final int W = 360, H = 280;
     private static final float MIN_OPACITY = (float) SoulClientConfig.MIN_OPACITY;

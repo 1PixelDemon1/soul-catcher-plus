@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.forgotten.altar.name",
+  "category": "soulcatcherplus:forgotten",
+  "icon": "soulcatcherplus:soul_transfer_altar",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.forgotten.altar.name",
+      "text": "guide.soulcatcherplus.forgotten.altar.page0"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_transfer_altar"
+    }
+  ]
+}

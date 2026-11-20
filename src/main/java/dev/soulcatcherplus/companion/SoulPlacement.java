@@ -8,11 +8,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
 /** Prefer open space, but allow soul placement inside blocks, water, and air. */
-final class SoulPlacement {
+public final class SoulPlacement {
     private static final int DIRECTIONS = 16, MAX_RADIUS = 16;
     private static final int[] HEIGHT_OFFSETS = {0, 1, -1, 2, -2};
 
-    static Vector3d findNear(MobEntity mob, ServerPlayerEntity player, Vector3d center) {
+    public static Vector3d findNear(MobEntity mob, ServerPlayerEntity player, Vector3d center) {
         double radius = Math.min(MAX_RADIUS, Math.max(2, Math.ceil(mob.getBbWidth() / 2) + 1));
         Vector3d fallback = null;
         for (int height : HEIGHT_OFFSETS) for (int i = 0; i < DIRECTIONS; i++) {
@@ -24,7 +24,7 @@ final class SoulPlacement {
                     || !mob.level.hasChunksAt(new BlockPos(bounds.minX, bounds.minY, bounds.minZ),
                         new BlockPos(bounds.maxX, bounds.maxY, bounds.maxZ))) continue;
             if (fallback == null) fallback = point;
-            if (!bounds.intersects(player.getBoundingBox()) && mob.level.noCollision(mob, bounds)) return point;
+            if ((player == null || !bounds.intersects(player.getBoundingBox())) && mob.level.noCollision(mob, bounds)) return point;
         }
         return fallback;
     }

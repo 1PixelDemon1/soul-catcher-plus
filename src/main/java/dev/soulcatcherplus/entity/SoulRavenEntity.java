@@ -5,6 +5,7 @@ import dev.soulcatcherplus.companion.CompanionBrain;
 import dev.soulcatcherplus.companion.LegacyGoals;
 import dev.soulcatcherplus.companion.SoulSpawnContext;
 import dev.soulcatcherplus.entity.ai.SoulRavenCollectGoal;
+import dev.soulcatcherplus.pylon.PylonSouls;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,11 @@ import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.entity.passive.IFlyingAnimal;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
@@ -42,6 +48,8 @@ import net.minecraftforge.fml.network.NetworkHooks;
 public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnimal {
     private static final int CARGO_LIMIT = 8;
     private static final DataParameter<Boolean> PERCHED = EntityDataManager.defineId(SoulRavenEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> ALTERNATE = EntityDataManager.defineId(SoulRavenEntity.class, DataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.LONG_TAILED_TIT;
     private static final DataParameter<Optional<UUID>> SOUL_OWNER = EntityDataManager.defineId(SoulRavenEntity.class, DataSerializers.OPTIONAL_UUID);
     private float flightBlend;
     private float previousFlightBlend;
@@ -51,8 +59,11 @@ public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnim
         moveControl = new FlyingMovementController(this, 10, false) {
             @Override public void tick() {
                 if (isPerched()) {
+                    operation = Action.WAIT;
                     setNoGravity(true);
                     setSpeed(0);
+                    setYya(0);
+                    setZza(0);
                     return;
                 }
                 super.tick();
@@ -73,8 +84,31 @@ public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnim
 
     @Override protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(ALTERNATE, false);
         entityData.define(PERCHED, false);
         entityData.define(SOUL_OWNER, Optional.empty());
+    }
+
+    public boolean isLongTailedTit() { return entityData.get(ALTERNATE); }
+
+    @Override public void readAdditionalSaveData(CompoundNBT tag) {
+        super.readAdditionalSaveData(tag);
+        entityData.set(ALTERNATE, FORM.isSavedIn(tag));
+    }
+
+    @Override public void addAdditionalSaveData(CompoundNBT tag) {
+        super.addAdditionalSaveData(tag);
+        if (isLongTailedTit()) FORM.save(tag);
+    }
+
+    @Override protected ITextComponent getTypeName() {
+        return isLongTailedTit() ? new TranslationTextComponent(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+        if (isPerched()) return super.mobInteract(player, hand);
+        ActionResultType result = FORM.interact(this, player, hand);
+        return result == ActionResultType.PASS ? super.mobInteract(player, hand) : result;
     }
 
     public void configureSoul() {
@@ -82,7 +116,7 @@ public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnim
         LegacyGoals.clear(targetSelector);
         navigation.stop();
         setTarget(null);
-        entityData.set(SOUL_OWNER, Optional.of(CompanionBrain.owner(this)));
+        entityData.set(SOUL_OWNER, PylonSouls.isPylon(this) ? Optional.empty() : Optional.of(CompanionBrain.owner(this)));
         goalSelector.addGoal(0, new SoulRavenCollectGoal(this));
     }
 
@@ -108,7 +142,17 @@ public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnim
         if (perched) {
             navigation.stop();
             setDeltaMovement(Vector3d.ZERO);
+            xRot = 0;
         }
+    }
+
+    @Override public void travel(Vector3d input) {
+        // A perch is stationary. Discard residual flight thrust and velocity on both sides.
+        if (isPerched()) {
+            setDeltaMovement(Vector3d.ZERO);
+            return;
+        }
+        super.travel(input);
     }
 
     @Override public void onSyncedDataUpdated(DataParameter<?> parameter) {
@@ -122,7 +166,7 @@ public final class SoulRavenEntity extends CreatureEntity implements IFlyingAnim
     public boolean takeCargo(Entity cargo) {
         if (!cargo.isAlive() || cargo.isPassenger() || !canAddPassenger(cargo) || !cargo.startRiding(this)) return false;
         if (cargo instanceof ItemEntity item) {
-            RavenItemDelivery.protect(item);
+            if (!PylonSouls.isPylon(this)) RavenItemDelivery.protect(item);
             item.setNeverPickUp();
         }
         setPerched(false);

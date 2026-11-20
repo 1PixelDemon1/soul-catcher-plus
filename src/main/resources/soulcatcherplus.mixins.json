@@ -9,6 +9,8 @@
     "SoulEntityLifecycleMixin",
     "RavenDeliveredItemMixin",
     "LegacyGoalSelectorMixin",
+    "CompanionWaitMovementMixin",
+    "SoulTotemMixin",
     "CompanionWitherMixin",
     "CompanionDragonMixin",
     "CompanionDragonPhaseMixin",
