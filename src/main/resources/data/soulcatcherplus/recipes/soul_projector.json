@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "KSK",
+    "KPK"
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:polished_blackstone"
+    },
+    "S": {
+      "item": "minecraft:glass_pane"
+    },
+    "P": {
+      "item": "minecraft:soul_sand"
+    }
+  },
+  "result": {
+    "item": "soulcatcherplus:soul_projector",
+    "count": 1
+  }
+}

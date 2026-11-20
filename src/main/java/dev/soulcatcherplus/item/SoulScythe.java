@@ -46,6 +46,7 @@ public final class SoulScythe extends SwordItem {
             SoulMinions.tryInherit(mob);
             PlayerSouls collection = SoulService.data(server);
             if (CompanionBrain.isSoul(mob)) {
+                if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)) return ActionResultType.SUCCESS;
                 if (CompanionBrain.owner(mob).equals(server.getUUID())) {
                     collection.selected = mob.getPersistentData().getUUID(CompanionBrain.ENTRY);
                     collection.commandGroup = false;

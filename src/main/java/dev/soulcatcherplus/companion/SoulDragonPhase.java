@@ -24,8 +24,9 @@ public final class SoulDragonPhase extends Phase {
 
     @Override public void doServerTick() {
         ServerPlayerEntity owner = dragon.getServer().getPlayerList().getPlayer(CompanionBrain.owner(dragon));
-        CompanionBrain.Mode mode = CompanionBrain.mode(dragon);
-        if (owner == null || owner.level != dragon.level || mode == CompanionBrain.Mode.WAIT) {
+        boolean pylon = dev.soulcatcherplus.pylon.PylonSouls.isPylon(dragon);
+        CompanionBrain.Mode mode = pylon ? CompanionBrain.Mode.GUARD : CompanionBrain.mode(dragon);
+        if (!pylon && (owner == null || owner.level != dragon.level) || mode == CompanionBrain.Mode.WAIT) {
             destination = null;
             dragon.setDeltaMovement(Vector3d.ZERO);
             return;

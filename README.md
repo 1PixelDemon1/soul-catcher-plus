@@ -16,14 +16,18 @@ companions in battle.
 - Progress through four scythe tiers, custom enchantments, and advancements.
 - Unlock Forgotten Souls: Raven collects items/souls, Courier opens each visitor's
   personal Ender Chest, and Shaman supplies support effects.
-- Customize local soul color/opacity and read an optional English/Russian Patchouli guide.
+- Choose the color and opacity of your summoned souls.
+- Bind guardians to Soul Pylons, display forms with Soul Projectors, and copy them
+  onto scrolls at a Soul Transfer Altar.
+- Power equipment and a Soul-Fueled Furnace with energy from soul cages.
+- Read an optional English/Russian Patchouli guide.
 - Extend creature support through a public API.
 
 ## Supported versions
 
-**1.2.3** covers the core and Compat on all four targets below.
-The update improves Aggressive target commitment, shared placement, and companion orders.
-See the [release notes](docs/releases/1.2.3.md) for dependencies and validation.
+**1.3.0-prerelease** covers the core on all four targets below. See the
+[prerelease notes](docs/releases/1.3.0-prerelease.md) for changes and validation.
+The [1.2.3 release notes](docs/releases/1.2.3.md) cover the matching stable core and Compat builds.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |

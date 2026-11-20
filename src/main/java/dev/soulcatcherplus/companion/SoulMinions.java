@@ -23,7 +23,7 @@ public final class SoulMinions {
     // Server-thread-only, weak keys: configuration state must not survive an entity reload.
     private static final Set<MobEntity> CONFIGURED = Collections.newSetFromMap(new WeakHashMap<>());
     @com.github.bsideup.jabel.Desugar
-    private record Bond(UUID owner, UUID entry, UUID root) {}
+    private record Bond(UUID owner, UUID entry, UUID root, boolean pylon) {}
 
     public static boolean isMinion(Entity entity) { return entity.getPersistentData().hasUUID(ROOT); }
 
@@ -70,6 +70,7 @@ public final class SoulMinions {
         tag.putUUID(CompanionBrain.OWNER, bond.owner());
         tag.putUUID(CompanionBrain.ENTRY, bond.entry());
         tag.putUUID(ROOT, bond.root());
+        if (bond.pylon()) tag.putBoolean(dev.soulcatcherplus.pylon.PylonSouls.PYLON, true);
         if (CompanionBrain.activeEntry(child) == null) { child.remove(); return false; }
         SoulNames.update(child);
         if (child.isAddedToWorld()) {
@@ -85,7 +86,8 @@ public final class SoulMinions {
             if (creator instanceof MobEntity mob && CompanionBrain.isSoul(mob)) {
                 if (!mob.getPersistentData().hasUUID(CompanionBrain.ENTRY)) return null;
                 UUID root = isMinion(mob) ? mob.getPersistentData().getUUID(ROOT) : mob.getUUID();
-                return new Bond(CompanionBrain.owner(mob), mob.getPersistentData().getUUID(CompanionBrain.ENTRY), root);
+                return new Bond(CompanionBrain.owner(mob), mob.getPersistentData().getUUID(CompanionBrain.ENTRY), root,
+                    dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob));
             }
             creator = summoner(creator);
         }

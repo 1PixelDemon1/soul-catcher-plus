@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus;
 
+import dev.soulcatcherplus.entity.SoulBoltEntity;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.entity.SoulRavenEntity;
 import dev.soulcatcherplus.entity.SoulRavenAdapter;
@@ -62,8 +63,18 @@ public final class SoulCatcherPlus {
         () -> new SoulScroll(SoulCatcherPlus.SOUL_COURIER, new Item.Properties().rarity(net.minecraft.item.Rarity.RARE)));
     /** Display-only item for the tab icon; omitted from the tab's obtainable equipment. */
     public static final RegistryObject<Item> SOUL_ICON = ITEMS.register("soul_icon", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> SOUL_SACRIFICE_TOTEM = ITEMS.register("soul_sacrifice_totem",
+        () -> new dev.soulcatcherplus.item.SoulItem(new Item.Properties().tab(SOUL_TAB).stacksTo(1).rarity(net.minecraft.item.Rarity.RARE)));
+    public static final RegistryObject<Item> SOULBOUND_HOE = ITEMS.register("soulbound_hoe",
+        () -> new dev.soulcatcherplus.item.SoulboundHoe(new Item.Properties().tab(SOUL_TAB)));
+    public static final RegistryObject<Item> SOUL_ENERGY_BOW = ITEMS.register("soul_energy_bow",
+        () -> new dev.soulcatcherplus.item.SoulEnergyBow(new Item.Properties().tab(SOUL_TAB).durability(384)));
     /** Compatibility alias for the original iron scythe. */
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
+    public static final RegistryObject<EntityType<SoulBoltEntity>> SOUL_BOLT = ENTITIES.register("soul_bolt",
+        () -> EntityType.Builder.<SoulBoltEntity>of(SoulBoltEntity::new, EntityClassification.MISC)
+            .sized(0.25f, 0.25f).clientTrackingRange(8).updateInterval(1)
+            .build(ID + ":soul_bolt"));
     public static final RegistryObject<EntityType<SoulRemnant>> REMNANT = ENTITIES.register("soul_remnant",
         () -> EntityType.Builder.<SoulRemnant>of(SoulRemnant::new, EntityClassification.MISC)
             .sized(0.6f, 0.8f).clientTrackingRange(8).updateInterval(10)
@@ -86,6 +97,14 @@ public final class SoulCatcherPlus {
             net.minecraftforge.fml.config.ModConfig.Type.CLIENT, SoulClientConfig.SPEC);
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         ITEMS.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.BLOCKS.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.TILES.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.MENUS.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.BLOCKS.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.TILES.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.MENUS.register(bus);
+        dev.soulcatcherplus.altar.SoulAltars.register(bus);
+        dev.soulcatcherplus.furnace.SoulFurnaces.register(bus);
         ENTITIES.register(bus);
         ForgottenSoulLoot.SERIALIZERS.register(bus);
         bus.addListener(SoulCatcherPlus::registerEntityAttributes);

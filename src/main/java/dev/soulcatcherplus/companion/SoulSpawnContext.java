@@ -56,6 +56,9 @@ public final class SoulSpawnContext {
         Entity source = entity;
         while (source != null && !(source instanceof MobEntity && CompanionBrain.isSoul(source)))
             source = passenger ? source.getVehicle() : null;
+        if (source instanceof MobEntity guardian && dev.soulcatcherplus.pylon.PylonSouls.isPylon(guardian)
+                && CompanionBrain.activeEntry(guardian) != null)
+            return dev.soulcatcherplus.pylon.PylonSouls.paused(guardian);
         if (!(source instanceof MobEntity mob) || !mob.isAlive() || !CompanionBrain.isSoul(mob) || mob.getServer() == null
                 || mob.getServer().getPlayerList().getPlayer(CompanionBrain.owner(mob)) != null
                 // Invalid reservations still reach normal stale-entity/cargo cleanup.

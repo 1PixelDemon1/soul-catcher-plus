@@ -22,3 +22,5 @@ art/soul-scroll/*.png
 modeling/**/preview*.png
 modeling/**/*.gif
 modeling/**/bounds-report.json
+modeling/**/surface-report.json
+modeling/**/*_surface.bbmodel

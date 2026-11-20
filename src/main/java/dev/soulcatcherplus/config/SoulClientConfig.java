@@ -3,10 +3,10 @@ package dev.soulcatcherplus.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 
-/** Client appearance preferences; no Minecraft client classes are loaded on a server. */
+/** Local owner preferences, published to the server after saving; previews remain local. */
 public final class SoulClientConfig {
-    public static final int DEFAULT_COLOR = 0x59D9FF;
-    public static final float DEFAULT_OPACITY = 0.42f;
+    public static final int DEFAULT_COLOR = dev.soulcatcherplus.data.SoulAppearance.DEFAULT_COLOR;
+    public static final float DEFAULT_OPACITY = dev.soulcatcherplus.data.SoulAppearance.DEFAULT_OPACITY;
     public static final double MIN_OPACITY = 0.1;
     public static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.IntValue COLOR;
@@ -18,9 +18,9 @@ public final class SoulClientConfig {
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         builder.push("appearance");
-        COLOR = builder.comment("RGB tint of summoned souls, stored as a decimal RGB integer.")
+        COLOR = builder.comment("RGB tint of your summoned souls, shared with other players by the server. Stored as a decimal RGB integer.")
             .defineInRange("color", DEFAULT_COLOR, 0, 0xFFFFFF);
-        OPACITY = builder.comment("Opacity of summoned souls: 0.1 is the minimum, 1 is opaque.")
+        OPACITY = builder.comment("Opacity of your summoned souls, shared with other players: 0.1 is the minimum, 1 is opaque.")
             .defineInRange("opacity", 0.42, MIN_OPACITY, 1);
         builder.pop();
         SPEC = builder.build();
@@ -33,6 +33,12 @@ public final class SoulClientConfig {
     public static float red() { return color() == DEFAULT_COLOR ? 0.35f : (color() >> 16 & 255) / 255f; }
     public static float green() { return color() == DEFAULT_COLOR ? 0.85f : (color() >> 8 & 255) / 255f; }
     public static float blue() { return (color() & 255) / 255f; }
+    public static dev.soulcatcherplus.data.SoulAppearance appearance() {
+        return dev.soulcatcherplus.data.SoulAppearance.clamped(color(), opacity());
+    }
+    public static dev.soulcatcherplus.data.SoulAppearance savedAppearance() {
+        return dev.soulcatcherplus.data.SoulAppearance.clamped(COLOR.get(), OPACITY.get().floatValue());
+    }
 
     public static void preview(int color, float opacity) {
         previewColor = color & 0xFFFFFF;

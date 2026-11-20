@@ -12,6 +12,11 @@ import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.ai.goal.LookRandomlyGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
@@ -34,6 +39,8 @@ public final class SoulShamanEntity extends CreatureEntity {
     private static final int AURA_DURATION_TICKS = 160;
     private static final double AURA_RADIUS = 6;
     private static final DataParameter<Boolean> CASTING = EntityDataManager.defineId(SoulShamanEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> ALTERNATE = EntityDataManager.defineId(SoulShamanEntity.class, DataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.MIKU;
     private static final DataParameter<Integer> CAST_STARTED_AT = EntityDataManager.defineId(SoulShamanEntity.class, DataSerializers.INT);
     private long nextCastAt;
 
@@ -49,8 +56,30 @@ public final class SoulShamanEntity extends CreatureEntity {
 
     @Override protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(ALTERNATE, false);
         entityData.define(CASTING, false);
         entityData.define(CAST_STARTED_AT, 0);
+    }
+
+    public boolean isMiku() { return entityData.get(ALTERNATE); }
+
+    @Override public void readAdditionalSaveData(CompoundNBT tag) {
+        super.readAdditionalSaveData(tag);
+        entityData.set(ALTERNATE, FORM.isSavedIn(tag));
+    }
+
+    @Override public void addAdditionalSaveData(CompoundNBT tag) {
+        super.addAdditionalSaveData(tag);
+        if (isMiku()) FORM.save(tag);
+    }
+
+    @Override protected ITextComponent getTypeName() {
+        return isMiku() ? new TranslationTextComponent(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+        ActionResultType result = FORM.interact(this, player, hand);
+        return result == ActionResultType.PASS ? super.mobInteract(player, hand) : result;
     }
 
     @Override protected void registerGoals() {

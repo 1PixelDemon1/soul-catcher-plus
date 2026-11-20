@@ -52,6 +52,11 @@ dependencies {
         runtimeOnly fg.deobf('maven.modrinth:patchouli:1.16.4-53.3-forge')
         playtestMods 'maven.modrinth:patchouli:1.16.4-53.3-forge'
     }
+    if (project.hasProperty('withJei')) {
+        def jei = 'maven.modrinth:u6dRKJwZ:DM1ByGMA' // Forge 1.16.5, 7.8.1.1018
+        runtimeOnly fg.deobf(jei)
+        playtestMods jei
+    }
     if (project.hasProperty('withAquamirae')) {
         runtimeOnly fg.deobf('maven.modrinth:8BmcQJ2H:UQGoJDhn')
         playtestMods 'maven.modrinth:8BmcQJ2H:UQGoJDhn'

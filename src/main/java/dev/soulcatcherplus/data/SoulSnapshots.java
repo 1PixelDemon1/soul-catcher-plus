@@ -8,6 +8,15 @@ import net.minecraft.nbt.INBT;
 
 /** Preserve mod-specific saved state, but never restore old identity/death/ownership. */
 public final class SoulSnapshots {
+    /** Bounded client-safe appearance, shared by collection previews and decorative projectors. */
+    public static CompoundNBT preview(SoulEntry entry) throws java.io.IOException {
+        CompoundNBT visual = sanitize(dev.soulcatcherplus.api.SoulAdapters.get(
+            new net.minecraft.util.ResourceLocation(entry.entityType)).previewData(entry.snapshot()));
+        visual.remove("ForgeData"); visual.remove("ForgeCaps");
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        net.minecraft.nbt.CompressedStreamTools.write(visual, new java.io.DataOutputStream(bytes));
+        return bytes.size() <= 16 * 1024 ? visual : new CompoundNBT();
+    }
     public static CompoundNBT sanitize(CompoundNBT original) {
         CompoundNBT tag = original.copy();
         for (String key : new String[]{"UUID", "Pos", "Motion", "Rotation", "Passengers", "Leash",

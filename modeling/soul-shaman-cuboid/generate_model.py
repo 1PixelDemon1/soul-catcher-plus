@@ -113,6 +113,22 @@ for side,sign in [('left',-1),('right',1)]:
         beam('hood_front_mark_'+side+'_'+part,start,end,.35,-2.80,-2.76,'cyan_trim')
 cube('hood_top_mark',[-1.65,20.76,-2.75],[1.65,20.80,-2.25],'cyan_trim')
 
+# Embed the embroidery into its cloth instead of floating a second closed slab
+# above it. The surface exporter removes the hidden cloth/decoration interfaces.
+for c in cubes:
+    if c['name'].startswith('hem_rune_'):
+        if '_front_' in c['name']: c['to'][2] = -1.63
+        if '_back_' in c['name']: c['from'][2] = 1.63
+    if c['name'].startswith('hood_side_mark_'):
+        if '_left_' in c['name']: c['to'][0] = -4.08
+        if '_right_' in c['name']: c['from'][0] = 4.08
+    if c['name'].startswith('hood_front_mark_'): c['to'][2] = -2.70
+    if c['name'] == 'hood_top_mark': c['from'][1] = 20.73
+    # Join the mask and lining to the rear hood volume. No concealed, separate
+    # face board remains visible through the translucent mask.
+    if c['name'] in ('mask_upper', 'mask_chin'): c['to'][2] = -2.0
+    if c['name'] == 'hood_inner_shadow': c['to'][2] = .1
+
 # Keep each hem strip and its embroidery together under an independent waist pivot.
 hem_names=['front_left','front_right','front_center','back_left','back_right',
            'back_center','side_-1','side_1']

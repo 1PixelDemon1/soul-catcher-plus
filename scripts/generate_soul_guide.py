@@ -147,14 +147,18 @@ def main():
     category('enchantments', ('Enchantments', 'Зачарования'),
              ('Charms that strengthen your tools and the bonds with your companions.',
               'Чары, укрепляющие снаряжение и связь со спутниками.'), 'minecraft:enchanted_book', 2)
-    category('forgotten', ('Forgotten Souls', 'Забытые души'),
-             ('Old seals sometimes hold companions with unusual gifts.',
-              'Старые печати порой хранят спутников с необычными дарами.'),
-             'soulcatcherplus:forgotten_soul_scroll', 3)
+    category('forgotten', ('Soul Scrolls', 'Свитки душ'),
+             ('Learn to read old seals, copy souls onto paper and find the Forgotten Souls.',
+              'Как читать старые печати, переносить души на бумагу и находить Забытые души.'),
+             'soulcatcherplus:soul_scroll', 3)
+    category('devices', ('Functional Blocks', 'Функциональные блоки'),
+             ('Additional blocks that use souls and their energy.',
+              'Дополнительные блоки, которые используют души и их энергию.'),
+             'soulcatcherplus:soul_pylon', 4)
     category('commands', ('Commands & debugging', 'Команды и отладка'),
              ('Administrative commands. Requires cheats or operator permission level 2.',
               'Команды администратора. Нужны включённые читы или права оператора уровня 2.'),
-             'minecraft:experience_bottle', 4)
+             'minecraft:experience_bottle', 5)
 
     entry('basics/capture', ('Your first soul', 'Первая душа'), 'soulcatcherplus:textures/entity/soul_remnant/small.png', 0, [
         ('Begin with simple equipment and your first soul. A good catcher learns to care for companions as well as summon them.$(br2)To catch a soul, you will need a scythe and a soul cage. Keep the cage in your offhand or on your hotbar.$(br2)Switch the scythe to Harvest mode and use it on a creature — right mouse button by default. A mark will appear. It fades quickly: defeat the creature before the bond breaks.$(br2)A glowing soul will remain after your victory. Use the scythe on it to preserve the captured form in your bestiary. Only you can claim a soul bearing your mark.$(br2)Do not linger: an unattended trace will soon fade away.',
@@ -200,6 +204,19 @@ def main():
         ('If these notes are lost, combine an ordinary book with soul sand.$(br2)May the new book serve you on your travels — or reach someone just beginning to hear the souls.',
          'Если эти записи будут потеряны, соедини обычную книгу с песком душ.$(br2)Пусть новая книга послужит тебе в дороге — или достанется тому, кто только начинает слышать души.'), crafting('soul_guide')])
 
+    entry('equipment/totem', ('Soul Sacrifice Totem', 'Жертвенный тотем'), 'soulcatcherplus:soul_sacrifice_totem', 5, [
+        ('Hold the totem in either hand. Keep a charged cage in your other hand or on your hotbar.$(br2)The star draws from the cage to save you from a fatal blow. The totem can be used again.',
+         'Держи тотем в руке, а клетку — в другой руке или на панели быстрого доступа.$(br2)При смертельном ударе звезда берёт энергию клетки и спасает тебя. Тотем остаётся цел.'),
+        crafting('soul_sacrifice_totem')])
+    entry('equipment/hoe', ('Soulbound Hoe', 'Мотыга душ'), 'soulcatcherplus:soulbound_hoe', 6, [
+        ('Sneak and use the hoe on a plant to feed it as you would with bone meal.$(br2)Keep a charged cage in your other hand or on your hotbar.',
+         'Крадучись, примени мотыгу к растению как костную муку.$(br2)Для подкормки держи заряженную клетку в другой руке или на панели быстрого доступа.'),
+        crafting('soulbound_hoe', smithing=True)])
+    entry('equipment/bow', ('Soul Energy Bow', 'Лук душ'), 'soulcatcherplus:soul_energy_bow', 7, [
+        ('The bow shapes soul energy into a shot. Keep a charged cage in your other hand or on your hotbar.',
+         'Лук превращает энергию душ в снаряд. Для выстрела держи заряженную клетку в другой руке или на панели быстрого доступа.'),
+        crafting('soul_energy_bow', smithing=True)])
+
     entry('enchantments/harvester', ('Soul Harvester', 'Жнец душ'), 'soulcatcherplus:soul_scythe', 0, [
         ('An enchanted scythe helps draw more energy from your victories.$(br2)Keep it in your hand when going into battle, and your cage will fill more generously.',
          'Зачарованная коса помогает извлекать больше энергии из одержанных побед.$(br2)Держи её в руке, отправляясь в бой, — и клетка будет наполняться щедрее.')])
@@ -210,18 +227,35 @@ def main():
         ('These charms are woven into armor to strengthen the bond between a catcher and their companions.$(br2)Wearing enchanted armor lets you sustain a larger party. A good scythe alone may not be enough for someone who wishes to lead many.',
          'Эти чары вплетают в броню, чтобы укрепить связь между ловцом и его спутниками.$(br2)Надетые зачарованные доспехи позволяют поддерживать больший отряд. Одной хорошей косы не всегда достаточно тому, кто желает вести за собой многих.')])
 
-    entry('forgotten/scrolls', ('Soul scrolls', 'Свитки душ'), 'soulcatcherplus:forgotten_soul_scroll', 0, [
+    entry('forgotten/scrolls', ('Reading a seal', 'Как открыть свиток'), 'soulcatcherplus:soul_scroll', 0, [
         ('Some souls have survived in old scrolls. Before breaking a seal, read which creature is bound to it.$(br2)Take the scroll in hand and use it. The seal will break, and the form held within will appear in your bestiary. You will still need energy and room in your party to summon it.$(br2)Scrolls of Forgotten Souls are occasionally found in chests. Their companions are reached through surviving seals, rather than caught with a scythe.',
          'Некоторые души сохранились в старых свитках. Прежде чем разрушить печать, прочитай, какое существо связано с ней.$(br2)Возьми свиток в руку и используй его. Печать разрушится, а заключённый в ней облик появится в бестиарии. Для призыва всё ещё понадобятся энергия и свободное место в отряде.$(br2)Изредка в сундуках встречаются свитки Забытых душ. Их спутников получают через сохранившиеся печати, а не обычной ловлей косой.')])
-    entry('forgotten/raven', ('Soul Raven', 'Призрачный ворон'), 'soulcatcherplus:forgotten_soul_scroll', 1, [
+    entry('forgotten/altar', ('Soul Transfer Altar', 'Алтарь переноса душ'), 'soulcatcherplus:soul_transfer_altar', 1, [
+        ('Place paper and a charged cage on the altar. Choose a form from your bestiary and pay the cost shown to make a scroll.$(br2)The form stays in your bestiary. You can give the copy to another catcher.',
+         'Положи в алтарь бумагу и заряженную клетку. Выбери облик из бестиария и создай свиток за указанную цену.$(br2)Облик останется у тебя. Копию можно передать другому ловцу.'),
+        crafting('soul_transfer_altar')])
+    entry('forgotten/raven', ('Soul Raven', 'Призрачный ворон'), 'soulcatcherplus:forgotten_soul_scroll', 2, [
         ('A small raven rests on its owner’s shoulder and watches for nearby spoils.$(br2)It seeks items and souls that you can claim, gathers several finds and brings them back. If your inventory is full, the spoils will be left at your feet.$(br2)You will need a cage to receive the souls it brings.$(br2)The raven is no fighter. Take care of your collector.',
          'Небольшой ворон отдыхает на плече своего хозяина и следит за оставленной поблизости добычей.$(br2)Он разыскивает предметы и доступные тебе души, подбирает несколько находок и приносит их обратно. Если в твоём инвентаре нет места, добыча останется у ног.$(br2)Для принятия принесённых душ нужна клетка.$(br2)Ворон не создан для сражений. Береги своего собирателя.')])
-    entry('forgotten/courier', ('Soul Courier', 'Призрачный курьер'), 'minecraft:ender_chest', 2, [
+    entry('forgotten/courier', ('Soul Courier', 'Призрачный курьер'), 'minecraft:ender_chest', 3, [
         ('A little skeleton carries an Ender Chest much heavier than itself. Use the courier to reach your storage far from home.$(br2)Other travelers can call upon it too. Each will see their own belongings.$(br2)The courier waits patiently while its chest is open. Even if its summon ends, the contents of your storage will remain safe.',
          'Маленький скелет несёт эндер-сундук, который заметно тяжелее его самого. Воспользуйся курьером, чтобы добраться до своего хранилища вдали от дома.$(br2)Другие путешественники тоже могут обращаться к нему. Каждый увидит собственные вещи.$(br2)Пока сундук открыт, курьер терпеливо ждёт. Даже если его призыв оборвётся, содержимое хранилища останется в сохранности.')])
-    entry('forgotten/shaman', ('Soul Shaman', 'Призрачный шаман'), 'minecraft:soul_torch', 3, [
+    entry('forgotten/shaman', ('Soul Shaman', 'Призрачный шаман'), 'minecraft:soul_torch', 4, [
         ('The shaman accompanies your party with a staff and an amulet. Its rites strengthen you and your allied souls, helping them fight and recover from wounds.$(br2)Stay nearby to keep its aid close at hand.$(br2)The shaman itself avoids combat. See to its protection, and it will care for those you lead.',
          'Шаман сопровождает отряд с посохом и амулетом. Своими обрядами он укрепляет тебя и союзные души, помогая им сражаться и оправляться от ран.$(br2)Держись поблизости, чтобы его помощь не прерывалась.$(br2)Сам шаман избегает боя. Позаботься о его защите — и он позаботится о тех, кого ты ведёшь за собой.')])
+
+    entry('devices/pylon', ('Soul Pylon', 'Пилон душ'), 'soulcatcherplus:soul_pylon', 0, [
+        ('Open the pylon and place a soul scroll and a charged cage inside.$(br2)The pylon draws from the cage to summon the soul as a guardian that patrols nearby.',
+         'Открой меню пилона и вложи в него свиток души и заряженную клетку.$(br2)Пилон черпает энергию из клетки и призывает стража, который охраняет место вокруг пилона.'),
+        crafting('soul_pylon')])
+    entry('devices/projector', ('Soul Projector', 'Проектор душ'), 'soulcatcherplus:soul_projector', 1, [
+        ('Place a scroll inside to display an image of its soul above the projector.',
+         'Вставь свиток, чтобы увидеть облик души над проектором.'),
+        crafting('soul_projector', 'quartz_soul_projector')])
+    entry('devices/furnace', ('Soul-Fueled Furnace', 'Печь душ'), 'soulcatcherplus:soul_fueled_furnace', 2, [
+        ('Put a charged soul cage in the lower slot to feed the blue flame.',
+         'Голубое пламя питается энергией душ. Для плавки вставь заряженную клетку в нижний паз печи.'),
+        crafting('soul_fueled_furnace')])
 
     entry('commands/energy', ('Set soul energy', 'Запас энергии'), 'soulcatcherplus:iron_soul_cage', 0, [
         ('$(thing)/soulcatcher energy <amount>$()$(br2)Sets the energy stored in your active cage. It replaces the current amount rather than adding to it.$(br2)Example:$(br)/soulcatcher energy 500',

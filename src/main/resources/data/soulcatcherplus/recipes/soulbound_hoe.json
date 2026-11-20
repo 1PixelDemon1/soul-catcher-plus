@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smithing",
+  "base": {
+    "item": "minecraft:iron_hoe"
+  },
+  "addition": {
+    "item": "minecraft:bone_block"
+  },
+  "result": {
+    "item": "soulcatcherplus:soulbound_hoe"
+  }
+}

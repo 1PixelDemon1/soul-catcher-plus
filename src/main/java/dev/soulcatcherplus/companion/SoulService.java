@@ -98,7 +98,7 @@ public final class SoulService {
                 return;
             }
             changed(player);
-            message(player, "summoned", entry.name);
+            message(player, "summoned", entry.displayName());
             completed = true;
         } catch (RuntimeException error) {
             entry.activeEntity = null; entry.dimension = "";

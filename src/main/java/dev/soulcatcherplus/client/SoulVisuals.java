@@ -4,7 +4,7 @@ package dev.soulcatcherplus.client;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import dev.soulcatcherplus.api.client.SoulVisualProvider;
 import dev.soulcatcherplus.companion.CompanionBrain;
-import dev.soulcatcherplus.config.SoulClientConfig;
+import dev.soulcatcherplus.data.SoulAppearance;
 import dev.soulcatcherplus.SoulCatcherPlus;
 import java.util.*;
 import net.minecraft.client.Minecraft;
@@ -46,13 +46,13 @@ public final class SoulVisuals {
         var renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
         ResourceLocation texture = renderer.getTextureLocation(entity);
         ResourceLocation type = entity.getType().getRegistryName();
-        return new CompanionBuffers(source, type, texture);
+        return new CompanionBuffers(source, type, texture, SoulAppearances.of(entity));
     }
     @com.github.bsideup.jabel.Desugar
     private record CompanionBuffers(IRenderTypeBuffer delegate, ResourceLocation type,
-            ResourceLocation texture) implements IRenderTypeBuffer {
+            ResourceLocation texture, SoulAppearance appearance) implements IRenderTypeBuffer {
         @Override public IVertexBuilder getBuffer(RenderType original) {
-            return tint(delegate.getBuffer(remap(type, texture, original)));
+            return tint(delegate.getBuffer(remap(type, texture, original)), appearance, appearance.opacity(), null);
         }
     }
     static RenderType remap(ResourceLocation type, ResourceLocation texture, RenderType original) {
@@ -61,18 +61,18 @@ public final class SoulVisuals {
         if (original == RenderType.entitySolid(texture) || original == RenderType.entityCutout(texture)
             || original == RenderType.entityCutoutNoCull(texture) || original == RenderType.entityCutoutNoCull(texture, false)
             || original == RenderType.entitySmoothCutout(texture) || original == RenderType.entityTranslucentCull(texture))
-            return RenderType.entityTranslucent(texture);
+            return forgottenSoul(type) ? RenderType.entityTranslucentCull(texture) : RenderType.entityTranslucent(texture);
         return original;
     }
-    static IVertexBuilder tint(IVertexBuilder delegate) {
-        return tint(delegate, SoulClientConfig.opacity());
+    /** Their baked shells have outward-facing surfaces; do not blend their hidden reverse sides. */
+    private static boolean forgottenSoul(ResourceLocation type) {
+        if (type == null || !SoulCatcherPlus.ID.equals(type.getNamespace())) return false;
+        String name = type.getPath();
+        return name.equals("soul_raven") || name.equals("soul_courier") || name.equals("soul_shaman");
     }
-    static IVertexBuilder tint(IVertexBuilder delegate, float opacity) {
-        return tint(delegate, opacity, null);
-    }
-    static IVertexBuilder tint(IVertexBuilder delegate, float opacity, VertexFade fade) {
+    static IVertexBuilder tint(IVertexBuilder delegate, SoulAppearance appearance, float opacity, VertexFade fade) {
         float alpha = net.minecraft.util.math.MathHelper.clamp(opacity, 0, 1);
-        float red = SoulClientConfig.red(), green = SoulClientConfig.green(), blue = SoulClientConfig.blue();
+        float red = appearance.red(), green = appearance.green(), blue = appearance.blue();
         return new IVertexBuilder() {
             private float vertexAlpha = 1;
             public IVertexBuilder vertex(double x, double y, double z) {

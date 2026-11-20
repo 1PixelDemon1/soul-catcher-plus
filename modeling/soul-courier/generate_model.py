@@ -211,6 +211,12 @@ for side,sign in (('left',-1),('right',1)):
 cube('amulet_frame', [-.55, 8.65, -1.82], [.55, 9.95, -1.48], 'amulet', 'strap')
 cube('amulet_stone', [-.35, 8.85, -1.88], [.35, 9.75, -1.81], 'amulet', 'soul')
 
+# Close the tiny concealed gap under the hood so its lining and the skull form
+# one shell. Only covered surfaces move; the visible vanilla face stays in place.
+skull = next(c for c in cubes if c['name'] == 'skeleton_head')
+skull['from'][0], skull['to'][0] = -3.05, 3.05
+skull['to'][2] = 3.05
+
 # A slight forward neck posture keeps the hood clear of the tilted chest.
 for element in cubes:
     if element['name'] in members['head']:

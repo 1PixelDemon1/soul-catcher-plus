@@ -32,8 +32,9 @@ public abstract class CompanionWitherMixin {
         wither.setInvulnerableTicks(0);
         destroyBlocksTick = 0;
         ServerPlayerEntity owner = wither.getServer().getPlayerList().getPlayer(CompanionBrain.owner(wither));
+        boolean pylon = dev.soulcatcherplus.pylon.PylonSouls.isPylon(wither);
         LivingEntity target = wither.getTarget();
-        if (owner == null || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT
+        if (owner == null && !pylon || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT
                 || target != null && !CompanionBrain.canAttack(wither, target)) {
             wither.setTarget(null);
             target = null;
@@ -49,11 +50,15 @@ public abstract class CompanionWitherMixin {
         }
         if (target == null) {
             wither.getNavigation().stop();
-            if (owner == null || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT) wither.setDeltaMovement(Vector3d.ZERO);
+            if (owner == null && !pylon || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT) wither.setDeltaMovement(Vector3d.ZERO);
             else {
                 Vector3d destination = CompanionBrain.mode(wither) == CompanionBrain.Mode.GUARD
                     ? Vector3d.atCenterOf(BlockPos.of(wither.getPersistentData().getLong("scp_guard"))).add(0, 3, 0)
                     : owner.position().subtract(owner.getLookAngle().multiply(1, 0, 1).normalize().scale(5)).add(0, 3, 0);
+                if (pylon) {
+                    double angle = wither.tickCount * .012 + (wither.getUUID().hashCode() & 255);
+                    destination = destination.add(Math.cos(angle) * 5, Math.sin(angle * .7) * .4, Math.sin(angle) * 5);
+                }
                 if (CompanionBrain.isReturning(wither)) destination = owner.position().add(0, 2, 0);
                 Vector3d offset = destination.subtract(wither.position());
                 Vector3d desired = offset.lengthSqr() < 1 ? Vector3d.ZERO : offset.normalize().scale(Math.min(0.6, offset.length() * 0.16));

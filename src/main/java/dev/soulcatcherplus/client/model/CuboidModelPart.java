@@ -29,6 +29,11 @@ class CuboidModelPart<M> {
         cubes.add(new Cube<>(material, x0 / 16, y0 / 16, z0 / 16, x1 / 16, y1 / 16, z1 / 16, uv, faces));
     }
 
+    /** An exposed quad baked from the editable cuboids, with interpolated face UVs. */
+    void surface(M material, float[] xyzuv, float nx, float ny, float nz) {
+        cubes.add(new Cube<>(material, xyzuv, nx, ny, nz));
+    }
+
     void render(M material, MatrixStack pose, IVertexBuilder buffer, int light, int overlay,
             float red, float green, float blue, float alpha) {
         pose.pushPose();
@@ -48,6 +53,16 @@ class CuboidModelPart<M> {
         // Precomputed XYZ, UV and normal; rendering does not allocate face arrays.
         private final List<float[]> vertices = new ArrayList<>(24);
         private final int faces;
+
+        Cube(M material, float[] xyzuv, float nx, float ny, float nz) {
+            this.material = material;
+            this.faces = 0;
+            for (int i = 3; i >= 0; i--) {
+                int j = i * 5;
+                vertices.add(new float[] {xyzuv[j]/16, xyzuv[j+1]/16, xyzuv[j+2]/16,
+                    xyzuv[j+3], xyzuv[j+4], nx, ny, nz});
+            }
+        }
 
         Cube(M material, float x0, float y0, float z0, float x1, float y1, float z1, float[] uv, int faces) {
             this.material = material;

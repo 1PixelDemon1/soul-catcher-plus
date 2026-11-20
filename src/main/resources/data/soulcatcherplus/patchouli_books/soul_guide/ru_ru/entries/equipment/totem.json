@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.equipment.totem.name",
+  "category": "soulcatcherplus:equipment",
+  "icon": "soulcatcherplus:soul_sacrifice_totem",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.totem.name",
+      "text": "guide.soulcatcherplus.equipment.totem.page0"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_sacrifice_totem"
+    }
+  ]
+}

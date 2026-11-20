@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.equipment.hoe.name",
+  "category": "soulcatcherplus:equipment",
+  "icon": "soulcatcherplus:soulbound_hoe",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.hoe.name",
+      "text": "guide.soulcatcherplus.equipment.hoe.page0"
+    },
+    {
+      "type": "smithing",
+      "recipe": "soulcatcherplus:soulbound_hoe"
+    }
+  ]
+}
