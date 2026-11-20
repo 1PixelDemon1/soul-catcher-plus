@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "KSK",
+    "KPK"
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:quartz_block"
+    },
+    "S": {
+      "item": "minecraft:glass_pane"
+    },
+    "P": {
+      "item": "minecraft:soul_sand"
+    }
+  },
+  "result": {
+    "item": "soulcatcherplus:quartz_soul_projector",
+    "count": 1
+  }
+}

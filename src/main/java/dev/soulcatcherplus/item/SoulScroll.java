@@ -63,7 +63,7 @@ public class SoulScroll extends Item {
         ItemStack stack = new ItemStack(scrollItem(soul.entityType, soul.maxHealth));
         CompoundTag payload = new CompoundTag();
         payload.putString("Type", soul.entityType);
-        payload.putString("Name", soul.name);
+        if (soul.forgottenForm() == null || soul.hasCustomName()) payload.putString("Name", soul.name);
         payload.put("Snapshot", SoulSnapshots.sanitize(soul.snapshot()));
         stack.getOrCreateTag().put(SOUL, payload);
         return stack;
@@ -94,7 +94,9 @@ public class SoulScroll extends Item {
 
     private static Component soulName(CompoundTag payload, EntityType<?> type) {
         String name = payload.getString("Name");
-        return name.isEmpty() ? type.getDescription() : Component.literal(name);
+        if (!name.isEmpty()) return Component.literal(name);
+        var form = dev.soulcatcherplus.entity.ForgottenForm.from(payload.getString("Type"), payload.getCompound("Snapshot"));
+        return form == null ? type.getDescription() : Component.translatable(form.nameKey());
     }
 
     @Override public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag flag) {
@@ -111,7 +113,7 @@ public class SoulScroll extends Item {
         ItemStack stack = user.getItemInHand(hand);
         if (world.isClientSide) return InteractionResultHolder.success(stack);
         if (!(user instanceof ServerPlayer player)) return InteractionResultHolder.fail(stack);
-        SoulEntry soul = readSoul(stack, player);
+        SoulEntry soul = readSoul(stack, player.getLevel());
         if (soul == null) {
             SoulService.message(player, "scroll_invalid");
             return InteractionResultHolder.fail(stack);
@@ -135,14 +137,14 @@ public class SoulScroll extends Item {
     }
 
     /** Validate on the server using an unspawned sample; tooltip rendering never creates entities. */
-    private SoulEntry readSoul(ItemStack stack, ServerPlayer player) {
+    public SoulEntry readSoul(ItemStack stack, net.minecraft.server.level.ServerLevel world) {
         Entity sample = null;
         try {
             CompoundTag payload = payload(stack);
             EntityType<?> type = type(payload);
             if (type == null) return null;
             if (payload.contains("Snapshot") && !payload.contains("Snapshot", 10)) return null;
-            sample = type.create(player.getLevel());
+            sample = type.create(world);
             if (!(sample instanceof Mob mob)) return null;
             if (payload.contains("Snapshot", 10)) mob.load(SoulSnapshots.sanitize(payload.getCompound("Snapshot")));
             if (!mob.hasCustomName() && !payload.getString("Name").isEmpty()) mob.setCustomName(soulName(payload, type));

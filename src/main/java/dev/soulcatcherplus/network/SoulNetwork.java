@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.network;
 
+import net.minecraft.network.chat.Component;
+
 import dev.soulcatcherplus.SoulCatcherPlus;
+import dev.soulcatcherplus.altar.SoulAltarMenu;
 import dev.soulcatcherplus.companion.*;
 import dev.soulcatcherplus.data.*;
 import dev.soulcatcherplus.api.SoulAdapters;
@@ -24,19 +27,22 @@ import net.minecraftforge.network.*;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class SoulNetwork {
-    private static final String VERSION = "13";
+    private static final String VERSION = "17";
     // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
     public static final int STATE_ROWS_PER_PART = 32;
-    private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
     private static final class UiRateLimit {
-        long action, preview, refresh, wheelRefresh;
+        long action, preview, refresh, wheelRefresh, appearance;
     }
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
         new ResourceLocation(SoulCatcherPlus.ID, "main"), () -> VERSION, VERSION::equals, VERSION::equals);
     public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
-            long cooldown, String command, SummonRules.Status status, boolean favorite) {}
+            long cooldown, String command, SummonRules.Status status, boolean favorite, boolean localizedFormName) {
+        public String displayName() {
+            return localizedFormName ? Component.translatable(name).getString() : name;
+        }
+    }
     public record State(boolean openScreen, int energy, int cageCapacity, int cageSlot, int activeCount, int summonLimit,
             boolean commandMode, boolean group, UUID selected, List<Row> rows) {
         static State read(FriendlyByteBuf b) {
@@ -49,7 +55,8 @@ public final class SoulNetwork {
             if (size < 0 || size > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Invalid soul state part size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
-                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
+                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class),
+                b.readBoolean(), b.readBoolean()));
             return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, com.google.common.collect.ImmutableList.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
@@ -62,7 +69,8 @@ public final class SoulNetwork {
             b.writeVarInt(rows.size());
             for (Row row : rows) { b.writeUUID(row.id); b.writeUtf(row.entityType, 256); b.writeUtf(row.name, 256); b.writeVarInt(row.cost);
                 b.writeDouble(row.maxHealth); b.writeBoolean(row.active); b.writeVarLong(row.cooldown);
-                b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
+                b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite);
+                b.writeBoolean(row.localizedFormName); }
         }
     }
     public record StatePart(UUID snapshot, int offset, int total, State state) {
@@ -117,9 +125,39 @@ public final class SoulNetwork {
             }
         }
     }
-    public record Ghost(int entityId, UUID owner) {
-        static Ghost read(FriendlyByteBuf b) { return new Ghost(b.readVarInt(), b.readUUID()); }
-        void write(FriendlyByteBuf b) { b.writeVarInt(entityId); b.writeUUID(owner); }
+    public record Ghost(int entityId, UUID entityUuid, UUID owner, SoulAppearance appearance) {
+        static Ghost read(FriendlyByteBuf b) {
+            return new Ghost(b.readVarInt(), b.readUUID(), b.readUUID(), new SoulAppearance(b.readInt(), b.readFloat()));
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(entityId); b.writeUUID(entityUuid); b.writeUUID(owner);
+            b.writeInt(appearance.color()); b.writeFloat(appearance.opacity());
+        }
+    }
+    /** C2S carries no owner UUID: a client can change only its own saved preference. */
+    public record AppearanceRequest(SoulAppearance appearance) {
+        static AppearanceRequest read(FriendlyByteBuf b) { return new AppearanceRequest(new SoulAppearance(b.readInt(), b.readFloat())); }
+        void write(FriendlyByteBuf b) { b.writeInt(appearance.color()); b.writeFloat(appearance.opacity()); }
+    }
+    public record AppearanceState(UUID owner, SoulAppearance appearance) {
+        static AppearanceState read(FriendlyByteBuf b) {
+            return new AppearanceState(b.readUUID(), new SoulAppearance(b.readInt(), b.readFloat()));
+        }
+        void write(FriendlyByteBuf b) { b.writeUUID(owner); b.writeInt(appearance.color()); b.writeFloat(appearance.opacity()); }
+    }
+    public record ProjectorUpdate(int window, dev.soulcatcherplus.projector.ProjectorSettings settings) {
+        static ProjectorUpdate read(FriendlyByteBuf b) {
+            return new ProjectorUpdate(b.readVarInt(), new dev.soulcatcherplus.projector.ProjectorSettings(
+                b.readInt(), b.readInt(), b.readInt(), b.readInt(), b.readBoolean()));
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(window); b.writeInt(settings.scale()); b.writeInt(settings.color());
+            b.writeInt(settings.angle()); b.writeInt(settings.opacity()); b.writeBoolean(settings.rotating());
+        }
+    }
+    public record AltarInscribe(int window, UUID entry) {
+        static AltarInscribe read(FriendlyByteBuf b) { return new AltarInscribe(b.readVarInt(), b.readUUID()); }
+        void write(FriendlyByteBuf b) { b.writeVarInt(window); b.writeUUID(entry); }
     }
     public record PreviewRequest(UUID entry) {
         static PreviewRequest read(FriendlyByteBuf b) { return new PreviewRequest(b.readUUID()); }
@@ -163,7 +201,36 @@ public final class SoulNetwork {
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(7, WheelState.class, WheelState::write, WheelState::read, SoulNetwork::wheelState,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(8, AppearanceRequest.class, AppearanceRequest::write, AppearanceRequest::read, SoulNetwork::appearanceRequest,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(9, AppearanceState.class, AppearanceState::write, AppearanceState::read, SoulNetwork::appearanceState,
+            Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(10, ProjectorUpdate.class, ProjectorUpdate::write, ProjectorUpdate::read, SoulNetwork::projectorUpdate,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(11, AltarInscribe.class, AltarInscribe::write, AltarInscribe::read, SoulNetwork::altarInscribe,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(12, TotemFlash.class, (packet, buffer) -> {}, buffer -> TotemFlash.SHOW,
+            (packet, context) -> {
+                NetworkEvent.Context ctx = context.get();
+                ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> dev.soulcatcherplus.client.ClientPackets::showSacrificeTotem));
+                ctx.setPacketHandled(true);
+            }, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
+    private enum TotemFlash { SHOW }
+    public static void showSacrificeTotem(ServerPlayer player) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), TotemFlash.SHOW);
+    }
+    private static void altarInscribe(AltarInscribe packet, Supplier<NetworkEvent.Context> context) {
+        NetworkEvent.Context ctx = context.get();
+        ctx.enqueueWork(() -> {
+            ServerPlayer player = ctx.getSender();
+            if (player != null && player.containerMenu instanceof SoulAltarMenu menu && menu.containerId == packet.window())
+                menu.inscribe(player, packet.entry());
+        });
+        ctx.setPacketHandled(true);
+    }
+    public static void sendAltarCollection(ServerPlayer player) { sendState(player, false); }
     public static void open(ServerPlayer player) {
         if (SoulService.holdsScythe(player)) sendState(player, true);
     }
@@ -175,8 +242,11 @@ public final class SoulNetwork {
             Mob active = SoulService.activeMob(player, e);
             String command = currentCommand(active);
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
-            return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
-                availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
+            var form = e.forgottenForm();
+            boolean localizedForm = form != null && !e.hasCustomName();
+            return new Row(e.id, e.entityType, localizedForm ? form.nameKey() : abbreviate(e.name),
+                e.cost, e.maxHealth, e.activeEntity != null, availability.recoverySeconds(), command,
+                availability.status(), data.isFavorite(e.entityType), localizedForm);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
         UUID snapshot = UUID.randomUUID();
         // Always send one part, including an empty collection. Clients apply only a complete snapshot.
@@ -188,10 +258,51 @@ public final class SoulNetwork {
         }
     }
     public static void ghost(ServerPlayer player, Entity entity) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), ghostState(entity));
     }
     public static void ghost(Entity entity) {
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), new Ghost(entity.getId(), CompanionBrain.owner(entity)));
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), ghostState(entity));
+    }
+    private static Ghost ghostState(Entity entity) {
+        UUID owner = CompanionBrain.owner(entity);
+        return new Ghost(entity.getId(), entity.getUUID(), owner, SoulLedger.get(entity.getServer()).player(owner).appearance);
+    }
+    private static void appearanceRequest(AppearanceRequest packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
+            if (player == null || !packet.appearance.valid()) return;
+            long now = System.nanoTime();
+            UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, p -> new UiRateLimit());
+            if (rate.appearance != 0 && now - rate.appearance < 0) return;
+            rate.appearance = now + 200_000_000L;
+            PlayerSouls data = SoulService.data(player);
+            if (packet.appearance.equals(data.appearance)) {
+                CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new AppearanceState(player.getUUID(), data.appearance));
+                return;
+            }
+            data.appearance = packet.appearance;
+            SoulService.changed(player);
+            // One small owner update, not a scan or packet per summoned creature.
+            CHANNEL.send(PacketDistributor.ALL.noArg(), new AppearanceState(player.getUUID(), data.appearance));
+        });
+        context.setPacketHandled(true);
+    }
+    private static void appearanceState(AppearanceState packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+            () -> () -> dev.soulcatcherplus.client.SoulAppearances.receive(packet.owner, packet.appearance, context.getNetworkManager())));
+        context.setPacketHandled(true);
+    }
+    private static void projectorUpdate(ProjectorUpdate packet, Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
+            if (player != null && !player.isSpectator() && packet.settings.valid()
+                    && player.containerMenu instanceof dev.soulcatcherplus.projector.SoulProjectorContainer menu
+                    && menu.containerId == packet.window && menu.stillValid(player)) menu.queueSettings(packet.settings);
+        });
+        context.setPacketHandled(true);
     }
     public static void dissolve(Mob mob) {
         if (mob.level.isClientSide || mob.getPersistentData().getBoolean("scp_dissolving")) return;
@@ -255,7 +366,9 @@ public final class SoulNetwork {
             Mob mob = SoulService.activeMob(player, entry);
             boolean loaded = mob != null && Float.isFinite(mob.getHealth()) && Float.isFinite(mob.getMaxHealth());
             boolean localizedName = entry.entityType.startsWith(SoulCatcherPlus.ID + ":") && !entry.hasCustomName();
-            String name = localizedName ? "entity." + entry.entityType.replace(':', '.') : abbreviate(entry.name);
+            var form = entry.forgottenForm();
+            String name = !localizedName ? abbreviate(entry.name)
+                : form != null ? form.nameKey() : "entity." + entry.entityType.replace(':', '.');
             return new Companion(entry.id, name, localizedName, loaded ? Math.max(0, mob.getHealth()) : 0,
                 loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? currentCommand(mob) : "", loaded);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
@@ -309,7 +422,7 @@ public final class SoulNetwork {
     private static void ghostPacket(Ghost packet, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-            () -> () -> dev.soulcatcherplus.client.ClientPackets.ghost(packet)));
+            () -> () -> dev.soulcatcherplus.client.ClientPackets.ghost(packet, context.getNetworkManager())));
         context.setPacketHandled(true);
     }
     private static void previewRequest(PreviewRequest packet, Supplier<NetworkEvent.Context> supplier) {
@@ -325,14 +438,7 @@ public final class SoulNetwork {
             if (entry == null) return;
             CompoundTag appearance = new CompoundTag();
             try {
-                CompoundTag visual = SoulAdapters.get(new ResourceLocation(entry.entityType)).previewData(entry.snapshot());
-                // Never transmit identity, ownership, health, passengers, or the full server snapshot.
-                visual = SoulSnapshots.sanitize(visual);
-                visual.remove("ForgeData"); visual.remove("ForgeCaps");
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                NbtIo.write(visual, new DataOutputStream(bytes));
-                if (bytes.size() <= MAX_PREVIEW_BYTES) appearance = visual;
-                else org.apache.logging.log4j.LogManager.getLogger().warn("Soul preview data too large for {}", entry.entityType);
+                appearance = SoulSnapshots.preview(entry);
             } catch (RuntimeException | IOException error) {
                 org.apache.logging.log4j.LogManager.getLogger().warn("Unable to prepare soul preview for {}", entry.entityType, error);
             }

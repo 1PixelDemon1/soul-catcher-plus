@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "soulcatcherplus:block/soul_transfer_altar",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "soulcatcherplus:block/soul_transfer_altar",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "soulcatcherplus:block/soul_transfer_altar",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "soulcatcherplus:block/soul_transfer_altar",
+      "y": 270
+    }
+  }
+}

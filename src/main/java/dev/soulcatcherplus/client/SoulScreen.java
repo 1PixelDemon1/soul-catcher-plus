@@ -91,7 +91,7 @@ public final class SoulScreen extends Screen {
         filteredGroups = normalizedQuery.isEmpty() ? groups : groups.stream().filter(group ->
             name(group).toLowerCase(Locale.ROOT).contains(normalizedQuery)
                 || group.entityType().toLowerCase(Locale.ROOT).contains(normalizedQuery)
-                || group.forms().stream().anyMatch(form -> form.name().toLowerCase(Locale.ROOT).contains(normalizedQuery)))
+                || group.forms().stream().anyMatch(form -> form.displayName().toLowerCase(Locale.ROOT).contains(normalizedQuery)))
             .collect(com.google.common.collect.ImmutableList.toImmutableList());
     }
     private void searchChanged(String value) {
@@ -409,7 +409,8 @@ public final class SoulScreen extends Screen {
     private void renderSoul(SoulGui g, float partialTick) {
         var group = group();
         var row = row();
-        String name = group == null ? text("unbound").getString() : name(group);
+        String name = group == null ? text("unbound").getString()
+            : row != null && row.localizedFormName() ? row.displayName() : name(group);
         g.drawCenteredString(font, net.minecraft.network.chat.Component.literal(fit(name, 222)), 306, 72,
             group != null && group.boss() ? SoulTheme.BOSS_PURPLE : SoulTheme.LIGHT);
         g.fillGradient(PX, PY, PX + PW, PY + PH, 0xFF122C36, 0xFF0A161F);

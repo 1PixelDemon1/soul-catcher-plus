@@ -41,8 +41,9 @@ public abstract class CompanionWitherMixin extends Monster {
         wither.setInvulnerableTicks(0);
         destroyBlocksTick = 0;
         ServerPlayer owner = wither.getServer().getPlayerList().getPlayer(CompanionBrain.owner(wither));
+        boolean pylon = dev.soulcatcherplus.pylon.PylonSouls.isPylon(wither);
         LivingEntity target = wither.getTarget();
-        if (owner == null || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT
+        if (owner == null && !pylon || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT
                 || target != null && !CompanionBrain.canAttack(wither, target)) {
             wither.setTarget(null);
             target = null;
@@ -58,11 +59,15 @@ public abstract class CompanionWitherMixin extends Monster {
         }
         if (target == null) {
             wither.getNavigation().stop();
-            if (owner == null || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT) wither.setDeltaMovement(Vec3.ZERO);
+            if (owner == null && !pylon || CompanionBrain.mode(wither) == CompanionBrain.Mode.WAIT) wither.setDeltaMovement(Vec3.ZERO);
             else {
                 Vec3 destination = CompanionBrain.mode(wither) == CompanionBrain.Mode.GUARD
                     ? Vec3.atCenterOf(BlockPos.of(wither.getPersistentData().getLong("scp_guard"))).add(0, 3, 0)
                     : WitherSoulMoveControl.followPosition(wither, owner, CompanionBrain.isReturning(wither));
+                if (pylon) {
+                    double angle = wither.tickCount * .012 + (wither.getUUID().hashCode() & 255);
+                    destination = destination.add(Math.cos(angle) * 5, Math.sin(angle * .7) * .4, Math.sin(angle) * 5);
+                }
                 Vec3 offset = destination.subtract(wither.position());
                 Vec3 desired = offset.lengthSqr() < 1 ? Vec3.ZERO : offset.normalize().scale(Math.min(0.6, offset.length() * 0.16));
                 wither.setDeltaMovement(wither.getDeltaMovement().scale(0.7).add(desired.scale(0.3)));

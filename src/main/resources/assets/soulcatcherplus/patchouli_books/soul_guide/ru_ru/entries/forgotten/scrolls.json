@@ -1,7 +1,7 @@
 {
   "name": "guide.soulcatcherplus.forgotten.scrolls.name",
   "category": "soulcatcherplus:forgotten",
-  "icon": "soulcatcherplus:forgotten_soul_scroll",
+  "icon": "soulcatcherplus:soul_scroll",
   "sortnum": 0,
   "pages": [
     {

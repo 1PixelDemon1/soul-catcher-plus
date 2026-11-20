@@ -5,6 +5,7 @@ import dev.soulcatcherplus.companion.CompanionBrain;
 
 import dev.soulcatcherplus.companion.SoulSpawnContext;
 import dev.soulcatcherplus.entity.ai.SoulRavenCollectGoal;
+import dev.soulcatcherplus.pylon.PylonSouls;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,10 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -42,6 +47,8 @@ import net.minecraftforge.network.NetworkHooks;
 public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal {
     private static final int CARGO_LIMIT = 8;
     private static final EntityDataAccessor<Boolean> PERCHED = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> ALTERNATE = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.LONG_TAILED_TIT;
     private static final EntityDataAccessor<Optional<UUID>> SOUL_OWNER = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private float flightBlend;
     private float previousFlightBlend;
@@ -51,8 +58,11 @@ public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal
         moveControl = new FlyingMoveControl(this, 10, false) {
             @Override public void tick() {
                 if (isPerched()) {
+                    operation = Operation.WAIT;
                     setNoGravity(true);
                     setSpeed(0);
+                    setYya(0);
+                    setZza(0);
                     return;
                 }
                 super.tick();
@@ -73,8 +83,31 @@ public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal
 
     @Override protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(ALTERNATE, false);
         entityData.define(PERCHED, false);
         entityData.define(SOUL_OWNER, Optional.empty());
+    }
+
+    public boolean isLongTailedTit() { return entityData.get(ALTERNATE); }
+
+    @Override public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        entityData.set(ALTERNATE, FORM.isSavedIn(tag));
+    }
+
+    @Override public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (isLongTailedTit()) FORM.save(tag);
+    }
+
+    @Override protected Component getTypeName() {
+        return isLongTailedTit() ? Component.translatable(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (isPerched()) return super.mobInteract(player, hand);
+        InteractionResult result = FORM.interact(this, player, hand);
+        return result == InteractionResult.PASS ? super.mobInteract(player, hand) : result;
     }
 
     public void configureSoul() {
@@ -82,7 +115,7 @@ public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal
         targetSelector.removeAllGoals();
         navigation.stop();
         setTarget(null);
-        entityData.set(SOUL_OWNER, Optional.of(CompanionBrain.owner(this)));
+        entityData.set(SOUL_OWNER, PylonSouls.isPylon(this) ? Optional.empty() : Optional.of(CompanionBrain.owner(this)));
         goalSelector.addGoal(0, new SoulRavenCollectGoal(this));
     }
 
@@ -108,7 +141,17 @@ public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal
         if (perched) {
             navigation.stop();
             setDeltaMovement(Vec3.ZERO);
+            setXRot(0);
         }
+    }
+
+    @Override public void travel(Vec3 input) {
+        // A perch is stationary. Discard residual flight thrust and velocity on both sides.
+        if (isPerched()) {
+            setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        super.travel(input);
     }
 
     @Override public void onSyncedDataUpdated(EntityDataAccessor<?> parameter) {
@@ -122,7 +165,7 @@ public final class SoulRavenEntity extends PathfinderMob implements FlyingAnimal
     public boolean takeCargo(Entity cargo) {
         if (!cargo.isAlive() || cargo.isPassenger() || !canAddPassenger(cargo) || !cargo.startRiding(this)) return false;
         if (cargo instanceof ItemEntity item) {
-            RavenItemDelivery.protect(item);
+            if (!PylonSouls.isPylon(this)) RavenItemDelivery.protect(item);
             item.setNeverPickUp();
         }
         setPerched(false);

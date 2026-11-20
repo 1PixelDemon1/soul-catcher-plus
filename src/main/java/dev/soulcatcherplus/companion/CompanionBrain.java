@@ -1,6 +1,18 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.companion;
 
+import net.minecraft.world.entity.monster.Vex;
+
+import net.minecraft.world.entity.monster.Blaze;
+
+import net.minecraft.world.entity.ambient.Bat;
+
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+
+import net.minecraft.world.entity.animal.FlyingAnimal;
+
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.api.SoulAdapter;
 import dev.soulcatcherplus.data.*;
@@ -13,12 +25,15 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 
 public final class CompanionBrain {
     public static final String OWNER = "scp_owner", ENTRY = "scp_entry", MODE = "scp_mode";
@@ -32,6 +47,7 @@ public final class CompanionBrain {
     /** Roots own the active UUID; minions validate their separately persisted root UUID. */
     public static SoulEntry activeEntry(Mob mob) {
         if (!isSoul(mob) || mob.getServer() == null || !mob.getPersistentData().hasUUID(ENTRY)) return null;
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)) return dev.soulcatcherplus.pylon.PylonSouls.activeEntry(mob);
         SoulEntry entry = SoulLedger.get(mob.getServer()).player(owner(mob)).entries.get(mob.getPersistentData().getUUID(ENTRY));
         UUID root = SoulMinions.isMinion(mob) ? mob.getPersistentData().getUUID(SoulMinions.ROOT) : mob.getUUID();
         return entry != null && root.equals(entry.activeEntity) ? entry : null;
@@ -39,6 +55,14 @@ public final class CompanionBrain {
     public static Mode mode(Mob mob) {
         try { return Mode.valueOf(mob.getPersistentData().getString(MODE)); }
         catch (IllegalArgumentException e) { return Mode.FOLLOW; }
+    }
+    /** Ordinary ground mobs keep vanilla gravity when told to wait. */
+    public static boolean holdsFlightPosition(Mob mob) {
+        if (!mob.isAlive() || !(mob instanceof FlyingMob || mob instanceof FlyingAnimal || mob.isNoGravity()
+                || mob.getMoveControl() instanceof FlyingMoveControl || mob.getNavigation() instanceof FlyingPathNavigation
+                || mob instanceof Bat || mob instanceof Blaze || mob instanceof Vex
+                || mob instanceof WitherBoss || mob instanceof EnderDragon)) return false;
+        return isSoul(mob) && Mode.WAIT.name().equals(mob.getPersistentData().getString(MODE));
     }
     public static boolean allied(Mob mob, Entity other) {
         UUID owner = owner(mob);
@@ -60,16 +84,26 @@ public final class CompanionBrain {
         if (targets == null || goals == null) throw new IllegalStateException("Missing mob goal selectors");
         targets.removeAllGoals();
         goals.getAvailableGoals().stream().map(net.minecraft.world.entity.ai.goal.WrappedGoal::getGoal)
-            .filter(goal -> goal instanceof HoldPositionGoal || goal instanceof FollowOwnerGoal)
+            .filter(goal -> goal instanceof HoldPositionGoal || goal instanceof FollowOwnerGoal
+                || goal instanceof dev.soulcatcherplus.pylon.PylonPatrolGoal
+                || dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)
+                    && goal instanceof net.minecraft.world.entity.ai.goal.RandomStrollGoal)
             .collect(com.google.common.collect.ImmutableList.toImmutableList()).forEach(goals::removeGoal);
         goals.addGoal(0, new HoldPositionGoal(mob));
         goals.addGoal(0, new FollowOwnerGoal(mob, true));
-        goals.addGoal(2, new FollowOwnerGoal(mob, false));
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob))
+            goals.addGoal(2, new dev.soulcatcherplus.pylon.PylonPatrolGoal(mob));
+        else goals.addGoal(2, new FollowOwnerGoal(mob, false));
     }
     public static void tick(Mob mob) {
         if (mob.level.isClientSide || SoulMinions.isMinion(mob) || mob.tickCount % 5 != 0) return;
         SoulEntry entry = activeEntry(mob);
         if (entry == null) { resetReturn(mob); mob.discard(); return; }
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)) {
+            resetReturn(mob);
+            dev.soulcatcherplus.pylon.PylonSouls.tick(mob);
+            return;
+        }
         SoulBossBars.suppress(mob);
         ServerPlayer player = mob.getServer().getPlayerList().getPlayer(owner(mob));
         // An absent owner may simply be logging in after saved entities load.
@@ -152,10 +186,7 @@ public final class CompanionBrain {
             mob.setTarget(null);
         if (mode == Mode.WAIT) mob.setTarget(null);
         else if (mode == Mode.GUARD) {
-            BlockPos guard = BlockPos.of(mob.getPersistentData().getLong("scp_guard"));
-            if (mob.getTarget() != null && mob.getTarget().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(guard)) > 16 * 16)
-                mob.setTarget(null);
-            if (mob.getTarget() == null) findEnemy(mob, guard);
+            guard(mob);
         } else if (mode == Mode.AGGRESSIVE) {
             if (mob.getTarget() == null) findHostile(mob, player);
         } else if (mob.getTarget() == null) {
@@ -168,6 +199,13 @@ public final class CompanionBrain {
                     && mob.distanceToSqr(victim) < 32 * 32 && insideCombatArea(mob, victim, player)
                     && canAttack(mob, victim)) mob.setTarget(victim);
         }
+    }
+    /** Shared stationary territory defense for player orders and block-bound guardians. */
+    public static void guard(Mob mob) {
+        BlockPos guard = BlockPos.of(mob.getPersistentData().getLong("scp_guard"));
+        if (mob.getTarget() != null && (!canAttack(mob, mob.getTarget())
+                || mob.getTarget().distanceToSqr(Vec3.atCenterOf(guard)) > 16 * 16)) mob.setTarget(null);
+        if (mob.getTarget() == null) findEnemy(mob, guard);
     }
     private static boolean insideCombatArea(Mob mob, LivingEntity target, ServerPlayer player) {
         double range = followRange(mob);
@@ -217,6 +255,8 @@ public final class CompanionBrain {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
         public boolean canUse() {
+            if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob))
+                return false;
             player = mob.getServer().getPlayerList().getPlayer(owner(mob));
             if (returningOnly) return player != null && followsOwner(mode(mob)) && RETURNS.containsKey(mob);
             if (RETURNS.containsKey(mob)) return false;
