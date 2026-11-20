@@ -2,7 +2,7 @@
   "name": "guide.soulcatcherplus.forgotten.courier.name",
   "category": "soulcatcherplus:forgotten",
   "icon": "minecraft:ender_chest",
-  "sortnum": 2,
+  "sortnum": 3,
   "pages": [
     {
       "type": "text",

@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 public final class ClientPackets {
+    public static void showSacrificeTotem() {
+        Minecraft.getInstance().gameRenderer.displayItemActivation(new net.minecraft.world.item.ItemStack(
+            dev.soulcatcherplus.SoulCatcherPlus.SOUL_SACRIFICE_TOTEM.get()));
+    }
     private static PendingState pending;
     private static final class PendingState {
         final UUID id;
@@ -38,7 +42,8 @@ public final class ClientPackets {
     }
     public static void open(SoulNetwork.State state) {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof SoulScreen screen) screen.update(state);
+        if (client.screen instanceof SoulAltarScreen altar && !state.openScreen()) altar.update(state);
+        else if (client.screen instanceof SoulScreen screen) screen.update(state);
         else if (client.screen instanceof SoulAppearanceScreen screen) screen.update(state);
         else if (state.openScreen() && client.screen == null && ClientControls.canUseMenus(client))
             client.setScreen(new SoulScreen(state));
@@ -47,11 +52,13 @@ public final class ClientPackets {
         // A late response must never reopen a wheel after its trigger was released.
         if (Minecraft.getInstance().screen instanceof SoulWheelScreen screen) screen.update(state);
     }
-    public static void ghost(SoulNetwork.Ghost state) {
+    public static void ghost(SoulNetwork.Ghost state, net.minecraft.network.Connection source) {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
+        if (!SoulAppearances.receive(state.owner(), state.appearance(), source)) return;
         Entity entity = client.level.getEntity(state.entityId());
-        if (entity != null) entity.getPersistentData().putUUID(CompanionBrain.OWNER, state.owner());
+        if (entity != null && entity.getUUID().equals(state.entityUuid()))
+            entity.getPersistentData().putUUID(CompanionBrain.OWNER, state.owner());
     }
     public static void preview(SoulNetwork.Preview preview) {
         if (Minecraft.getInstance().screen instanceof SoulScreen screen) screen.receivePreview(preview);

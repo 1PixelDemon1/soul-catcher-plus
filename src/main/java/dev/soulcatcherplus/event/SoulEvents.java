@@ -9,6 +9,7 @@ import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.enchantment.SoulEnchantments;
 import dev.soulcatcherplus.network.SoulNetwork;
 import dev.soulcatcherplus.item.SoulScroll;
+import dev.soulcatcherplus.pylon.PylonSouls;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -29,6 +30,16 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SoulCatcherPlus.ID)
 public final class SoulEvents {
+    @SubscribeEvent public static void interactPylon(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getEntity().isSecondaryUseActive()) return;
+        var block = event.getLevel().getBlockState(event.getPos()).getBlock();
+        if (block instanceof dev.soulcatcherplus.pylon.SoulPylonBlock
+                || block instanceof dev.soulcatcherplus.projector.SoulProjectorBlock
+                || block instanceof dev.soulcatcherplus.altar.SoulAltarBlock) {
+            event.setUseBlock(Event.Result.ALLOW);
+            event.setUseItem(Event.Result.DENY);
+        }
+    }
     /** Handle creative use before vanilla restores the old stack count after Item.use. */
     @SubscribeEvent public static void creativeScrollUse(PlayerInteractEvent.RightClickItem event) {
         if (!event.getEntity().isCreative() || !(event.getItemStack().getItem() instanceof SoulScroll scroll)) return;
@@ -52,7 +63,6 @@ public final class SoulEvents {
     @SubscribeEvent public static void reload(AddReloadListenerEvent event) { event.addListener(new SoulProfiles()); }
     private static ServerPlayer creditedPlayer(Entity source) {
         if (source instanceof ServerPlayer player) return player;
-        if (source instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (source != null && CompanionBrain.isSoul(source))
             return source.getServer().getPlayerList().getPlayer(CompanionBrain.owner(source));
         return null;
@@ -66,10 +76,14 @@ public final class SoulEvents {
             if (!SoulMinions.isMinion(mob)) endCompanion(mob);
             return;
         }
-        ServerPlayer player = creditedPlayer(event.getSource().getEntity());
+        Entity killer = event.getSource().getEntity();
+        if (killer instanceof Mob attacker) SoulMinions.tryInherit(attacker);
+        Mob pylonAttacker = killer instanceof Mob attacker && PylonSouls.isPylon(attacker) ? attacker : null;
+        if (pylonAttacker != null) PylonSouls.creditVictory(pylonAttacker, mob);
+        ServerPlayer player = creditedPlayer(killer);
         if (player == null) return;
         SoulProfiles.Profile profile = SoulProfiles.get(mob);
-        SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
+        if (pylonAttacker == null) SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
         CompoundTag tag = mob.getPersistentData();
         long now = player.server.overworld().getGameTime();
         if (!tag.hasUUID("scp_mark_owner") || !tag.getUUID("scp_mark_owner").equals(player.getUUID())
@@ -125,12 +139,19 @@ public final class SoulEvents {
         if (SoulSpawnContext.wasDestroyed(mob)) endCompanion(mob);
     }
     private static void endCompanion(Mob mob) {
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)) {
+            dev.soulcatcherplus.pylon.PylonSouls.ended(mob);
+            return;
+        }
         SoulEntry entry = CompanionBrain.activeEntry(mob);
         if (entry == null) return;
         entry.activeEntity = null; entry.dimension = "";
         entry.readyAt = mob.getServer().overworld().getGameTime() + 20 * 60;
         SoulLedger.get(mob.getServer()).setDirty();
         SoulMinions.dismiss(mob.getServer(), mob.getUUID());
+    }
+    @SubscribeEvent public static void pylonTravel(net.minecraftforge.event.entity.EntityTravelToDimensionEvent event) {
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(event.getEntity())) event.setCanceled(true);
     }
     @SubscribeEvent public static void tracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof Mob mob && !mob.level().isClientSide) SoulMinions.tryInherit(mob);

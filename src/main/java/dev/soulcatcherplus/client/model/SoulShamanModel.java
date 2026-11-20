@@ -30,11 +30,13 @@ public final class SoulShamanModel extends EntityModel<SoulShamanEntity> {
         "back_left", "back_right", "back_center", "side_-1", "side_1"};
     private final CuboidModelPart<Material> root, head, rightArm, leftArm, staff, charm, wisp;
     private final CuboidModelPart<Material>[] hems;
+    private final boolean miku;
     private float hover;
 
     @SuppressWarnings("unchecked")
-    public SoulShamanModel() {
-        Map<String, CuboidModelPart<Material>> parts = SoulShamanGeometry.create();
+    public SoulShamanModel(boolean miku) {
+        this.miku = miku;
+        Map<String, CuboidModelPart<Material>> parts = miku ? SoulShamanMikuGeometry.create() : SoulShamanGeometry.create();
         root = parts.get("root");
         head = parts.get("head");
         rightArm = parts.get("arm_right");
@@ -42,7 +44,7 @@ public final class SoulShamanModel extends EntityModel<SoulShamanEntity> {
         staff = parts.get("staff");
         charm = parts.get("charm");
         wisp = parts.get("wisp");
-        hems = (CuboidModelPart<Material>[]) new CuboidModelPart<?>[HEM_NAMES.length];
+        hems = (CuboidModelPart<Material>[]) new CuboidModelPart<?>[miku ? 0 : HEM_NAMES.length];
         for (int i = 0; i < hems.length; i++) hems[i] = parts.get("hem_" + HEM_NAMES[i]);
     }
 
@@ -64,15 +66,16 @@ public final class SoulShamanModel extends EntityModel<SoulShamanEntity> {
         float raise = phase >= SoulShamanEntity.CAST_DURATION_TICKS ? 0
             : phase < 12 ? smooth(phase / 12) : 1 - smooth((phase - 24) / 12);
         float sweep = raise * (2 * smooth((phase - 12) / 12) - 1);
+        int direction = miku ? -1 : 1;
         rightArm.rx = 25 * raise;
-        rightArm.ry = -18 * sweep;
-        rightArm.rz = 28 * raise;
+        rightArm.ry = -18 * sweep * direction;
+        rightArm.rz = 28 * raise * direction;
         leftArm.rx = 8 * raise;
-        leftArm.rz = -6 * raise;
+        leftArm.rz = -6 * raise * direction;
         staff.rx = -8 * raise;
-        staff.ry = 12 * sweep;
-        staff.rz = -10 * raise;
-        charm.rx = Mth.sin(age * 0.15f) * 3 + 8 * sweep;
+        staff.ry = 12 * sweep * direction;
+        staff.rz = -10 * raise * direction;
+        if (charm != null) charm.rx = Mth.sin(age * 0.15f) * 3 + 8 * sweep;
     }
 
     private static float smooth(float progress) {

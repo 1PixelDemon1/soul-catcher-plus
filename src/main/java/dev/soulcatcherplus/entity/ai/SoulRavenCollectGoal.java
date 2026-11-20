@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.entity.ai;
 
+import net.minecraft.world.phys.AABB;
+
+import net.minecraft.core.BlockPos;
+
 import dev.soulcatcherplus.companion.CompanionBrain;
 import dev.soulcatcherplus.entity.SoulRavenEntity;
 import dev.soulcatcherplus.entity.SoulRemnant;
 import dev.soulcatcherplus.entity.RavenItemDelivery;
+import dev.soulcatcherplus.pylon.PylonSouls;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -26,6 +31,7 @@ public final class SoulRavenCollectGoal extends Goal {
     private final SoulRavenEntity raven;
     private final Map<UUID, Long> ignoredUntil = new HashMap<>();
     private ServerPlayer owner;
+    private BlockPos pylon;
     private Entity target;
     private long nextSearch, tripDeadline, returnDeadline, nextPath, nextSweep;
 
@@ -35,6 +41,10 @@ public final class SoulRavenCollectGoal extends Goal {
     }
 
     @Override public boolean canUse() {
+        if (PylonSouls.isPylon(raven)) {
+            pylon = PylonSouls.collectorAnchor(raven);
+            return pylon != null;
+        }
         owner = CompanionBrain.isSoul(raven) && raven.getServer() != null
             ? raven.getServer().getPlayerList().getPlayer(CompanionBrain.owner(raven)) : null;
         return owner != null && owner.isAlive() && owner.level() == raven.level()
@@ -49,25 +59,36 @@ public final class SoulRavenCollectGoal extends Goal {
         target = null;
         raven.setPerched(false);
         raven.getNavigation().stop();
-        raven.releaseCargo();
+        // A raven briefly separated from its unloaded pylon keeps the real cargo.
+        // Death, removal and dismantling use the entity's normal dismount path.
+        if (!PylonSouls.isPylon(raven)) raven.releaseCargo();
     }
 
     @Override public void tick() {
         long now = raven.level().getGameTime();
+        Vec3 anchor = pylon == null ? owner.position() : Vec3.atCenterOf(pylon);
+        Vec3 home = pylon == null ? SoulRavenEntity.shoulderPosition(owner, 1) : anchor.add(0, 1.2, 0);
         if (raven.isPerched() || target != null) returnDeadline = now + TRIP_TIMEOUT;
-        if (raven.distanceToSqr(owner) > 32 * 32 || now >= returnDeadline) {
+        if (raven.position().distanceToSqr(anchor) > 32 * 32 || now >= returnDeadline) {
             target = null;
             returnDeadline = now + TRIP_TIMEOUT;
             raven.getNavigation().stop();
-            Vec3 shoulder = SoulRavenEntity.shoulderPosition(owner, 1);
-            raven.teleportTo(shoulder.x, shoulder.y, shoulder.z);
+            if (pylon == null || canRestAt(home)) raven.teleportTo(home.x, home.y, home.z);
         }
         if (raven.hasCargo()) {
             target = null;
-            if (raven.distanceToSqr(owner) <= DELIVERY_RANGE * DELIVERY_RANGE) deliver(now);
+            if (raven.position().distanceToSqr(anchor) <= DELIVERY_RANGE * DELIVERY_RANGE) {
+                if (pylon == null) deliver(now);
+                else {
+                    Vec3 drop = RavenPylonDrop.find(raven.level(), pylon);
+                    if (drop != null) deliverToPylon(drop, now);
+                    restNearPylon(home, now);
+                }
+            }
             else {
                 collectNearby(now);
-                flyTo(owner.getX(), owner.getY() + 1.3, owner.getZ(), RETURN_SPEED, now);
+                Vec3 destination = pylon == null ? anchor.add(0, 1.3, 0) : home;
+                flyTo(destination.x, destination.y, destination.z, RETURN_SPEED, now);
             }
             return;
         }
@@ -89,12 +110,15 @@ public final class SoulRavenCollectGoal extends Goal {
                 return;
             }
         }
-        if (now >= nextSearch && !owner.isSpectator()) {
+        if (now >= nextSearch && (pylon != null || !owner.isSpectator())) {
             nextSearch = now + SEARCH_INTERVAL;
             ignoredUntil.values().removeIf(until -> until <= now);
-            target = raven.level().getEntitiesOfClass(Entity.class, owner.getBoundingBox().inflate(SEARCH_RANGE),
-                    entity -> available(entity, now))
-                .stream().min(java.util.Comparator.comparingDouble(raven::distanceToSqr)).orElse(null);
+            AABB search = pylon == null ? owner.getBoundingBox() : new AABB(pylon);
+            if (pylon == null || RavenPylonDrop.find(raven.level(), pylon) != null) {
+                Class<? extends Entity> pickupType = pylon == null ? Entity.class : ItemEntity.class;
+                target = raven.level().getEntitiesOfClass(pickupType, search.inflate(SEARCH_RANGE), entity -> available(entity, now))
+                    .stream().min(java.util.Comparator.comparingDouble(raven::distanceToSqr)).orElse(null);
+            }
             if (target != null) {
                 tripDeadline = now + TRIP_TIMEOUT;
                 nextPath = 0;
@@ -102,16 +126,21 @@ public final class SoulRavenCollectGoal extends Goal {
                 return;
             }
         }
-        Vec3 shoulder = SoulRavenEntity.shoulderPosition(owner, 1);
-        if (raven.position().distanceToSqr(shoulder) < 1.2 * 1.2) raven.setPerched(true);
-        else flyTo(shoulder.x, shoulder.y, shoulder.z, RETURN_SPEED, now);
+        if (pylon != null) restNearPylon(home, now);
+        else if (raven.position().distanceToSqr(home) < 1.2 * 1.2) raven.setPerched(true);
+        else flyTo(home.x, home.y, home.z, RETURN_SPEED, now);
     }
 
     private boolean available(Entity entity, long now) {
         if (!(entity instanceof ItemEntity || entity instanceof SoulRemnant) || !entity.isAlive()
-                || entity.isPassenger() || entity.level() != owner.level()
-                || entity.distanceToSqr(owner) > SEARCH_RANGE * SEARCH_RANGE
+                || entity.isPassenger() || entity.level() != raven.level()
                 || ignoredUntil.getOrDefault(entity.getUUID(), 0L) > now) return false;
+        if (pylon != null) {
+            return entity instanceof ItemEntity item && pickupReady(item, CompanionBrain.owner(raven))
+                && item.position().distanceToSqr(Vec3.atCenterOf(pylon)) <= SEARCH_RANGE * SEARCH_RANGE
+                && !RavenPylonDrop.inStockpile(pylon, item.blockPosition());
+        }
+        if (entity.distanceToSqr(owner) > SEARCH_RANGE * SEARCH_RANGE) return false;
         if (entity instanceof SoulRemnant remnant) return remnant.canCollect(owner);
         ItemEntity item = (ItemEntity) entity;
         return !item.hasPickUpDelay() && !item.getItem().isEmpty()
@@ -121,8 +150,12 @@ public final class SoulRavenCollectGoal extends Goal {
             && !(RavenItemDelivery.isProtected(item) && item.distanceToSqr(owner) <= DELIVERY_RANGE * DELIVERY_RANGE);
     }
 
+    private static boolean pickupReady(ItemEntity item, UUID owner) {
+        return !item.hasPickUpDelay() && !item.getItem().isEmpty() && (item.getOwner() == null || item.getOwner().equals(owner));
+    }
+
     private void collectNearby(long now) {
-        if (!raven.canCarryMore() || now < nextSweep || owner.isSpectator()) return;
+        if (!raven.canCarryMore() || now < nextSweep || (pylon == null && owner.isSpectator())) return;
         nextSweep = now + SWEEP_INTERVAL;
         for (Entity pickup : raven.level().getEntitiesOfClass(Entity.class, raven.getBoundingBox().inflate(BATCH_RANGE),
                 entity -> available(entity, now) && raven.distanceToSqr(entity) <= BATCH_RANGE * BATCH_RANGE
@@ -142,6 +175,27 @@ public final class SoulRavenCollectGoal extends Goal {
             if (cargo.isAlive()) ignore(cargo, now);
         }
         nextSearch = now + 10;
+    }
+
+    private void deliverToPylon(Vec3 drop, long now) {
+        for (Entity cargo : new ArrayList<>(raven.getPassengers())) {
+            if (!raven.releaseCargo(cargo) || !cargo.isAlive()) continue;
+            cargo.setPos(drop.x, drop.y, drop.z);
+            ignore(cargo, now);
+        }
+        nextSearch = now + 10;
+    }
+
+    private boolean canRestAt(Vec3 home) {
+        return raven.level().noCollision(raven, raven.getBoundingBox().move(home.subtract(raven.position())));
+    }
+
+    private void restNearPylon(Vec3 home, long now) {
+        if (raven.isPerched()) return;
+        if (raven.position().distanceToSqr(home) < 1.2 * 1.2 && canRestAt(home)) {
+            raven.setPos(home.x, home.y, home.z);
+            raven.setPerched(true);
+        } else flyTo(home.x, home.y, home.z, RETURN_SPEED, now);
     }
 
     private void flyTo(double x, double y, double z, double speed, long now) {

@@ -36,6 +36,24 @@ public final class SoulCages {
         player.getInventory().setChanged();
         return true;
     }
+    /** Equipment uses the first accessible cage that can cover the entire action. */
+    public static ItemStack chargedEquipmentCage(Player player, int amount) {
+        if (amount <= 0) return ItemStack.EMPTY;
+        for (int slot : SLOTS) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (SoulCage.energy(stack) >= amount) return stack;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** Returns the cage that paid, so an unsuccessful use can refund that same cage. */
+    public static ItemStack spendEquipment(ServerPlayer player, int amount) {
+        ItemStack cage = chargedEquipmentCage(player, amount);
+        if (cage.isEmpty()) return ItemStack.EMPTY;
+        SoulCage.setEnergy(cage, SoulCage.energy(cage) - amount);
+        player.getInventory().setChanged();
+        return cage;
+    }
     public static int set(ServerPlayer player, int amount) {
         int stored = SoulCage.setEnergy(active(player).stack(), amount);
         player.getInventory().setChanged();

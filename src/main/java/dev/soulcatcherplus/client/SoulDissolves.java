@@ -34,12 +34,14 @@ public final class SoulDissolves {
         final Mob mob;
         final Vec3 position;
         final float width, height;
+        final dev.soulcatcherplus.data.SoulAppearance appearance;
         int age;
         boolean renderFailed;
 
         Echo(ClientLevel level, Mob mob, SoulNetwork.Dissolve packet) {
             this.level = level;
             this.mob = mob;
+            appearance = mob == null ? dev.soulcatcherplus.data.SoulAppearance.DEFAULT : SoulAppearances.of(mob);
             position = new Vec3(packet.x(), packet.y(), packet.z());
             width = Mth.clamp(packet.width(), 0.2f, 12);
             height = Mth.clamp(packet.height(), 0.3f, 16);
@@ -105,7 +107,7 @@ public final class SoulDissolves {
                     || camera.distanceToSqr(echo.position) > 96 * 96) continue;
             float partial = client.isPaused() ? 0 : event.getPartialTick();
             float progress = Mth.clamp((echo.age + partial) / DURATION, 0, 1);
-            float alpha = dev.soulcatcherplus.config.SoulClientConfig.opacity() * (1 - progress * progress);
+            float alpha = echo.appearance.opacity() * (1 - progress * progress);
             Mob mob = echo.mob;
             int deathTime = mob.deathTime, hurtTime = mob.hurtTime;
             pose.pushPose();
@@ -134,7 +136,7 @@ public final class SoulDissolves {
                 var texture = renderer.getTextureLocation(mob);
                 var type = mob.getType().builtInRegistryHolder().key().location();
                 MultiBufferSource spectral = renderType -> SoulVisuals.tint(buffers.getBuffer(
-                    SoulVisuals.remap(type, texture, renderType)), alpha, fade);
+                    SoulVisuals.remap(type, texture, renderType)), echo.appearance, alpha, fade);
                 mob.deathTime = mob.hurtTime = 0;
                 renderingEcho = true;
                 dispatcher.render(mob, 0, 0, 0, mob.getYRot(), partial, pose, spectral, 15728880);

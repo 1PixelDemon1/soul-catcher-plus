@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.equipment.bow.name",
+  "category": "soulcatcherplus:equipment",
+  "icon": "soulcatcherplus:soul_energy_bow",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.equipment.bow.name",
+      "text": "guide.soulcatcherplus.equipment.bow.page0"
+    },
+    {
+      "type": "smithing",
+      "recipe": "soulcatcherplus:soul_energy_bow"
+    }
+  ]
+}

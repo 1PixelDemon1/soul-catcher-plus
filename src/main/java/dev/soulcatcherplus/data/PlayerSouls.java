@@ -16,6 +16,7 @@ public final class PlayerSouls {
     public UUID selected;
     public boolean commandMode;
     public boolean commandGroup = true;
+    public SoulAppearance appearance = SoulAppearance.DEFAULT;
     public final Map<UUID, SoulEntry> entries = new LinkedHashMap<>();
     private final Set<String> favoriteTypes = new HashSet<>();
     public boolean isFavorite(String entityType) { return favoriteTypes.contains(entityType); }
@@ -41,6 +42,7 @@ public final class PlayerSouls {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("CommandMode", commandMode);
         tag.putBoolean("Group", commandGroup);
+        tag.put("Appearance", appearance.save());
         if (selected != null) tag.putUUID("Selected", selected);
         ListTag list = new ListTag();
         entries.values().forEach(entry -> list.add(entry.save()));
@@ -54,6 +56,7 @@ public final class PlayerSouls {
         PlayerSouls data = new PlayerSouls();
         data.commandMode = tag.getBoolean("CommandMode");
         data.commandGroup = tag.getBoolean("Group");
+        data.appearance = SoulAppearance.load(tag.getCompound("Appearance"));
         if (tag.hasUUID("Selected")) data.selected = tag.getUUID("Selected");
         Set<String> ownedTypes = new HashSet<>();
         for (Tag raw : tag.getList("Souls", 10)) {

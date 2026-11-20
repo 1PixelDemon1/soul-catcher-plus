@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.entity;
 
+import net.minecraft.network.chat.Component;
+
+import net.minecraft.nbt.CompoundTag;
+
+import net.minecraft.world.InteractionHand;
+
+import net.minecraft.world.InteractionResult;
+
 import dev.soulcatcherplus.companion.CompanionBrain;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.EntityType;
@@ -34,6 +42,8 @@ public final class SoulShamanEntity extends PathfinderMob {
     private static final int AURA_DURATION_TICKS = 160;
     private static final double AURA_RADIUS = 6;
     private static final EntityDataAccessor<Boolean> CASTING = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> ALTERNATE = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.MIKU;
     private static final EntityDataAccessor<Integer> CAST_STARTED_AT = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.INT);
     private long nextCastAt;
 
@@ -49,8 +59,30 @@ public final class SoulShamanEntity extends PathfinderMob {
 
     @Override protected void defineSynchedData() {
         super.defineSynchedData();
+        entityData.define(ALTERNATE, false);
         entityData.define(CASTING, false);
         entityData.define(CAST_STARTED_AT, 0);
+    }
+
+    public boolean isMiku() { return entityData.get(ALTERNATE); }
+
+    @Override public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        entityData.set(ALTERNATE, FORM.isSavedIn(tag));
+    }
+
+    @Override public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (isMiku()) FORM.save(tag);
+    }
+
+    @Override protected Component getTypeName() {
+        return isMiku() ? Component.translatable(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        InteractionResult result = FORM.interact(this, player, hand);
+        return result == InteractionResult.PASS ? super.mobInteract(player, hand) : result;
     }
 
     @Override protected void registerGoals() {
