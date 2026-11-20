@@ -4,6 +4,23 @@
 
 No changes yet.
 
+## 1.3.0-prerelease — 2026-11-21
+
+Core-only prerelease for Minecraft 1.16.5/1.19.2/1.20.1/26.3, Forge 36.2.42/43.5.0/47.4.28/66.1.0, and game Java 8/17/17/25. Compat is not part of this release.
+
+- Add Soul Pylons with saved, block-bound guardians fueled by an inserted cage and scroll. Support ordinary Guard-compatible mobs and Raven collectors; use separate world reservations rather than personal companion slots. New summons require the owner online, and pylons do not force-load chunks.
+- Give pylon Ravens an item stockpile near the anchor, preferring a safe adjacent hopper/drop position and avoiding repeated collection of the stockpile. Personal Raven item/soul collection remains separate.
+- Add dark/quartz Soul Projectors with detached decorative previews and adjustable size, angle, color, opacity, and rotation.
+- Add the Soul Transfer Altar: copy a collected form into a shareable scroll using paper and the displayed soul-energy cost, retaining the original collection entry.
+- Add a Soul-Fueled Furnace using one soul energy per smelting operation, plus a Soul Energy Bow (10 per shot), Soulbound Hoe (5 per successful fertilization), and reusable Soul Sacrifice Totem (500 per revival). Equipment draws the entire cost from one sufficiently charged offhand/hotbar cage.
+- Require the vanilla Netherite Upgrade smithing template for Soul Energy Bow/Soulbound Hoe recipes on 1.20.1 and 26.3; the older recipe formats remain platform-specific.
+- Add unlockable Long-tailed Tit and Hatsune Miku forms for Raven/Shaman, refreshed Forgotten Soul geometry/materials, and owner-based appearance synchronization instead of viewer-only coloring.
+- Hold recognized flying souls in place during Wait while retaining ordinary ground-mob gravity. Reuse guard/ownership rules for block-bound companions and descendants.
+- Expand the optional English/Russian guide to 25 entries across six categories per language, adding devices, scroll copying, and equipment recipes. Forge Patchouli support for 26.3 remains unverified.
+- Advance the network protocol from 13 to 17; both sides must use the matching prerelease for the same Minecraft version.
+
+All four fresh `build -x test` packages and archive/resource audits passed. Isolated local Forge development servers reached Done and saved/stopped normally with exit 0 on all four versions. These are build/archive/server-startup checks; no clients, automated tests, GameTests, UI automation, gameplay, or multiplayer verification ran. Frozen runtime/sources JARs, `SHA256SUMS.txt`, and `archive-audit.json` are in `build/releases/1.3.0-prerelease`. See [prerelease notes](docs/releases/1.3.0-prerelease.md) for validation limits.
+
 ## 1.2.3 — 2026-11-13
 
 Matching core/Compat releases target Minecraft 1.16.5/1.19.2/1.20.1/26.3 with Forge 36.2.42/43.5.0/47.4.28/66.1.0 and game Java 8/17/17/25.

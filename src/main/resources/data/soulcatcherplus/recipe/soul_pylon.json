@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GPG",
+    "P P",
+    "GPG"
+  ],
+  "key": {
+    "G": "minecraft:gold_nugget",
+    "P": "minecraft:polished_blackstone"
+  },
+  "result": {
+    "count": 1,
+    "id": "soulcatcherplus:soul_pylon"
+  }
+}

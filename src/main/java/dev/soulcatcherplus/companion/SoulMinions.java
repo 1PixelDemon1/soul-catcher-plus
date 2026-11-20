@@ -24,7 +24,7 @@ public final class SoulMinions {
     private static final int MAX_CREATOR_DEPTH = 32;
     // Server-thread-only, weak keys: configuration state must not survive an entity reload.
     private static final Set<Mob> CONFIGURED = Collections.newSetFromMap(new WeakHashMap<>());
-    private record Bond(UUID owner, UUID entry, UUID root) {}
+    private record Bond(UUID owner, UUID entry, UUID root, boolean pylon) {}
 
     public static boolean isMinion(Entity entity) { return dev.soulcatcherplus.data.SoulNbt.hasUuid(entity.getPersistentData(), ROOT); }
 
@@ -71,6 +71,7 @@ public final class SoulMinions {
         dev.soulcatcherplus.data.SoulNbt.putUuid(tag, CompanionBrain.OWNER, bond.owner());
         dev.soulcatcherplus.data.SoulNbt.putUuid(tag, CompanionBrain.ENTRY, bond.entry());
         dev.soulcatcherplus.data.SoulNbt.putUuid(tag, ROOT, bond.root());
+        if (bond.pylon()) tag.putBoolean(dev.soulcatcherplus.pylon.PylonSouls.PYLON, true);
         if (CompanionBrain.activeEntry(child) == null) { child.discard(); return false; }
         SoulNames.update(child);
         if ((child.level().getEntity(child.getId()) == child)) {
@@ -86,7 +87,8 @@ public final class SoulMinions {
             if (creator instanceof Mob mob && CompanionBrain.isSoul(mob)) {
                 if (!dev.soulcatcherplus.data.SoulNbt.hasUuid(mob.getPersistentData(), CompanionBrain.ENTRY)) return null;
                 UUID root = isMinion(mob) ? dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), ROOT) : mob.getUUID();
-                return new Bond(CompanionBrain.owner(mob), dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), CompanionBrain.ENTRY), root);
+                return new Bond(CompanionBrain.owner(mob), dev.soulcatcherplus.data.SoulNbt.uuid(mob.getPersistentData(), CompanionBrain.ENTRY), root,
+                    dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob));
             }
             creator = summoner(creator);
         }

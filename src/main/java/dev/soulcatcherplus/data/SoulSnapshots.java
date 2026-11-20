@@ -8,6 +8,16 @@ import net.minecraft.nbt.Tag;
 
 /** Preserve mod-specific saved state, but never restore old identity/death/ownership. */
 public final class SoulSnapshots {
+    public static CompoundTag preview(SoulEntry entry) throws java.io.IOException {
+        var adapter = dev.soulcatcherplus.api.SoulAdapters.get(net.minecraft.resources.Identifier.parse(entry.entityType));
+        CompoundTag tag = sanitize(adapter.previewData(entry.snapshot()));
+        tag.remove("ForgeData");
+        tag.remove("ForgeCaps");
+        var bytes = new java.io.ByteArrayOutputStream();
+        net.minecraft.nbt.NbtIo.write(tag, new java.io.DataOutputStream(bytes));
+        return bytes.size() <= 16 * 1024 ? tag : new CompoundTag();
+    }
+
     public static CompoundTag sanitize(CompoundTag original) {
         CompoundTag tag = original.copy();
         for (String key : new String[]{"UUID", "Pos", "Motion", "Rotation", "Passengers", "Leash",

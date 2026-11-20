@@ -63,7 +63,7 @@ public class SoulScroll extends Item {
         ItemStack stack = new ItemStack(scrollItem(soul.entityType, soul.maxHealth));
         CompoundTag payload = new CompoundTag();
         payload.putString("Type", soul.entityType);
-        payload.putString("Name", soul.name);
+        if (soul.forgottenForm() == null || soul.hasCustomName()) payload.putString("Name", soul.name);
         payload.put("Snapshot", SoulSnapshots.sanitize(soul.snapshot()));
         dev.soulcatcherplus.data.SoulItemData.update(stack, tag -> tag.put(SOUL, payload));
         return stack;
@@ -94,7 +94,9 @@ public class SoulScroll extends Item {
 
     private static Component soulName(CompoundTag payload, EntityType<?> type) {
         String name = payload.getStringOr("Name", "");
-        return name.isEmpty() ? type.getDescription() : Component.literal(name);
+        if (!name.isEmpty()) return Component.literal(name);
+        var form = dev.soulcatcherplus.entity.ForgottenForm.from(payload.getStringOr("Type", ""), payload.getCompoundOrEmpty("Snapshot"));
+        return form == null ? type.getDescription() : Component.translatable(form.nameKey());
     }
 
     @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltip, TooltipFlag flag) {
@@ -111,7 +113,7 @@ public class SoulScroll extends Item {
         ItemStack stack = user.getItemInHand(hand);
         if (world.isClientSide()) return InteractionResult.SUCCESS;
         if (!(user instanceof ServerPlayer player)) return InteractionResult.FAIL;
-        SoulEntry soul = readSoul(stack, player);
+        SoulEntry soul = readSoul(stack, (net.minecraft.server.level.ServerLevel) player.level());
         if (soul == null) {
             SoulService.message(player, "scroll_invalid");
             return InteractionResult.FAIL;
@@ -135,14 +137,14 @@ public class SoulScroll extends Item {
     }
 
     /** Validate on the server using an unspawned sample; tooltip rendering never creates entities. */
-    private SoulEntry readSoul(ItemStack stack, ServerPlayer player) {
+    public SoulEntry readSoul(ItemStack stack, net.minecraft.server.level.ServerLevel world) {
         Entity sample = null;
         try {
             CompoundTag payload = payload(stack);
             EntityType<?> type = type(payload);
             if (type == null) return null;
             if (payload.contains("Snapshot") && !(payload.get("Snapshot") instanceof CompoundTag)) return null;
-            sample = type.create(player.level(), net.minecraft.world.entity.EntitySpawnReason.LOAD);
+            sample = type.create(world, net.minecraft.world.entity.EntitySpawnReason.LOAD);
             if (!(sample instanceof Mob mob)) return null;
             if (payload.contains("Snapshot")) dev.soulcatcherplus.data.SoulNbt.restore(mob,SoulSnapshots.sanitize(payload.getCompoundOrEmpty("Snapshot")));
             if (!mob.hasCustomName() && !payload.getStringOr("Name", "").isEmpty()) mob.setCustomName(soulName(payload, type));

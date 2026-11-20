@@ -1,0 +1,6 @@
+{
+  "parent": "soulcatcherplus:block/soul_pylon_scroll",
+  "textures": {
+    "rune": "minecraft:block/purple_concrete"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.devices.pylon.name",
+  "category": "soulcatcherplus:devices",
+  "icon": "soulcatcherplus:soul_pylon",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.devices.pylon.name",
+      "text": "guide.soulcatcherplus.devices.pylon.page0"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_pylon"
+    }
+  ]
+}

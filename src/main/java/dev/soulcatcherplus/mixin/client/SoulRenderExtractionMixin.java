@@ -15,7 +15,7 @@ public abstract class SoulRenderExtractionMixin {
     private void soulcatcherplus$capture(Entity entity,float partial,CallbackInfoReturnable<EntityRenderState> callback) {
         var state=callback.getReturnValue();
         boolean soul=CompanionBrain.isSoul(entity);
-        ((SoulRenderState)state).soulcatcherplus$capture(entity.getUUID(),soul);
+        ((SoulRenderState)state).soulcatcherplus$capture(entity.getUUID(), soul, dev.soulcatcherplus.client.SoulAppearances.of(entity));
         if(soul) state.nameTag=null;
     }
 }

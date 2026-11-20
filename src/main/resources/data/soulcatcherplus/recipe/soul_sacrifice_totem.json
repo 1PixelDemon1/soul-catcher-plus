@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " N ",
+    "BTB"
+  ],
+  "key": {
+    "T": "minecraft:totem_of_undying",
+    "N": "minecraft:nether_star",
+    "B": "minecraft:bone"
+  },
+  "result": {
+    "count": 1,
+    "id": "soulcatcherplus:soul_sacrifice_totem"
+  }
+}

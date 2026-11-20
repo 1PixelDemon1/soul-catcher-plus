@@ -54,7 +54,6 @@ public final class SoulEvents {
     @SubscribeEvent public static void reload(AddReloadListenerEvent event) { event.addListener(new SoulProfiles()); }
     private static ServerPlayer creditedPlayer(Entity source) {
         if (source instanceof ServerPlayer player) return player;
-        if (source instanceof Mob mob) SoulMinions.tryInherit(mob);
         if (source != null && CompanionBrain.isSoul(source))
             return source.level().getServer().getPlayerList().getPlayer(CompanionBrain.owner(source));
         return null;
@@ -68,10 +67,14 @@ public final class SoulEvents {
             if (!SoulMinions.isMinion(mob)) endCompanion(mob);
             return;
         }
-        ServerPlayer player = creditedPlayer(event.getSource().getEntity());
+        Entity killer = event.getSource().getEntity();
+        if (killer instanceof Mob attacker) SoulMinions.tryInherit(attacker);
+        Mob guard = killer instanceof Mob attacker && dev.soulcatcherplus.pylon.PylonSouls.isPylon(attacker) ? attacker : null;
+        if (guard != null) dev.soulcatcherplus.pylon.PylonSouls.creditVictory(guard, mob);
+        ServerPlayer player = creditedPlayer(killer);
         if (player == null) return;
         SoulProfiles.Profile profile = SoulProfiles.get(mob);
-        SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
+        if (guard == null) SoulCages.credit(player, SoulEnchantments.victoryEnergy(player, profile.energy()));
         CompoundTag tag = mob.getPersistentData();
         long now = player.level().getServer().overworld().getGameTime();
         if (!dev.soulcatcherplus.data.SoulNbt.hasUuid(tag, "scp_mark_owner") || !dev.soulcatcherplus.data.SoulNbt.uuid(tag, "scp_mark_owner").equals(player.getUUID())
@@ -128,7 +131,14 @@ public final class SoulEvents {
                 || !CompanionBrain.isSoul(mob) || SoulMinions.isMinion(mob)) return;
         if (SoulSpawnContext.wasDestroyed(mob)) endCompanion(mob);
     }
+    @SubscribeEvent public static boolean pylonTravel(net.minecraftforge.event.entity.EntityTravelToDimensionEvent event) {
+        return dev.soulcatcherplus.pylon.PylonSouls.isPylon(event.getEntity());
+    }
     private static void endCompanion(Mob mob) {
+        if (dev.soulcatcherplus.pylon.PylonSouls.isPylon(mob)) {
+            dev.soulcatcherplus.pylon.PylonSouls.ended(mob);
+            return;
+        }
         SoulEntry entry = CompanionBrain.activeEntry(mob);
         if (entry == null) return;
         entry.activeEntity = null; entry.dimension = "";

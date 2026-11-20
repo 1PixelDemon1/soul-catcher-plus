@@ -24,8 +24,9 @@ public final class SoulDragonPhase extends AbstractDragonPhaseInstance {
 
     @Override public void doServerTick(net.minecraft.server.level.ServerLevel level) {
         ServerPlayer owner = dragon.level().getServer().getPlayerList().getPlayer(CompanionBrain.owner(dragon));
-        CompanionBrain.Mode mode = CompanionBrain.mode(dragon);
-        if (owner == null || owner.level() != dragon.level() || mode == CompanionBrain.Mode.WAIT) {
+        boolean pylon = dev.soulcatcherplus.pylon.PylonSouls.isPylon(dragon);
+        CompanionBrain.Mode mode = pylon ? CompanionBrain.Mode.GUARD : CompanionBrain.mode(dragon);
+        if ((!pylon && (owner == null || owner.level() != dragon.level())) || mode == CompanionBrain.Mode.WAIT) {
             destination = null;
             dragon.setDeltaMovement(Vec3.ZERO);
             return;
@@ -39,7 +40,7 @@ public final class SoulDragonPhase extends AbstractDragonPhaseInstance {
             ? Vec3.atCenterOf(BlockPos.of(dragon.getPersistentData().getLongOr("scp_guard", 0L))) : owner.position();
         double angle = dragon.tickCount * 0.02 + (dragon.getUUID().hashCode() & 255);
         Vec3 orbit = new Vec3(Math.cos(angle) * ORBIT_RADIUS, ORBIT_HEIGHT, Math.sin(angle) * ORBIT_RADIUS);
-        if (CompanionBrain.isReturning(dragon)) destination = owner.position().add(0, 2, 0);
+        if (!pylon && CompanionBrain.isReturning(dragon)) destination = owner.position().add(0, 2, 0);
         else if (target == null) destination = anchor.add(orbit);
         else destination = dragon.tickCount % ATTACK_CYCLE < ATTACK_RUN_TICKS
             ? target.position().add(0, 2, 0) : target.position().add(orbit);

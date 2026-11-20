@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -30,18 +31,22 @@ public final class SoulNetwork {
             Optional<NetworkDirection> direction) {
         CHANNEL.messageBuilder(type,id,direction.orElseThrow()).encoder(encoder).decoder(decoder).consumerNetworkThread(handler).add();
     }
-    private static final int VERSION = 13;
+    private static final int VERSION = 17;
     // Even two 256-character UTF-8 strings per row keep a part below 64 KiB.
     public static final int STATE_ROWS_PER_PART = 32;
     private static final int MAX_PREVIEW_BYTES = 16 * 1024;
     // Server-thread-only, weakly held session state: unlike world time this clock runs while paused.
     private static final Map<ServerPlayer, UiRateLimit> UI_RATE_LIMITS = new WeakHashMap<>();
     private static final class UiRateLimit {
-        long action, preview, refresh, wheelRefresh;
+        long action, preview, refresh, wheelRefresh, appearance;
     }
     public static final SimpleChannel CHANNEL = ChannelBuilder.named(Identifier.fromNamespaceAndPath(SoulCatcherPlus.ID,"main")).networkProtocolVersion(VERSION).simpleChannel();
     public record Row(UUID id, String entityType, String name, int cost, double maxHealth, boolean active,
-            long cooldown, String command, SummonRules.Status status, boolean favorite) {}
+            long cooldown, String command, SummonRules.Status status, boolean favorite, boolean localizedFormName) {
+        public String displayName() {
+            return localizedFormName ? Component.translatable(name).getString() : name;
+        }
+    }
     public record State(boolean openScreen, int energy, int cageCapacity, int cageSlot, int activeCount, int summonLimit,
             boolean commandMode, boolean group, UUID selected, List<Row> rows) {
         static State read(FriendlyByteBuf b) {
@@ -54,7 +59,7 @@ public final class SoulNetwork {
             if (size < 0 || size > STATE_ROWS_PER_PART) throw new IllegalArgumentException("Invalid soul state part size");
             List<Row> rows = new ArrayList<>();
             for (int i = 0; i < size; i++) rows.add(new Row(b.readUUID(), b.readUtf(256), b.readUtf(256), b.readVarInt(),
-                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean()));
+                b.readDouble(), b.readBoolean(), b.readVarLong(), b.readUtf(16), b.readEnum(SummonRules.Status.class), b.readBoolean(), b.readBoolean()));
             return new State(open, energy, cageCapacity, cageSlot, activeCount, limit, mode, group, selected, com.google.common.collect.ImmutableList.copyOf(rows));
         }
         void write(FriendlyByteBuf b) {
@@ -67,7 +72,7 @@ public final class SoulNetwork {
             b.writeVarInt(rows.size());
             for (Row row : rows) { b.writeUUID(row.id); b.writeUtf(row.entityType, 256); b.writeUtf(row.name, 256); b.writeVarInt(row.cost);
                 b.writeDouble(row.maxHealth); b.writeBoolean(row.active); b.writeVarLong(row.cooldown);
-                b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); }
+                b.writeUtf(row.command, 16); b.writeEnum(row.status); b.writeBoolean(row.favorite); b.writeBoolean(row.localizedFormName); }
         }
     }
     public record StatePart(UUID snapshot, int offset, int total, State state) {
@@ -122,9 +127,39 @@ public final class SoulNetwork {
             }
         }
     }
-    public record Ghost(int entityId, UUID owner) {
-        static Ghost read(FriendlyByteBuf b) { return new Ghost(b.readVarInt(), b.readUUID()); }
-        void write(FriendlyByteBuf b) { b.writeVarInt(entityId); b.writeUUID(owner); }
+    public record Ghost(int entityId, UUID entityUuid, UUID owner, SoulAppearance appearance) {
+        static Ghost read(FriendlyByteBuf b) {
+            return new Ghost(b.readVarInt(), b.readUUID(), b.readUUID(), new SoulAppearance(b.readInt(), b.readFloat()));
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(entityId); b.writeUUID(entityUuid); b.writeUUID(owner);
+            b.writeInt(appearance.color()); b.writeFloat(appearance.opacity());
+        }
+    }
+    /** C2S carries no owner UUID: a client can change only its own saved preference. */
+    public record AppearanceRequest(SoulAppearance appearance) {
+        static AppearanceRequest read(FriendlyByteBuf b) { return new AppearanceRequest(new SoulAppearance(b.readInt(), b.readFloat())); }
+        void write(FriendlyByteBuf b) { b.writeInt(appearance.color()); b.writeFloat(appearance.opacity()); }
+    }
+    public record AppearanceState(UUID owner, SoulAppearance appearance) {
+        static AppearanceState read(FriendlyByteBuf b) {
+            return new AppearanceState(b.readUUID(), new SoulAppearance(b.readInt(), b.readFloat()));
+        }
+        void write(FriendlyByteBuf b) { b.writeUUID(owner); b.writeInt(appearance.color()); b.writeFloat(appearance.opacity()); }
+    }
+    public record ProjectorUpdate(int window, dev.soulcatcherplus.projector.ProjectorSettings settings) {
+        static ProjectorUpdate read(FriendlyByteBuf b) {
+            return new ProjectorUpdate(b.readVarInt(), new dev.soulcatcherplus.projector.ProjectorSettings(
+                b.readInt(), b.readInt(), b.readInt(), b.readInt(), b.readBoolean()));
+        }
+        void write(FriendlyByteBuf b) {
+            b.writeVarInt(window); b.writeInt(settings.scale()); b.writeInt(settings.color());
+            b.writeInt(settings.angle()); b.writeInt(settings.opacity()); b.writeBoolean(settings.rotating());
+        }
+    }
+    public record AltarInscribe(int window, UUID entry) {
+        static AltarInscribe read(FriendlyByteBuf b) { return new AltarInscribe(b.readVarInt(), b.readUUID()); }
+        void write(FriendlyByteBuf b) { b.writeVarInt(window); b.writeUUID(entry); }
     }
     public record PreviewRequest(UUID entry) {
         static PreviewRequest read(FriendlyByteBuf b) { return new PreviewRequest(b.readUUID()); }
@@ -134,9 +169,8 @@ public final class SoulNetwork {
         static Preview read(FriendlyByteBuf b) {
             UUID entry = b.readUUID();
             String type = b.readUtf(256);
-            net.minecraft.nbt.Tag raw = b.readNbt(NbtAccounter.create(2 * 1024 * 1024));
-            if (!(raw instanceof CompoundTag appearance)) throw new IllegalArgumentException("Invalid soul appearance payload");
-            return new Preview(entry, type, appearance == null ? new CompoundTag() : appearance);
+            var appearance = b.readNbt(NbtAccounter.create(2 * 1024 * 1024));
+            return new Preview(entry, type, appearance instanceof CompoundTag tag ? tag : new CompoundTag());
         }
         void write(FriendlyByteBuf b) { b.writeUUID(entry); b.writeUtf(entityType, 256); b.writeNbt(appearance); }
     }
@@ -169,8 +203,73 @@ public final class SoulNetwork {
             Optional.of(NetworkDirection.PLAY_TO_SERVER));
         registerMessage(7, WheelState.class, WheelState::write, WheelState::read, SoulNetwork::wheelState,
             Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        registerMessage(8, AppearanceRequest.class, AppearanceRequest::write, AppearanceRequest::read, SoulNetwork::appearanceRequest,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        registerMessage(9, AppearanceState.class, AppearanceState::write, AppearanceState::read, SoulNetwork::appearanceState,
+            Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        registerMessage(10, ProjectorUpdate.class, ProjectorUpdate::write, ProjectorUpdate::read, SoulNetwork::projectorUpdate,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        registerMessage(11, AltarInscribe.class, AltarInscribe::write, AltarInscribe::read, SoulNetwork::altarInscribe,
+            Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        registerMessage(12, TotemFlash.class, (packet, buffer) -> {}, buffer -> TotemFlash.SHOW,
+            (packet, context) -> {
+                context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> dev.soulcatcherplus.client.ClientPackets::showSacrificeTotem));
+                context.setPacketHandled(true);
+            }, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.build();
     }
+    public static void sendAltarCollection(ServerPlayer player) { sendState(player, false); }
+    private enum TotemFlash { SHOW }
+
+    public static void showSacrificeTotem(ServerPlayer player) {
+        CHANNEL.send(TotemFlash.SHOW, PacketDistributor.PLAYER.with(player));
+    }
+
+    private static void altarInscribe(AltarInscribe packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            if (context.getSender() != null
+                    && context.getSender().containerMenu instanceof dev.soulcatcherplus.altar.SoulAltarMenu menu
+                    && menu.containerId == packet.window()) menu.inscribe(context.getSender(), packet.entry());
+        });
+        context.setPacketHandled(true);
+    }
+
+    private static void projectorUpdate(ProjectorUpdate packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            if (context.getSender() != null
+                    && context.getSender().containerMenu instanceof dev.soulcatcherplus.projector.SoulProjectorContainer menu
+                    && menu.containerId == packet.window() && packet.settings().valid()) menu.queueSettings(packet.settings());
+        });
+        context.setPacketHandled(true);
+    }
+
+    private static void appearanceRequest(AppearanceRequest packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            ServerPlayer player = context.getSender();
+            if (player == null || !packet.appearance.valid()) return;
+            UiRateLimit rate = UI_RATE_LIMITS.computeIfAbsent(player, ignored -> new UiRateLimit());
+            long now = System.nanoTime();
+            if (rate.appearance != 0 && now - rate.appearance < 0) return;
+            rate.appearance = now + 200_000_000L;
+            var data = SoulService.data(player);
+            if (packet.appearance.equals(data.appearance)) {
+                CHANNEL.send(new AppearanceState(player.getUUID(), data.appearance), PacketDistributor.PLAYER.with(player));
+                return;
+            }
+            data.appearance = packet.appearance;
+            SoulService.changed(player);
+            CHANNEL.send(new AppearanceState(player.getUUID(), data.appearance), PacketDistributor.ALL.noArg());
+        });
+        context.setPacketHandled(true);
+    }
+
+    private static void appearanceState(AppearanceState packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
+            () -> () -> dev.soulcatcherplus.client.SoulAppearances.receive(packet.owner, packet.appearance, context.getConnection())));
+        context.setPacketHandled(true);
+    }
+
     public static void open(ServerPlayer player) {
         if (SoulService.holdsScythe(player)) sendState(player, true);
     }
@@ -182,8 +281,11 @@ public final class SoulNetwork {
             Mob active = SoulService.activeMob(player, e);
             String command = currentCommand(active);
             SummonRules.Availability availability = SummonRules.inspect(availabilityContext, e);
-            return new Row(e.id, e.entityType, abbreviate(e.name), e.cost, e.maxHealth, e.activeEntity != null,
-                availability.recoverySeconds(), command, availability.status(), data.isFavorite(e.entityType));
+            var form = e.forgottenForm();
+            boolean localizedForm = form != null && !e.hasCustomName();
+            return new Row(e.id, e.entityType, localizedForm ? form.nameKey() : abbreviate(e.name),
+                e.cost, e.maxHealth, e.activeEntity != null, availability.recoverySeconds(), command,
+                availability.status(), data.isFavorite(e.entityType), localizedForm);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());
         UUID snapshot = UUID.randomUUID();
         // Always send one part, including an empty collection. Clients apply only a complete snapshot.
@@ -195,11 +297,16 @@ public final class SoulNetwork {
         }
     }
     public static void ghost(ServerPlayer player, Entity entity) {
-        CHANNEL.send(new Ghost(entity.getId(), CompanionBrain.owner(entity)), PacketDistributor.PLAYER.with(player));
+        CHANNEL.send(ghostPacketFor(entity), PacketDistributor.PLAYER.with(player));
     }
     public static void ghost(Entity entity) {
-        CHANNEL.send(new Ghost(entity.getId(), CompanionBrain.owner(entity)), PacketDistributor.TRACKING_ENTITY.with(entity));
+        CHANNEL.send(ghostPacketFor(entity), PacketDistributor.TRACKING_ENTITY.with(entity));
     }
+    private static Ghost ghostPacketFor(Entity entity) {
+        UUID owner = CompanionBrain.owner(entity);
+        return new Ghost(entity.getId(), entity.getUUID(), owner, SoulLedger.get(entity.level().getServer()).player(owner).appearance);
+    }
+
     public static void dissolve(Mob mob) {
         if (mob.level().isClientSide() || mob.getPersistentData().getBooleanOr("scp_dissolving", false)) return;
         mob.getPersistentData().putBoolean("scp_dissolving", true);
@@ -260,7 +367,9 @@ public final class SoulNetwork {
             Mob mob = SoulService.activeMob(player, entry);
             boolean loaded = mob != null && Float.isFinite(mob.getHealth()) && Float.isFinite(mob.getMaxHealth());
             boolean localizedName = entry.entityType.startsWith(SoulCatcherPlus.ID + ":") && !entry.hasCustomName();
-            String name = localizedName ? "entity." + entry.entityType.replace(':', '.') : abbreviate(entry.name);
+            var form = entry.forgottenForm();
+            String name = !localizedName ? abbreviate(entry.name)
+                : form != null ? form.nameKey() : "entity." + entry.entityType.replace(':', '.');
             return new Companion(entry.id, name, localizedName, loaded ? Math.max(0, mob.getHealth()) : 0,
                 loaded ? Math.max(1, mob.getMaxHealth()) : 0, loaded ? currentCommand(mob) : "", loaded);
         }).collect(com.google.common.collect.ImmutableList.toImmutableList());

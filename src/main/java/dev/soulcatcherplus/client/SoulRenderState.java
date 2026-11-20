@@ -5,5 +5,6 @@ import java.util.UUID;
 public interface SoulRenderState {
     UUID soulcatcherplus$uuid();
     boolean soulcatcherplus$isSoul();
-    void soulcatcherplus$capture(UUID uuid, boolean soul);
+    dev.soulcatcherplus.data.SoulAppearance soulcatcherplus$appearance();
+    void soulcatcherplus$capture(UUID uuid, boolean soul, dev.soulcatcherplus.data.SoulAppearance appearance);
 }

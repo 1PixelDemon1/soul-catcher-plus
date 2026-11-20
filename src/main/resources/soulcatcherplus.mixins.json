@@ -12,7 +12,9 @@
     "CompanionDragonMixin",
     "CompanionDragonPhaseMixin",
     "CompanionDragonBreathMixin",
-    "CompanionDragonFightMixin"
+    "CompanionDragonFightMixin",
+    "CompanionWaitMovementMixin",
+    "SoulTotemMixin"
   ],
   "client": [
     "client.SoulEntityRenderMixin",

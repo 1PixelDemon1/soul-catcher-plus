@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " P ",
+    "BSB",
+    "GBG"
+  ],
+  "key": {
+    "P": "minecraft:paper",
+    "B": "minecraft:polished_blackstone",
+    "S": "minecraft:soul_sand",
+    "G": "minecraft:gold_ingot"
+  },
+  "result": {
+    "count": 1,
+    "id": "soulcatcherplus:soul_transfer_altar"
+  }
+}

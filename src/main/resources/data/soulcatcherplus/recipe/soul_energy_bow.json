@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": "minecraft:bow",
+  "addition": "minecraft:soul_torch",
+  "result": {
+    "id": "soulcatcherplus:soul_energy_bow"
+  },
+  "template": "minecraft:netherite_upgrade_smithing_template"
+}

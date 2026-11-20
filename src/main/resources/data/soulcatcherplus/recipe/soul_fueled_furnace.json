@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GPG",
+    "PFP",
+    "GSG"
+  ],
+  "key": {
+    "F": "minecraft:furnace",
+    "G": "minecraft:gold_nugget",
+    "P": "minecraft:polished_blackstone",
+    "S": "minecraft:soul_sand"
+  },
+  "result": {
+    "count": 1,
+    "id": "soulcatcherplus:soul_fueled_furnace"
+  }
+}

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus;
 
+import dev.soulcatcherplus.item.SoulEnergyBow;
+import dev.soulcatcherplus.item.SoulboundHoe;
+import dev.soulcatcherplus.item.SoulItem;
 import dev.soulcatcherplus.entity.*;
 import dev.soulcatcherplus.api.SoulAdapters;
 import dev.soulcatcherplus.item.SoulScroll;
@@ -49,6 +52,12 @@ public final class SoulCatcherPlus {
     /** Display-only item for the tab icon; omitted from the tab's obtainable equipment. */
     public static final RegistryObject<Item> SOUL_ICON = ITEMS.register("soul_icon", () -> new Item(new Item.Properties().setId(ITEMS.key("soul_icon"))));
     /** Compatibility alias for the original iron scythe. */
+    public static final RegistryObject<Item> SOUL_SACRIFICE_TOTEM = ITEMS.register("soul_sacrifice_totem",
+        () -> new SoulItem(new Item.Properties().setId(ITEMS.key("soul_sacrifice_totem")).stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> SOULBOUND_HOE = ITEMS.register("soulbound_hoe",
+        () -> new SoulboundHoe(new Item.Properties().setId(ITEMS.key("soulbound_hoe"))));
+    public static final RegistryObject<Item> SOUL_ENERGY_BOW = ITEMS.register("soul_energy_bow",
+        () -> new SoulEnergyBow(new Item.Properties().setId(ITEMS.key("soul_energy_bow")).durability(384)));
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<CreativeModeTab> SOUL_TAB = CREATIVE_TABS.register("soulcatcherplus", () ->
         CreativeModeTab.builder()
@@ -58,6 +67,14 @@ public final class SoulCatcherPlus {
             .displayItems((parameters, output) -> {
                 output.accept(IRON_SCYTHE.get()); output.accept(DIAMOND_SCYTHE.get()); output.accept(NETHERITE_SCYTHE.get()); output.accept(SUPREME_SCYTHE.get());
                 output.accept(SOUL_SCROLL.get()); output.accept(BOSS_SOUL_SCROLL.get());
+                output.accept(SOUL_ENERGY_BOW.get());
+                output.accept(SOULBOUND_HOE.get());
+                output.accept(SOUL_SACRIFICE_TOTEM.get());
+                output.accept(dev.soulcatcherplus.pylon.SoulPylons.ITEM.get());
+                output.accept(dev.soulcatcherplus.projector.SoulProjectors.DARK_ITEM.get());
+                output.accept(dev.soulcatcherplus.projector.SoulProjectors.LIGHT_ITEM.get());
+                output.accept(dev.soulcatcherplus.altar.SoulAltars.ITEM.get());
+                output.accept(dev.soulcatcherplus.furnace.SoulFurnaces.ITEM.get());
                 for (ItemStack scroll : FORGOTTEN_SOUL_SCROLL.get().creativeVariants()) output.accept(scroll);
                 output.accept(IRON_CAGE.get()); output.accept(DIAMOND_CAGE.get()); output.accept(NETHERITE_CAGE.get()); output.accept(SUPREME_CAGE.get());
             }).build());
@@ -69,6 +86,9 @@ public final class SoulCatcherPlus {
     public static final RegistryObject<EntityType<SoulRavenEntity>> SOUL_RAVEN = ENTITIES.register("soul_raven", () -> EntityType.Builder.<SoulRavenEntity>of(SoulRavenEntity::new, MobCategory.MISC).sized(.45f,.65f).clientTrackingRange(8).updateInterval(3).build(ENTITIES.key("soul_raven")));
     public static final RegistryObject<EntityType<SoulCourierEntity>> SOUL_COURIER = ENTITIES.register("soul_courier", () -> EntityType.Builder.<SoulCourierEntity>of(SoulCourierEntity::new, MobCategory.MISC).sized(.875f,1.4875f).clientTrackingRange(8).updateInterval(3).build(ENTITIES.key("soul_courier")));
     public static final RegistryObject<EntityType<SoulShamanEntity>> SOUL_SHAMAN = ENTITIES.register("soul_shaman", () -> EntityType.Builder.<SoulShamanEntity>of(SoulShamanEntity::new, MobCategory.MISC).sized(.62f,1.22f).clientTrackingRange(8).updateInterval(3).build(ENTITIES.key("soul_shaman")));
+    public static final RegistryObject<EntityType<SoulBoltEntity>> SOUL_BOLT = ENTITIES.register("soul_bolt",
+        () -> EntityType.Builder.<SoulBoltEntity>of(SoulBoltEntity::new, MobCategory.MISC)
+            .sized(.2f, .2f).clientTrackingRange(8).updateInterval(1).build(ENTITIES.key("soul_bolt")));
     public SoulCatcherPlus(FMLJavaModLoadingContext context) {
         context.registerConfig(net.minecraftforge.fml.config.ModConfig.Type.CLIENT, SoulClientConfig.SPEC);
         var bus = context.getModBusGroup();
@@ -87,6 +107,14 @@ public final class SoulCatcherPlus {
         }));
         ForgottenSoulLoot.SERIALIZERS.register(bus);
         ITEMS.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.BLOCKS.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.TILES.register(bus);
+        dev.soulcatcherplus.pylon.SoulPylons.MENUS.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.BLOCKS.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.TILES.register(bus);
+        dev.soulcatcherplus.projector.SoulProjectors.MENUS.register(bus);
+        dev.soulcatcherplus.altar.SoulAltars.register(bus);
+        dev.soulcatcherplus.furnace.SoulFurnaces.register(bus);
         ENTITIES.register(bus);
         CREATIVE_TABS.register(bus);
         SoulNetwork.register();

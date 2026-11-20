@@ -30,11 +30,12 @@ public final class SoulVisuals {
         if(SoulDissolves.renderingEcho()) return nodes;
         var raw=nodes instanceof SoulSubmitNodes spectral?spectral.root():nodes;
         if(!((SoulRenderState)state).soulcatcherplus$isSoul()) return raw;
-        return new SoulSubmitNodes(raw,appearance(state,SoulClientConfig.opacity(),null));
+        return new SoulSubmitNodes(raw,appearance(state,((SoulRenderState) state).soulcatcherplus$appearance().opacity(),null));
     }
     static Appearance appearance(EntityRenderState state,float opacity,VertexFade fade) {
+        var tint = ((SoulRenderState) state).soulcatcherplus$appearance();
         return new Appearance(state.entityType.builtInRegistryHolder().key().identifier(),
-            ARGB.colorFromFloat(opacity,SoulClientConfig.red(),SoulClientConfig.green(),SoulClientConfig.blue()),fade);
+            ARGB.colorFromFloat(opacity,tint.red(),tint.green(),tint.blue()),fade);
     }
     static RenderType remap(Appearance appearance,RenderType original) {
         var setup=((SoulRenderTypeAccess)original).soulcatcherplus$state();
@@ -45,7 +46,13 @@ public final class SoulVisuals {
         if(provider!=null) return provider.remap(original,texture);
         if(original==RenderTypes.entitySolid(texture) || original==RenderTypes.entityCutoutCull(texture)
                 || original==RenderTypes.entityCutout(texture) || original==RenderTypes.entityCutout(texture,false)
-                || original==RenderTypes.entityTranslucentCull(texture)) return RenderTypes.entityTranslucent(texture);
+                || original==RenderTypes.entityTranslucentCull(texture)) {
+            var type = appearance.type();
+            if ("soulcatcherplus".equals(type.getNamespace())
+                    && java.util.Set.of("soul_raven", "soul_shaman", "soul_courier").contains(type.getPath()))
+                return RenderTypes.entityTranslucentCull(texture);
+            return RenderTypes.entityTranslucent(texture);
+        }
         if(original==RenderTypes.eyes(texture)) return RenderTypes.entityTranslucentEmissive(texture);
         return original;
     }

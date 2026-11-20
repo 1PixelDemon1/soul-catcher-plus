@@ -35,10 +35,17 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /** Passive legendary collector. Raw /summon birds remain unowned preview entities. */
 public final class SoulRavenEntity extends PathfinderMob {
     private static final int CARGO_LIMIT = 8;
+    private static final EntityDataAccessor<Boolean> ALTERNATE = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.LONG_TAILED_TIT;
     private static final EntityDataAccessor<Boolean> PERCHED = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<net.minecraft.world.entity.EntityReference<LivingEntity>>> SOUL_OWNER = SynchedEntityData.defineId(SoulRavenEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
     private float flightBlend;
@@ -69,8 +76,31 @@ public final class SoulRavenEntity extends PathfinderMob {
             .add(Attributes.FOLLOW_RANGE, 20.0).build();
     }
 
+    public boolean isLongTailedTit() { return entityData.get(ALTERNATE); }
+
+    @Override protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        entityData.set(ALTERNATE, FORM.isSavedIn(input));
+    }
+
+    @Override protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        if (isLongTailedTit()) FORM.save(output);
+    }
+
+    @Override protected Component getTypeName() {
+        return isLongTailedTit() ? Component.translatable(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (isPerched()) return super.mobInteract(player, hand);
+        InteractionResult result = FORM.interact(this, player, hand);
+        return result == InteractionResult.PASS ? super.mobInteract(player, hand) : result;
+    }
+
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(ALTERNATE, false);
         builder.define(PERCHED, false);
         builder.define(SOUL_OWNER, Optional.empty());
     }

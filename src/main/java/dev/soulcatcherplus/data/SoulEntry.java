@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 package dev.soulcatcherplus.data;
 
+import dev.soulcatcherplus.entity.ForgottenForm;
+import net.minecraft.network.chat.Component;
+
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 
@@ -20,6 +23,13 @@ public final class SoulEntry {
         this.snapshot = snapshot.copy(); this.maxHealth = SoulBalance.health(maxHealth);
         this.cost = SoulBalance.summonCost(this.maxHealth);
     }
+    public ForgottenForm forgottenForm() { return ForgottenForm.from(entityType, snapshot); }
+
+    public Component displayName() {
+        ForgottenForm form = forgottenForm();
+        return form != null && !hasCustomName() ? Component.translatable(form.nameKey()) : Component.literal(name);
+    }
+
     public boolean hasCustomName() { return snapshot.contains("CustomName"); }
     public CompoundTag snapshot() { return snapshot.copy(); }
     public CompoundTag save() {

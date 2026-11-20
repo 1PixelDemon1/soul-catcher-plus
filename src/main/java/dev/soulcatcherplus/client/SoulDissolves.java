@@ -110,7 +110,7 @@ public final class SoulDissolves {
             if (echo.level != client.level || echo.state == null || echo.renderFailed
                     || camera.distanceToSqr(echo.position) > 96 * 96) continue;
             float progress = Mth.clamp((echo.age + (client.isPaused() ? 0 : level.worldPartialTicks)) / DURATION, 0, 1);
-            float alpha = dev.soulcatcherplus.config.SoulClientConfig.opacity() * (1 - progress * progress);
+            float alpha = ((SoulRenderState) echo.state).soulcatcherplus$appearance().opacity() * (1 - progress * progress);
             pose.pushPose();
             try {
                 pose.translate(echo.position.x - camera.x, echo.position.y - camera.y + progress * .12,

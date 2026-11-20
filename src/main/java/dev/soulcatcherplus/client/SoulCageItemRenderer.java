@@ -23,7 +23,7 @@ public final class SoulCageItemRenderer implements SpecialModelRenderer<Float> {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath("soulcatcherplus", "textures/item/cage_material.png");
     private final SoulCageModel model;
 
-    private SoulCageItemRenderer(Material material) { model = new SoulCageModel(material); }
+    SoulCageItemRenderer(Material material) { model = new SoulCageModel(material); }
 
     @Override public Float extractArgument(ItemStack stack) {
         var client = Minecraft.getInstance();
@@ -37,6 +37,15 @@ public final class SoulCageItemRenderer implements SpecialModelRenderer<Float> {
         pose.pushPose();
         // Authored coordinates are centered on the chain grip, below the hand.
         pose.translate(0, -GRIP_HEIGHT, 0);
+        submitCage(seconds, pose, nodes, light, overlay, foil);
+        pose.popPose();
+    }
+
+    void submitFloating(float seconds, PoseStack pose, SubmitNodeCollector nodes, int light, int overlay) {
+        submitCage(seconds, pose, nodes, light, overlay, false);
+    }
+
+    private void submitCage(float seconds, PoseStack pose, SubmitNodeCollector nodes, int light, int overlay, boolean foil) {
         nodes.submitCustomGeometry(pose, foil ? RenderTypes.armorCutoutNoCullGlint(TEXTURE)
                 : RenderTypes.entityCutout(TEXTURE), (frame, buffer) ->
             model.render(SoulCageModel.Surface.FRAME, seconds, SoulModelRenderer.poseFrom(frame), buffer, light, overlay));
@@ -44,7 +53,6 @@ public final class SoulCageItemRenderer implements SpecialModelRenderer<Float> {
             model.render(SoulCageModel.Surface.SOUL, seconds, SoulModelRenderer.poseFrom(frame), buffer, 0xF000F0, overlay));
         nodes.order(1).submitCustomGeometry(pose, RenderTypes.entityTranslucent(TEXTURE), (frame, buffer) ->
             model.render(SoulCageModel.Surface.GLASS, seconds, SoulModelRenderer.poseFrom(frame), buffer, light, overlay));
-        pose.popPose();
     }
 
     @Override public void getExtents(Consumer<Vector3fc> output) {

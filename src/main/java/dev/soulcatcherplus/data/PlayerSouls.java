@@ -14,6 +14,7 @@ import net.minecraft.nbt.Tag;
 public final class PlayerSouls {
     public static final int MAX_ENTRIES = 4096;
     public UUID selected;
+    public SoulAppearance appearance = SoulAppearance.DEFAULT;
     public boolean commandMode;
     public boolean commandGroup = true;
     public final Map<UUID, SoulEntry> entries = new LinkedHashMap<>();
@@ -39,6 +40,7 @@ public final class PlayerSouls {
     }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
+        tag.put("Appearance", appearance.save());
         tag.putBoolean("CommandMode", commandMode);
         tag.putBoolean("Group", commandGroup);
         if (selected != null) dev.soulcatcherplus.data.SoulNbt.putUuid(tag, "Selected", selected);
@@ -52,6 +54,7 @@ public final class PlayerSouls {
     }
     public static PlayerSouls load(CompoundTag tag) {
         PlayerSouls data = new PlayerSouls();
+        data.appearance = SoulAppearance.load(tag.getCompoundOrEmpty("Appearance"));
         data.commandMode = tag.getBooleanOr("CommandMode", false);
         data.commandGroup = tag.getBooleanOr("Group", false);
         if (dev.soulcatcherplus.data.SoulNbt.hasUuid(tag, "Selected")) data.selected = dev.soulcatcherplus.data.SoulNbt.uuid(tag, "Selected");

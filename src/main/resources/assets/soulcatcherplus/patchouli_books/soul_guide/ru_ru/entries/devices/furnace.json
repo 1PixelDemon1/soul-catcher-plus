@@ -1,0 +1,17 @@
+{
+  "name": "guide.soulcatcherplus.devices.furnace.name",
+  "category": "soulcatcherplus:devices",
+  "icon": "soulcatcherplus:soul_fueled_furnace",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "title": "guide.soulcatcherplus.devices.furnace.name",
+      "text": "guide.soulcatcherplus.devices.furnace.page0"
+    },
+    {
+      "type": "crafting",
+      "recipe": "soulcatcherplus:soul_fueled_furnace"
+    }
+  ]
+}

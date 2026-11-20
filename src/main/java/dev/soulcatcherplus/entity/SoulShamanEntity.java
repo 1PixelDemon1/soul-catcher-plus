@@ -22,6 +22,11 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerLevel;
 
 /** Passive support soul. Its aura supports only its owner and that owner's active souls. */
@@ -32,6 +37,8 @@ public final class SoulShamanEntity extends PathfinderMob {
     private static final int CAST_IMPACT_TICK = 18;
     private static final int AURA_DURATION_TICKS = 160;
     private static final double AURA_RADIUS = 6;
+    private static final EntityDataAccessor<Boolean> ALTERNATE = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ForgottenForm FORM = ForgottenForm.MIKU;
     private static final EntityDataAccessor<Boolean> CASTING = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> CAST_STARTED_AT = SynchedEntityData.defineId(SoulShamanEntity.class, EntityDataSerializers.INT);
     private long nextCastAt;
@@ -46,8 +53,30 @@ public final class SoulShamanEntity extends PathfinderMob {
             .add(Attributes.MOVEMENT_SPEED, 0.25).add(Attributes.FOLLOW_RANGE, 32).build();
     }
 
+    public boolean isMiku() { return entityData.get(ALTERNATE); }
+
+    @Override protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        entityData.set(ALTERNATE, FORM.isSavedIn(input));
+    }
+
+    @Override protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        if (isMiku()) FORM.save(output);
+    }
+
+    @Override protected Component getTypeName() {
+        return isMiku() ? Component.translatable(FORM.nameKey()) : super.getTypeName();
+    }
+
+    @Override protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        InteractionResult result = FORM.interact(this, player, hand);
+        return result == InteractionResult.PASS ? super.mobInteract(player, hand) : result;
+    }
+
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(ALTERNATE, false);
         builder.define(CASTING, false);
         builder.define(CAST_STARTED_AT, 0);
     }

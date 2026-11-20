@@ -38,7 +38,8 @@ public final class ClientPackets {
     }
     public static void open(SoulNetwork.State state) {
         Minecraft client = Minecraft.getInstance();
-        if (client.gui.screen() instanceof SoulScreen screen) screen.update(state);
+        if (client.gui.screen() instanceof SoulAltarScreen screen) screen.update(state);
+        else if (client.gui.screen() instanceof SoulScreen screen) screen.update(state);
         else if (client.gui.screen() instanceof SoulAppearanceScreen screen) screen.update(state);
         else if (state.openScreen() && client.gui.screen() == null && ClientControls.canUseMenus(client))
             client.gui.setScreen(new SoulScreen(state));
@@ -51,7 +52,15 @@ public final class ClientPackets {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
         Entity entity = client.level.getEntity(state.entityId());
-        if (entity != null) dev.soulcatcherplus.data.SoulNbt.putUuid(entity.getPersistentData(), CompanionBrain.OWNER, state.owner());
+        if (entity != null && entity.getUUID().equals(state.entityUuid())) {
+            dev.soulcatcherplus.data.SoulNbt.putUuid(entity.getPersistentData(), CompanionBrain.OWNER, state.owner());
+            SoulAppearances.receive(state.owner(), state.appearance(), client.getConnection().getConnection());
+        }
+    }
+    public static void showSacrificeTotem() {
+        var player = Minecraft.getInstance().player;
+        if (player != null) player.itemActivation().activate(new net.minecraft.world.item.ItemStack(
+            dev.soulcatcherplus.SoulCatcherPlus.SOUL_SACRIFICE_TOTEM.get()), player.getRandom());
     }
     public static void preview(SoulNetwork.Preview preview) {
         if (Minecraft.getInstance().gui.screen() instanceof SoulScreen screen) screen.receivePreview(preview);

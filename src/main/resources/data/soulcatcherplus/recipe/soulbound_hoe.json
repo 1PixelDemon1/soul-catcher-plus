@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": "minecraft:iron_hoe",
+  "addition": "minecraft:bone_block",
+  "result": {
+    "id": "soulcatcherplus:soulbound_hoe"
+  },
+  "template": "minecraft:netherite_upgrade_smithing_template"
+}
