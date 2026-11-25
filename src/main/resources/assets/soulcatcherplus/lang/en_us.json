@@ -1,4 +1,8 @@
 {
+  "item.soulcatcherplus.soul_seal": "Soul Seal",
+  "message.soulcatcherplus.seal_applied": "Soul state updated.",
+  "message.soulcatcherplus.seal_unchanged": "This soul's saved state is unchanged.",
+  "message.soulcatcherplus.seal_requires_companion": "Use the seal on one of your summoned companions.",
   "screen.soulcatcherplus.teleport": "Teleport to me",
   "screen.soulcatcherplus.teleport_all": "Teleport all to me",
   "screen.soulcatcherplus.teleport_short": "Teleport",
