@@ -69,6 +69,8 @@ public final class SoulCatcherPlus {
         () -> new dev.soulcatcherplus.item.SoulboundHoe(new Item.Properties().tab(SOUL_TAB)));
     public static final RegistryObject<Item> SOUL_ENERGY_BOW = ITEMS.register("soul_energy_bow",
         () -> new dev.soulcatcherplus.item.SoulEnergyBow(new Item.Properties().tab(SOUL_TAB).durability(384)));
+    public static final RegistryObject<Item> SOUL_SEAL = ITEMS.register("soul_seal",
+        () -> new dev.soulcatcherplus.item.SoulSeal(new Item.Properties().tab(SOUL_TAB)));
     /** Compatibility alias for the original iron scythe. */
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<EntityType<SoulBoltEntity>> SOUL_BOLT = ENTITIES.register("soul_bolt",
