@@ -25,16 +25,15 @@ companions in battle.
 
 ## Supported versions
 
-**1.3.0-prerelease** covers the core on all four targets below. See the
-[prerelease notes](docs/releases/1.3.0-prerelease.md) for changes and validation.
-The [1.2.3 release notes](docs/releases/1.2.3.md) cover the matching stable core and Compat builds.
+**1.3.0** covers all four Forge targets below. The [release notes](docs/releases/1.3.0.md)
+describe the new devices, equipment, alternate forms, and the Soul Seal.
 
-| Minecraft | Mod loader | Java |
-| --- | --- | --- |
-| 1.16.5 | Forge 36.2.42 | 8 |
-| 1.19.2 | Forge 43.5.0 | 17 |
-| 1.20.1 | Forge 47.4.28 | 17 |
-| 26.3 | Forge 66.1.0 | 25 |
+| Minecraft | Forge build target | Minimum Forge | Java |
+| --- | --- | --- | --- |
+| 1.16.5 | 36.2.42 | 36.0.42 | 8 |
+| 1.19.2 | 43.5.0 | 43.1.10 | 17 |
+| 1.20.1 | 47.4.28 | 47.1.4 | 17 |
+| 26.3 | 66.1.0 | 66.0.0 | 25 |
 
 Each Minecraft version has its own JAR. Install the matching core mod in the
 `mods` folder on both client and server. The core does not require any creature
@@ -105,12 +104,8 @@ Historical release artifacts and notes retain their original requirements.
 
 ## Release validation
 
-All four fresh core builds, archive audits, and ordinary installed-client startups
-passed before publication. Clients loaded sound/atlases and closed normally without
-entering worlds. Patchouli book resources loaded on the older three platforms;
-26.3 has no verified Forge Patchouli build. No automated tests, GameTests, gameplay,
-multiplayer, or fresh dedicated-server checks ran. See the
-[release notes](docs/releases/1.2.3.md) for profiles and known external warnings.
+See the [1.3.0 release notes](docs/releases/1.3.0.md) for the validation matrix
+and integration limits.
 
 ## License
 

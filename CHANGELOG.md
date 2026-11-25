@@ -4,6 +4,22 @@
 
 No changes yet.
 
+## 1.3.0 — 2026-11-25
+
+Stable core and separate Compat addon release for Minecraft 1.16.5/1.19.2/1.20.1/26.3. Build targets remain Forge 36.2.42/43.5.0/47.4.28/66.1.0 and game Java 8/17/17/25; declared Forge minima are listed separately in the release notes.
+
+- Add Soul Seal after the prerelease: use it on your active personal companion to update its collection snapshot through the registered adapter, including supported equipment/state and current maximum health. Preserve the collection name and active identity; recalculate summon cost. Consume one seal only when the saved snapshot changes, except in Creative.
+- Remove temporary effects, live position/identity, and Soul Catcher ownership from restored snapshots; set captured equipment drop chances to zero. Merge legacy experimental `SealedEquipment` data into the unified snapshot on load; include `SaddleItem` in equipment previews.
+- Bring the 1.3 prerelease features into the stable release: saved Soul Pylon guardians and Raven stockpiles, dark/quartz Soul Projectors, shareable altar scrolls, Soul-Fueled Furnace, Soul Energy Bow, Soulbound Hoe, and reusable Soul Sacrifice Totem.
+- Retain alternate Long-tailed Tit/Miku collection forms, refreshed Forgotten Soul models, owner-synchronized color/opacity, and stationary Wait for recognized flying souls.
+- Correct empty Pylon/Projector slot encoding on 26.3, fit the furnace's displayed cage, reject appearance updates from an obsolete connection, and allow Raven pylon deliveries below Y=0 within native build-height bounds on 1.19.2/1.20.1/26.3.
+- Fix 26.3 startup with default mipmap settings by doubling ten 8-pixel device-block sprites to 16 pixels with nearest-neighbor sampling, preserving their pixel art and UV layout.
+- Expand the optional English/Russian guide from the last stable release to 25 entries across six categories per language. The 26.3 JAR includes text resources without claiming working Forge Patchouli or guide crafting there.
+- Use network protocol 17 (1.2.3 used 13). Install the matching core release for the same Minecraft version on both sides.
+- Separate Forge build targets from lowered runtime minima and retain standalone core/Compat isolation. No universal creature-mod compatibility or cross-Minecraft world migration is promised.
+
+All eight fresh core/addon builds and 16 runtime/sources archive audits passed. All eight installed-production-client profiles completed startup and normal closure with exit 0 using JARs whose hashes match the final release assets, including both corrected 26.3 profiles at default mipmap settings. No new dedicated-server, automated-test, GameTest, UI-automation, gameplay, or multiplayer verification ran. See [release notes](docs/releases/1.3.0.md) for exact profiles and limits.
+
 ## 1.3.0-prerelease — 2026-11-21
 
 Core-only prerelease for Minecraft 1.16.5/1.19.2/1.20.1/26.3, Forge 36.2.42/43.5.0/47.4.28/66.1.0, and game Java 8/17/17/25. Compat is not part of this release.
