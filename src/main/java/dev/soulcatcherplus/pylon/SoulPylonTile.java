@@ -195,16 +195,16 @@ public final class SoulPylonTile extends BlockEntity implements WorldlyContainer
 
     @Override protected void saveAdditional(ValueOutput tag) {
         super.saveAdditional(tag);
-        tag.store("Cage", ItemStack.CODEC, cage);
-        tag.store("Scroll", ItemStack.CODEC, scroll);
+        tag.store("Cage", ItemStack.OPTIONAL_CODEC, cage);
+        tag.store("Scroll", ItemStack.OPTIONAL_CODEC, scroll);
         if (owner != null) dev.soulcatcherplus.data.SoulNbt.putUuid(tag, "Owner", owner);
         if (bondId != null) dev.soulcatcherplus.data.SoulNbt.putUuid(tag, "Bond", bondId);
     }
 
     @Override protected void loadAdditional(ValueInput tag) {
         super.loadAdditional(tag);
-        cage = tag.read("Cage", ItemStack.CODEC).orElse(ItemStack.EMPTY);
-        scroll = tag.read("Scroll", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+        cage = tag.read("Cage", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        scroll = tag.read("Scroll", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
         if (!(cage.getItem() instanceof SoulCage)) cage = ItemStack.EMPTY;
         if (!(scroll.getItem() instanceof SoulScroll)) scroll = ItemStack.EMPTY;
         owner = dev.soulcatcherplus.data.SoulNbt.hasUuid(tag, "Owner") ? dev.soulcatcherplus.data.SoulNbt.uuid(tag, "Owner") : null;
@@ -217,8 +217,8 @@ public final class SoulPylonTile extends BlockEntity implements WorldlyContainer
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
-        tag.store("Cage", ItemStack.CODEC, registries.createSerializationContext(NbtOps.INSTANCE), cage);
-        if (!scroll.isEmpty()) tag.store("Scroll", ItemStack.CODEC, registries.createSerializationContext(NbtOps.INSTANCE), new ItemStack(scroll.getItem()));
+        tag.store("Cage", ItemStack.OPTIONAL_CODEC, registries.createSerializationContext(NbtOps.INSTANCE), cage);
+        if (!scroll.isEmpty()) tag.store("Scroll", ItemStack.OPTIONAL_CODEC, registries.createSerializationContext(NbtOps.INSTANCE), new ItemStack(scroll.getItem()));
         tag.putInt("Guardian", guardianId);
         return tag;
     }
@@ -228,8 +228,8 @@ public final class SoulPylonTile extends BlockEntity implements WorldlyContainer
     }
     @Override public void handleUpdateTag(ValueInput tag, HolderLookup.Provider holders) { readVisuals(tag); }
     private void readVisuals(ValueInput tag) {
-        cage = tag.read("Cage", ItemStack.CODEC).orElse(ItemStack.EMPTY);
-        scroll = tag.read("Scroll", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+        cage = tag.read("Cage", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        scroll = tag.read("Scroll", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
         guardianId = tag.getIntOr("Guardian", 0);
     }
     @Override public AABB getRenderBoundingBox() { return new AABB(getBlockPos()).inflate(PylonSouls.RETURN_RADIUS); }

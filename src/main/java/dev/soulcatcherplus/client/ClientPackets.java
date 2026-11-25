@@ -48,14 +48,12 @@ public final class ClientPackets {
         // A late response must never reopen a wheel after its trigger was released.
         if (Minecraft.getInstance().gui.screen() instanceof SoulWheelScreen screen) screen.update(state);
     }
-    public static void ghost(SoulNetwork.Ghost state) {
+    public static void ghost(SoulNetwork.Ghost state, net.minecraft.network.Connection source) {
         Minecraft client = Minecraft.getInstance();
-        if (client.level == null) return;
+        if (client.level == null || !SoulAppearances.receive(state.owner(), state.appearance(), source)) return;
         Entity entity = client.level.getEntity(state.entityId());
-        if (entity != null && entity.getUUID().equals(state.entityUuid())) {
+        if (entity != null && entity.getUUID().equals(state.entityUuid()))
             dev.soulcatcherplus.data.SoulNbt.putUuid(entity.getPersistentData(), CompanionBrain.OWNER, state.owner());
-            SoulAppearances.receive(state.owner(), state.appearance(), client.getConnection().getConnection());
-        }
     }
     public static void showSacrificeTotem() {
         var player = Minecraft.getInstance().player;

@@ -1,4 +1,8 @@
 {
+  "item.soulcatcherplus.soul_seal": "Печать души",
+  "message.soulcatcherplus.seal_applied": "Состояние души обновлено.",
+  "message.soulcatcherplus.seal_unchanged": "Сохранённое состояние души не изменилось.",
+  "message.soulcatcherplus.seal_requires_companion": "Примени печать к своему призванному спутнику.",
   "screen.soulcatcherplus.teleport": "Телепортировать к себе",
   "screen.soulcatcherplus.teleport_all": "Телепортировать всех к себе",
   "screen.soulcatcherplus.teleport_short": "К себе",

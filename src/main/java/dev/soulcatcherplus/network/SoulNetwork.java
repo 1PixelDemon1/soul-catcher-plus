@@ -420,7 +420,7 @@ public final class SoulNetwork {
     }
     private static void ghostPacket(Ghost packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> ClientDispatch.unsafeRunWhenOn(Dist.CLIENT,
-            () -> () -> dev.soulcatcherplus.client.ClientPackets.ghost(packet)));
+            () -> () -> dev.soulcatcherplus.client.ClientPackets.ghost(packet, context.getConnection())));
         context.setPacketHandled(true);
     }
     private static void previewRequest(PreviewRequest packet, net.minecraftforge.event.network.CustomPayloadEvent.Context context) {

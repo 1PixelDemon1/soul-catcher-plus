@@ -42,7 +42,7 @@ final class RavenPylonDrop {
     }
 
     private static boolean clear(Level world, BlockPos cell) {
-        if (cell.getY() < 0 || cell.getY() >= world.getHeight()) return false;
+        if (cell.getY() < world.getMinY() || cell.getY() >= world.getMaxY() + 1) return false;
         BlockState state = world.getBlockState(cell);
         return !state.getFluidState().is(FluidTags.LAVA) && !state.is(Blocks.FIRE) && !state.is(Blocks.SOUL_FIRE)
             && state.getCollisionShape(world, cell).isEmpty();

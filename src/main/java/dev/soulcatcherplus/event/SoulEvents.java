@@ -39,12 +39,13 @@ public final class SoulEvents {
 
     @SubscribeEvent(priority = Priority.HIGHEST)
     public static boolean interact(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific event) {
-        if (!(event.getItemStack().getItem() instanceof dev.soulcatcherplus.item.SoulScythe scythe)) return false;
+        var item = event.getItemStack().getItem();
+        if (!(item instanceof dev.soulcatcherplus.item.SoulScythe || item instanceof dev.soulcatcherplus.item.SoulSeal)) return false;
         net.minecraft.world.InteractionResult result;
         Entity target = event.getTarget();
         if (target instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragonPart part) target = part.parentMob;
         if (target instanceof LivingEntity living) {
-            result = scythe.interactLivingEntity(event.getItemStack(), event.getEntity(), living, event.getHand());
+            result = item.interactLivingEntity(event.getItemStack(), event.getEntity(), living, event.getHand());
         } else return false;
         if (result != net.minecraft.world.InteractionResult.PASS) {
             event.setCancellationResult(result); return true;

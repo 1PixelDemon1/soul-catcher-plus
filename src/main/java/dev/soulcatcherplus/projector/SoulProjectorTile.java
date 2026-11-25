@@ -132,12 +132,12 @@ public final class SoulProjectorTile extends BlockEntity implements WorldlyConta
     }
     @Override protected void saveAdditional(ValueOutput tag) {
         super.saveAdditional(tag);
-        tag.store("Scroll", ItemStack.CODEC, scroll);
+        tag.store("Scroll", ItemStack.OPTIONAL_CODEC, scroll);
         tag.store("Projection", CompoundTag.CODEC, projection.copy()); tag.store("Settings", CompoundTag.CODEC, settings.save());
     }
     @Override protected void loadAdditional(ValueInput tag) {
         super.loadAdditional(tag);
-        scroll = tag.read("Scroll", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+        scroll = tag.read("Scroll", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
         if (!(scroll.getItem() instanceof SoulScroll)) scroll = ItemStack.EMPTY;
         readVisuals(tag);
     }

@@ -21,9 +21,9 @@ companions in battle.
 
 ## Supported versions
 
-**1.2.3** covers the core and Compat on all four targets below.
+**1.3.0** covers the core and Compat on all four targets below.
 The update improves Aggressive target commitment, shared placement, and companion orders.
-See the [release notes](docs/releases/1.2.3.md) for dependencies and validation.
+See the [release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0) for dependencies and validation.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
@@ -101,12 +101,7 @@ Historical release artifacts and notes retain their original requirements.
 
 ## Release validation
 
-All four fresh core builds, archive audits, and ordinary installed-client startups
-passed before publication. Clients loaded sound/atlases and closed normally without
-entering worlds. Patchouli book resources loaded on the older three platforms;
-26.3 has no verified Forge Patchouli build. No automated tests, GameTests, gameplay,
-multiplayer, or fresh dedicated-server checks ran. See the
-[release notes](docs/releases/1.2.3.md) for profiles and known external warnings.
+See the [1.3.0 release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0) for the validation matrix and integration limits.
 
 ## License
 

@@ -58,6 +58,8 @@ public final class SoulCatcherPlus {
         () -> new SoulboundHoe(new Item.Properties().setId(ITEMS.key("soulbound_hoe"))));
     public static final RegistryObject<Item> SOUL_ENERGY_BOW = ITEMS.register("soul_energy_bow",
         () -> new SoulEnergyBow(new Item.Properties().setId(ITEMS.key("soul_energy_bow")).durability(384)));
+    public static final RegistryObject<Item> SOUL_SEAL = ITEMS.register("soul_seal",
+        () -> new dev.soulcatcherplus.item.SoulSeal(new Item.Properties().setId(ITEMS.key("soul_seal"))));
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<CreativeModeTab> SOUL_TAB = CREATIVE_TABS.register("soulcatcherplus", () ->
         CreativeModeTab.builder()
@@ -67,7 +69,7 @@ public final class SoulCatcherPlus {
             .displayItems((parameters, output) -> {
                 output.accept(IRON_SCYTHE.get()); output.accept(DIAMOND_SCYTHE.get()); output.accept(NETHERITE_SCYTHE.get()); output.accept(SUPREME_SCYTHE.get());
                 output.accept(SOUL_SCROLL.get()); output.accept(BOSS_SOUL_SCROLL.get());
-                output.accept(SOUL_ENERGY_BOW.get());
+                output.accept(SOUL_ENERGY_BOW.get()); output.accept(SOUL_SEAL.get());
                 output.accept(SOULBOUND_HOE.get());
                 output.accept(SOUL_SACRIFICE_TOTEM.get());
                 output.accept(dev.soulcatcherplus.pylon.SoulPylons.ITEM.get());

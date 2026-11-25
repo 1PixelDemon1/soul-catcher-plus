@@ -112,8 +112,8 @@ final class SoulDeviceRenderer<T extends BlockEntity> implements BlockEntityRend
                 pose.translate(-.25, 13.01 / 16, .25);
                 pose.scale(.6f, .6f, .6f);
             } else {
-                pose.translate(0, .19, -.44);
-                pose.scale(.40f, .40f, .40f);
+                pose.translate(0, 2 / 16.0, -5.5 / 16.0);
+                pose.scale(.36f, .36f, .36f);
             }
             cages.get(state.cage).submitFloating(state.time, pose, nodes, state.lightCoords, OverlayTexture.NO_OVERLAY);
             pose.popPose();

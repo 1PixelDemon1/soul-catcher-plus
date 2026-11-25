@@ -11,9 +11,9 @@ public final class SoulEntry {
     public final UUID id;
     public final String entityType;
     public final String name;
-    private final CompoundTag snapshot;
-    public final double maxHealth;
-    public final int cost;
+    private CompoundTag snapshot;
+    public double maxHealth;
+    public int cost;
     public UUID activeEntity;
     public String dimension = "";
     public long readyAt;
@@ -32,6 +32,20 @@ public final class SoulEntry {
 
     public boolean hasCustomName() { return snapshot.contains("CustomName"); }
     public CompoundTag snapshot() { return snapshot.copy(); }
+    public boolean updateSnapshot(CompoundTag captured, double currentMaxHealth) {
+        CompoundTag current = captured.copy();
+        // The live name includes a generated owner prefix. Keep the collection name.
+        for (String key : new String[]{"CustomName", "CustomNameVisible"}) {
+            if (snapshot.contains(key)) current.put(key, snapshot.get(key).copy());
+            else current.remove(key);
+        }
+        double health = SoulBalance.health(currentMaxHealth);
+        if (current.equals(snapshot) && health == maxHealth) return false;
+        snapshot = current;
+        maxHealth = health;
+        cost = SoulBalance.summonCost(health);
+        return true;
+    }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         dev.soulcatcherplus.data.SoulNbt.putUuid(tag, "Id", id); tag.putString("Type", entityType); tag.putString("Name", name);
@@ -47,8 +61,10 @@ public final class SoulEntry {
         // Rebalance the built-in courier prototype without replacing its collection or summon identity.
         if (type.equals("soulcatcherplus:soul_courier") && maxHealth == 20)
             maxHealth = dev.soulcatcherplus.entity.SoulCourierEntity.MAX_HEALTH;
+        CompoundTag snapshot = tag.getCompoundOrEmpty("Snapshot").copy();
+        snapshot.merge(tag.getCompoundOrEmpty("SealedEquipment"));
         SoulEntry entry = new SoulEntry(dev.soulcatcherplus.data.SoulNbt.uuid(tag, "Id"), type,
-            tag.getStringOr("Name", ""), tag.getCompoundOrEmpty("Snapshot"), maxHealth);
+            tag.getStringOr("Name", ""), snapshot, maxHealth);
         if (dev.soulcatcherplus.data.SoulNbt.hasUuid(tag, "Active")) entry.activeEntity = dev.soulcatcherplus.data.SoulNbt.uuid(tag, "Active");
         entry.dimension = tag.getStringOr("Dimension", ""); entry.readyAt = tag.getLongOr("ReadyAt", 0L);
         return entry;

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GBG",
+    "BSB",
+    "GBG"
+  ],
+  "key": {
+    "G": "minecraft:gold_nugget",
+    "B": "minecraft:bone",
+    "S": "minecraft:soul_sand"
+  },
+  "result": {
+    "id": "soulcatcherplus:soul_seal"
+  }
+}
