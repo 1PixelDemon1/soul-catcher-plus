@@ -56,6 +56,8 @@ public final class SoulCatcherPlus {
         () -> new dev.soulcatcherplus.item.SoulboundHoe(new Item.Properties()));
     public static final RegistryObject<Item> SOUL_ENERGY_BOW = ITEMS.register("soul_energy_bow",
         () -> new dev.soulcatcherplus.item.SoulEnergyBow(new Item.Properties().durability(384)));
+    public static final RegistryObject<Item> SOUL_SEAL = ITEMS.register("soul_seal",
+        () -> new dev.soulcatcherplus.item.SoulSeal(new Item.Properties()));
     /** Compatibility alias for the original iron scythe. */
     public static final RegistryObject<Item> SCYTHE = IRON_SCYTHE;
     public static final RegistryObject<CreativeModeTab> SOUL_TAB = CREATIVE_TABS.register("soulcatcherplus", () ->
@@ -68,7 +70,7 @@ public final class SoulCatcherPlus {
                 output.accept(SOUL_SCROLL.get());
                 output.accept(SOUL_SACRIFICE_TOTEM.get());
                 output.accept(SOULBOUND_HOE.get());
-                output.accept(SOUL_ENERGY_BOW.get());
+                output.accept(SOUL_ENERGY_BOW.get()); output.accept(SOUL_SEAL.get());
                 output.accept(dev.soulcatcherplus.furnace.SoulFurnaces.ITEM.get());
                 output.accept(dev.soulcatcherplus.altar.SoulAltars.ITEM.get());
                 output.accept(dev.soulcatcherplus.projector.SoulProjectors.LIGHT_ITEM.get());

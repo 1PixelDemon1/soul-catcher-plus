@@ -8,8 +8,8 @@ with `--release 8`. Jabel is compile-only and must never be bundled into the mod
 Use `develop` for ongoing 1.16.5 work. `forge/1.19.2` and `forge/1.20.1`
 maintain their version-specific ports. `archive/neoforge-1.20.4` is a preserved
 experimental port, outside the current release.
-For the next Minecraft 1.20.1 release, retain Forge **47.4.28** as the build
-target and minimum Forge version in mod metadata, as requested by the user.
+Build the Minecraft 1.20.1 port against Forge **47.4.28**. Keep the runtime
+minimum in mod metadata based on compatibility checks.
 `main` retains release history and the public project overview. Update it for
 requested releases or explicitly requested publication/documentation preparation.
 Verify old APIs against the actual 1.16.5 mapped JAR and Forge sources. The class

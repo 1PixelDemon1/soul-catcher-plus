@@ -37,7 +37,7 @@ public final class SoulVariants {
     public static CompoundTag preview(CompoundTag snapshot) {
         CompoundTag result = appearance(snapshot);
         // Equipment is visible in the preview, but does not create a new variant.
-        for (String key : com.google.common.collect.ImmutableList.of("HandItems", "ArmorItems", "Saddle", "DecorItem", "ArmorItem", "carriedBlockState")) {
+        for (String key : com.google.common.collect.ImmutableList.of("HandItems", "ArmorItems", "Saddle", "SaddleItem", "DecorItem", "ArmorItem", "carriedBlockState")) {
             if (snapshot.contains(key)) result.put(key, snapshot.get(key).copy());
         }
         return result;

@@ -10,9 +10,9 @@ public final class SoulEntry {
     public final UUID id;
     public final String entityType;
     public final String name;
-    private final CompoundTag snapshot;
-    public final double maxHealth;
-    public final int cost;
+    private CompoundTag snapshot;
+    public double maxHealth;
+    public int cost;
     public UUID activeEntity;
     public String dimension = "";
     public long readyAt;
@@ -30,6 +30,20 @@ public final class SoulEntry {
             ? Component.translatable(form.nameKey()) : Component.literal(name);
     }
     public CompoundTag snapshot() { return snapshot.copy(); }
+    public boolean updateSnapshot(CompoundTag captured, double currentMaxHealth) {
+        CompoundTag current = captured.copy();
+        // The live name includes a generated owner prefix. Keep the collection name.
+        for (String key : new String[]{"CustomName", "CustomNameVisible"}) {
+            if (snapshot.contains(key)) current.put(key, snapshot.get(key).copy());
+            else current.remove(key);
+        }
+        double health = SoulBalance.health(currentMaxHealth);
+        if (current.equals(snapshot) && health == maxHealth) return false;
+        snapshot = current;
+        maxHealth = health;
+        cost = SoulBalance.summonCost(health);
+        return true;
+    }
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("Id", id); tag.putString("Type", entityType); tag.putString("Name", name);
@@ -45,8 +59,10 @@ public final class SoulEntry {
         // Rebalance the built-in courier prototype without replacing its collection or summon identity.
         if (type.equals("soulcatcherplus:soul_courier") && maxHealth == 20)
             maxHealth = dev.soulcatcherplus.entity.SoulCourierEntity.MAX_HEALTH;
+        CompoundTag snapshot = tag.getCompound("Snapshot").copy();
+        snapshot.merge(tag.getCompound("SealedEquipment"));
         SoulEntry entry = new SoulEntry(tag.getUUID("Id"), type,
-            tag.getString("Name"), tag.getCompound("Snapshot"), maxHealth);
+            tag.getString("Name"), snapshot, maxHealth);
         if (tag.hasUUID("Active")) entry.activeEntity = tag.getUUID("Active");
         entry.dimension = tag.getString("Dimension"); entry.readyAt = tag.getLong("ReadyAt");
         return entry;
