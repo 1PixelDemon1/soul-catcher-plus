@@ -4,6 +4,16 @@
 
 No changes yet.
 
+## 1.3.0.1 — 2026-11-26
+
+Core and Compat maintenance release for Minecraft 1.16.5/1.19.2/1.20.1/26.3, with artifact versions `1.3.0.1+<minecraft>`.
+
+- Raise the declared Forge minimum for 1.16.5 from 36.0.42 to 36.2.26 in both projects; retain the 36.2.42 build target. Other platforms retain their existing build targets and runtime minima.
+- Use a no-argument core mod entrypoint on 1.20.1, obtaining the mod event bus through the existing loading context instead of requiring constructor injection, for compatibility with the declared older Forge floor.
+- Pair with Compat 1.3.0.1, which accepts matching-Minecraft core 1.3.0.1, 1.3.0, or 1.3.0-prerelease. Retain protocol 17 and the existing gameplay/API behavior.
+
+All eight fresh versioned builds and 16 runtime/sources archive audits passed. A new 26-run installed-client matrix verified exact 1.3.0.1 release bytes across 13 Minecraft/Forge combinations, with normal exit 0; a separate isolated OccultCraft copy on Forge 47.2.5 also passed startup with both final JARs. No worlds, gameplay, multiplayer, dedicated-server checks, automated tests, GameTests, or UI automation were run. The earlier 1.3.0-versioned matrix remains separate historical evidence. See [release notes](docs/releases/1.3.0.1.md).
+
 ## 1.3.0 — 2026-11-25
 
 Stable core and separate Compat addon release for Minecraft 1.16.5/1.19.2/1.20.1/26.3. Build targets remain Forge 36.2.42/43.5.0/47.4.28/66.1.0 and game Java 8/17/17/25; declared Forge minima are listed separately in the release notes.
