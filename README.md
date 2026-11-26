@@ -25,12 +25,11 @@ companions in battle.
 
 ## Supported versions
 
-**1.3.0** covers all four Forge targets below. The [release notes](docs/releases/1.3.0.md)
-describe the new devices, equipment, alternate forms, and the Soul Seal.
+**1.3.0.1** fixes loader compatibility on Forge 1.16.5 and 1.20.1. All four targets are listed below. See the [hotfix notes](docs/releases/1.3.0.1.md) and the [1.3.0 feature overview](docs/releases/1.3.0.md).
 
 | Minecraft | Forge build target | Minimum Forge | Java |
 | --- | --- | --- | --- |
-| 1.16.5 | 36.2.42 | 36.0.42 | 8 |
+| 1.16.5 | 36.2.42 | 36.2.26 | 8 |
 | 1.19.2 | 43.5.0 | 43.1.10 | 17 |
 | 1.20.1 | 47.4.28 | 47.1.4 | 17 |
 | 26.3 | 66.1.0 | 66.0.0 | 25 |
@@ -104,7 +103,7 @@ Historical release artifacts and notes retain their original requirements.
 
 ## Release validation
 
-See the [1.3.0 release notes](docs/releases/1.3.0.md) for the validation matrix
+See the [1.3.0.1 release notes](docs/releases/1.3.0.1.md) for the validation matrix
 and integration limits.
 
 ## License
