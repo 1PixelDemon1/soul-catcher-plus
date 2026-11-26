@@ -90,9 +90,9 @@ public final class SoulCatcherPlus {
     public static final RegistryObject<EntityType<SoulBoltEntity>> SOUL_BOLT = ENTITIES.register("soul_bolt",
         () -> EntityType.Builder.<SoulBoltEntity>of(SoulBoltEntity::new, MobCategory.MISC)
             .sized(.2f, .2f).clientTrackingRange(8).updateInterval(1).build(ID + ":soul_bolt"));
-    public SoulCatcherPlus(FMLJavaModLoadingContext context) {
+    public SoulCatcherPlus() {
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.CLIENT, SoulClientConfig.SPEC);
-        IEventBus bus = context.getModEventBus();
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener((net.minecraftforge.event.entity.EntityAttributeCreationEvent event) -> {
             event.put(SOUL_RAVEN.get(), SoulRavenEntity.createAttributes());
             event.put(SOUL_COURIER.get(), SoulCourierEntity.createAttributes());
