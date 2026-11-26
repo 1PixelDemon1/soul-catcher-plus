@@ -21,9 +21,9 @@ companions in battle.
 
 ## Supported versions
 
-**1.3.0** covers the core and Compat on all four targets below.
+**1.3.0.1** covers the core and Compat on all four targets below.
 The update improves Aggressive target commitment, shared placement, and companion orders.
-See the [release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0) for dependencies and validation.
+See the [release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0.1) for dependencies and validation.
 
 | Minecraft | Mod loader | Java |
 | --- | --- | --- |
@@ -101,7 +101,7 @@ Historical release artifacts and notes retain their original requirements.
 
 ## Release validation
 
-See the [1.3.0 release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0) for the validation matrix and integration limits.
+See the [1.3.0.1 release notes](https://github.com/1PixelDemon1/soul-catcher-plus/releases/tag/v1.3.0.1) for the validation matrix and integration limits.
 
 ## License
 
